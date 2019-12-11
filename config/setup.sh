@@ -89,7 +89,6 @@ if ! [ "$(ls -A $CURRENT/Pfam/Pfam-hmms)" ]; then
 		printf "\nRemoving duplicated data. Please wait.\n------------------------------------\n"
 		rm -rf $CURRENT/data_HaMStR
   	    rm $CURRENT/data_HaMStR.tar
-		printf "\nDone! Data should be in place to run FAS.\n"
 	  fi
 	else
 	  echo "Something went wrong with the download. Checksum does not match."
@@ -108,4 +107,4 @@ if [ -z "$(grep PATH=$CURRENT ~/$bashFile)" ]; then
 	echo "export PATH=$CURRENT:\$PATH" >> ~/$bashFile
 fi
 
-echo "Done! Now you can use FAS tool :-)"
+echo "Finished! Now you can use FAS tool :-)"
