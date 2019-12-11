@@ -1,0 +1,18 @@
+package:
+  name: "greedyFAS"
+  version: "1.7"
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+
+test:
+  imports:
+    -
+
+about:
+  home:
