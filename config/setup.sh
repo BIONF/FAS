@@ -88,7 +88,7 @@ if ! [ "$(ls -A $CURRENT/Pfam/Pfam-hmms)" ]; then
 		rsync -rva data_HaMStR/README* $CURRENT/
 		printf "\nRemoving duplicated data. Please wait.\n------------------------------------\n"
 		rm -rf $CURRENT/data_HaMStR
-  	    # rm $CURRENT/data_HaMStR.tar
+  	    rm $CURRENT/data_HaMStR.tar
 		printf "\nDone! Data should be in place to run FAS.\n"
 	  fi
 	else
