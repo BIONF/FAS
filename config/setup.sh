@@ -103,7 +103,7 @@ fi
 echo "-------------------------------------"
 echo "Adding path to ~/$bashFile"
 
-if [ -z "$(grep PATH=$CURRENT ~/$bashFile)" ]; then
+if [ -z "$(grep PATH=$CURRENT:\$PATH ~/$bashFile)" ]; then
 	echo "export PATH=$CURRENT:\$PATH" >> ~/$bashFile
 fi
 
