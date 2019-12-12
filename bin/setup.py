@@ -22,14 +22,14 @@
 
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as input:
-    long_description = input.read()
+# with open("README.md", "r") as input:
+#     long_description = input.read()
 
 setup(
     name="greedyFAS",
     version="1.7",
     description="A tool to compare protein feature architectures",
-    long_description=long_description,
+    # long_description=long_description,
     author="Julian Dosch",
     author_email="Dosch@bio.uni-frankfurt.de",
     url="https://github.com/BIONF/FAS",
