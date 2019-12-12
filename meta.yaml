@@ -1,9 +1,9 @@
-{% set name = "FAS" % }
-{% set version = "1.0.0" % }
+{% set name = "FAS" %}
+{% set version = "1.0.0" %}
 
 package:
-  name: {{ name|lower } }
-  version: {{ version } }
+  name: {{ name|lower }}
+  version: {{ version }}
 
 source:
   path: ./bin/
