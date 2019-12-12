@@ -11,4 +11,4 @@ mkdir -p $TESTPKG_HOME
 cp -R $SRC_DIR/* $TESTPKG_HOME/
 
 echo "INSTALL FAS..."
-$PYTHON $TESTPKG_HOME/bin/setup.py install
+$PYTHON $TESTPKG_HOME/bin/setup.py install -single-version-externally-managed
