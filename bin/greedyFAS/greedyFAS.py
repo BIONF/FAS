@@ -55,6 +55,7 @@ taciturn = 1
 # Flow Control <fc>
 # flow control functions
 
+
 def fc_start(option):
     """Overhead function,
     this function manages the individual functions that read the input files and prepares the data for the main script.
@@ -2232,21 +2233,21 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                             if feature in forward_q_path and feature in forward_s_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     weights[feature] + "\tY\n")
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
+                                                     + weights[feature] + "\tY\n")
                                     else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     weights[feature] + "\tN\n")
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
+                                                     + weights[feature] + "\tN\n")
                             elif feature in forward_q_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tY\n")
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tY\n")
                                     else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
                             else:
                                 for inst in arc[query_id][feature]:
                                     d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
@@ -2284,8 +2285,8 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                                                          inst[1] + "\t" + weights[feature] + "\tN\n")
                                 else:
                                     for inst in arc[query_id][feature]:
-                                        d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
+                                        d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                         if path.tag == "query_path":
                             reverse_s_path = {}

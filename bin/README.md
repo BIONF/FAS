@@ -16,14 +16,25 @@ The main FAS script is written in Python and should run on both Python 2 and Pyt
 
 
 # Installation
-FAS is part of the [HaMStR oneseq](https://github.com/BIONF/HaMStR) package. To get it simply clone the HaMStR repository and follow the installation instructions.
+FAS can be cloned from github here:
 
 ```
-git clone https://github.com/BIONF/HaMStR
+git clone https://github.com/BIONF/FAS
 ```
 
-Afterwards you might want to check if the Pfam HMMs under HaMStR/bin/fas/Pfam/Pfam-hmms/ are up-to-date. If not, download the newest [release](ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases) and replace the corresponding files in HaMStR/bin/fas/Pfam/Pfam-hmms/.
+Then change into the bin directory and run pip install:
+```
+cd FAS/bin
+pip install .
+```
 
+
+Alternatively, you can use Anaconda:
+```
+conda install -c jurudo fas
+```
+
+TOBECHANGED/ADDED
 
 # Usage
 ## How to get started

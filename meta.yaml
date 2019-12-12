@@ -1,14 +1,13 @@
-{% set name = "FAS" %}
-{% set version = "1.0.0" %}
+{% set name = "FAS" % }
+{% set version = "1.0.0" % }
 
 package:
-  name: {{ name|lower }}
-  version: {{ version }}
+  name: {{ name|lower } }
+  version: {{ version } }
 
 source:
   path: ./bin/
-  #git_url: https://github.com/trvinh/hamstr_recipe
-  #git_depth: 1
+
 
 build:
   noarch: python
@@ -24,8 +23,9 @@ requirements:
 test:
   commands:
     - greedyFAS -h 2>&1
+    - parseInterPro -h 2>&1
 
 about:
   home: 'https://github.com/BIONF/FAS'
-  license: GPL-3.0
+  license: GPL
   summary: "Tool for protein feature architecture comparisons"
