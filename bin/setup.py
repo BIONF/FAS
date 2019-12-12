@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.7",
+    version="1.0.0",
     description="A tool to compare protein feature architectures",
     long_description=long_description,
     author="Julian Dosch",

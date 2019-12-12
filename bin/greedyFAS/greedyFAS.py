@@ -2335,7 +2335,7 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
 
 # start #
 def main():
-    version = "1.7"
+    version = "1.0.0"
     greedyfas_path = inspect.getfile(inspect.currentframe())
     expath = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 
