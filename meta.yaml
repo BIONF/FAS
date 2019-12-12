@@ -10,9 +10,8 @@ requirements:
   run:
     - python
 
-test:
-  imports:
-    -
 
 about:
-  home:
+  home: https://github.com/BIONF/FAS
+  license: GPL
+  summary: tool for protein feature architecture comparisons
