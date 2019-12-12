@@ -27,5 +27,5 @@ test:
 
 about:
   home: 'https://github.com/BIONF/FAS'
-  license: GPLv3
-summary: "tool for protein feature architecture comparisons"
+  license: GPL-3.0
+  summary: "Tool for protein feature architecture comparisons"
