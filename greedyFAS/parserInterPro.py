@@ -24,12 +24,6 @@
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description="InterPro table output parser to FAS XML input")
-parser.add_argument("-i", "--input", type=str, default=None)
-parser.add_argument("-o", "--output", type=str, default=None)
-parser.add_argument("-s", "--singlefile", action="store_true", help="single file output")
-options = parser.parse_args()
-
 
 
 def read_input(path):
@@ -97,11 +91,18 @@ def write_output_single(path, proteins, proteinlengths):
     out.close()
 
 
-def main(option):
-    proteins, proteinlengths, tools = read_input(option.input)
-    if option.singlefile:
-        write_output_single(option.output, proteins, proteinlengths)
+def main():
+    parser = argparse.ArgumentParser(description="InterPro table output parser to FAS XML input")
+    parser.add_argument("-i", "--input", type=str, default=None, required=True)
+    parser.add_argument("-o", "--output", type=str, default=None, required=True)
+    parser.add_argument("-s", "--singlefile", action="store_true", help="single file output")
+    options = parser.parse_args()
+    proteins, proteinlengths, tools = read_input(options.input)
+    if options.singlefile:
+        write_output_single(options.output, proteins, proteinlengths)
     else:
-        write_output(option.output, proteins, proteinlengths, tools)
+        write_output(options.output, proteins, proteinlengths, tools)
 
-main(options)
+
+if __name__ == '__main__':
+    main()

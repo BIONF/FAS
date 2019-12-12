@@ -36,7 +36,8 @@ setup(
     packages=find_packages(),
     install_requires=[],
     entry_points={
-        'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main"],
+        'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
+                            "parseInterPro = greedyFAS.parserInterPro:main"],
     },
     license="GPL-3.0",
     classifiers=[
