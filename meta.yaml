@@ -6,7 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  path: ./
+  path: ./bin/
   #git_url: https://github.com/trvinh/hamstr_recipe
   #git_depth: 1
 
