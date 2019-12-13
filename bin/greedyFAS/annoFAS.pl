@@ -9,30 +9,30 @@ use File::Basename;
 
 
 ########## dev. version v6 ############
-# This script is using a fasta file as input for different protein annotation
+# This script is using a fasta file as input for different protein annotation 
 # tools. Only needed information will then be filtered out of the results of
 # every tool and will then be written into an output file as an xml file.
-#
+# 
 # If a foldername is given a folder will be created in "./annot/foldername" so the
 # created annotation xml files can be saved permanently. If no foldername is given the
-# created xml files will either be saved in the "./annot/query" folder or the
+# created xml files will either be saved in the "./annot/query" folder or the 
 # "./annot/proteom" folder, depending on the second command "q or p" and existing
 # xml files in these folders will be overwritten.
-#
+# 
 # usage: shell$ perl annotations.pl TODO
 #
 # note : either "q or p" or a foldername need to be set. if both are given the second
-# argument will be ignored.
+# argument will be ignored. 
 #
 # MODIFICATIONS made by holger bergmann:
 #	25.05.2015	- missing clan annotations will be filled with the domain family name it self
 #				- hereby the clan score will not be 0 if two identical domains (annotated in q and p) have no clan annotated
 #	01.06.2015	- added var $fasPath: location of the FACT folder. Default: my $fasPath = "/home/holger/src/FACT/" (must be adapted to your environment)
 #	02.06.2015	- changed output format
-#				- added sequence length calculation (see sub: seq_id_len())
+#				- added sequence length calculation (see sub: seq_id_len()) 
 #				- compare ids: check for clean labels
 #				- clan info is assigned directly to feature type
-#				- example:
+#				- example: 
 #
 #				-	<?xml version="1.0"?>
 #					<tool name="PfamDB">
@@ -80,20 +80,6 @@ my $version         = 1.1;
 #### SETUP PATH ####
 my $location	= abs_path($0);
 my ($base, $fasPath, $suffix) = fileparse( $location, qr/\.[^.]*/ );
-print $base,"\n";
-print $fasPath,"\n";
-print $suffix,"\n";
-my $currentPath = cwd();
-print $currentPath,"\n";
-unless (-d "$fasPath/Pfam") {
-    my @folders=("CAST", "COILS2", "Pfam", "Pfam/Pfam-hmms", "Pfam/output_files", "SEG", "SignalP", "SMART", "TMHMM");
-    foreach my $f (@folders) {
-        mkdir $f;
-    }
-    
-}
-
-exit;
 chdir($fasPath);
 
 #### PRINT SETUP ####
@@ -103,7 +89,7 @@ print "--> Running ".$base.$suffix."\n\n";
 #### CHECK OPTIONS ####
 my $usage           =	"";
 my $helpmessage     = getHelpMessage();
-
+ 
 my $verbose = 0;
 my $help;
 my $fasta;
@@ -161,10 +147,10 @@ else{print("ERROR: choose (q)uery or (p)roteom or set a foldername to save the x
 
 ## check for given output if it already exists (specified by -path option)
 ## if it exists, check if XMl files exist and skip annoation if they do and option force is not set
-if(!(-d($dirOut))){
+if(!(-d($dirOut))){     
     mkdir($dirOut);
     $regular = 1;
-
+        
 } else {
     my @fileList = glob($dirOut."/*.xml");
     if(scalar(@fileList) == $tool_count && !$force && !$redo){
@@ -188,7 +174,7 @@ if(!(-d($dirOut))){
         }else {
             die("\nPlease check options. -redo=$redo is not a valid option. Something went wrong. Exiting...\n\n");
         }
-
+        
     }else{
         die("\nPlease check options and output directory. Something went wrong. Exiting...\n\n");
     }
@@ -318,7 +304,7 @@ sub seq_id_len {
     # creates hash lists of ids and seq length
     my $file = $_[0];
     my $id;
-
+    
 	open(INPUT, $file)   # open the input fasta file
 	or die("ERROR: could not find or open file: $file. $!\n");
 	my @content = <INPUT>;
@@ -351,7 +337,7 @@ sub smart{
     chdir($smartPATH);
 
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
-    my $outName = main_smart($fasta, $qORp);
+    my $outName = main_smart($fasta, $qORp);        
 
     if(-e $OutFilesPATH."/".$outName){
         open(SMART, $OutFilesPATH."/".$outName);
@@ -365,7 +351,7 @@ sub smart{
     my $delCommand = "rm -f ".$OutFilesPATH."/".$outName;
     system ($delCommand);
 
-    chdir($fasPath);
+    chdir($fasPath);    
 
     open(OUT, ">".$dirOut."smart.xml") or print("ERROR: could not create output file smart.xml.\n");
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"SMART-DB\">\n";
@@ -377,7 +363,7 @@ sub smart{
             $content[$i] =~ s/\n//g;    # substitute newlines
             my $CR = chr(13);		# define some weird character
             $content[$i] =~ s/\Q$CR//g; # substitute some weird character
-
+            
             my $length = check_id_length($content[$i]);
             print OUT "\t<protein id=\"" . $content[$i] . "\" length=\"" . $length . "\">\n";
 
@@ -425,7 +411,7 @@ sub smart{
             }
 # take sorting into account
             my @keys = keys(%domainName);
-            foreach(@keys){
+            foreach(@keys){                
                 print OUT "\t\t<feature type=\"" . $_ . "\" instance=\"" . $domainName{$_} . "\" clan=\"" . "---" . "\" evalue=\"" . $evalInfo{$_}. "\">\n";
                     my @temp_s = split(/, /, $starts{$_});
                     my @s;
@@ -456,7 +442,7 @@ sub pfam {
     chdir($PfamPATH);
 
     require($PfamPATH."/".$PFAM_tool);
-    my $outName = main($fasta,$qORp);
+    my $outName = main($fasta,$qORp);	
 
     open(PFAM, $OutFilesPATH."/".$outName) or print("ERROR: could not find or open $outName. $!\n $OutFilesPATH/$outName\n");
     my @content = <PFAM>;
@@ -470,7 +456,7 @@ sub pfam {
     chdir($fasPath);
 
     open(OUT, ">".$dirOut."pfam.xml") or print("ERROR: could not create output file pfam.xml.\n");
-
+        
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"PfamDB\">\n";
 
     for(my $i=0;$i<@content;$i++){  # loop the content of pfam_scan.out file and filter whats needed
@@ -481,7 +467,7 @@ sub pfam {
             $content[$i] =~ s/\n//g;    # substitute newlines
             my $CR = chr(13);		# define some weird character
             $content[$i] =~ s/\Q$CR//g; # substitute some weird character
-
+            
             my $length = check_id_length($content[$i]);
             print OUT "\t<protein id=\"" . $content[$i] . "\" length=\"" . $length . "\">\n";
 
@@ -515,8 +501,8 @@ sub pfam {
                         if(!defined($clanInfo{$temp_familyname[1]})){ #clan detected the first time
                             $clanInfo{$temp_familyname[1]} = $temp[1];
                         }
-
-                    }elsif($content[$i]=~/clan: ---/){ #no clan info av. (family name will be used as "clan" to
+			
+                    }elsif($content[$i]=~/clan: ---/){ #no clan info av. (family name will be used as "clan" to 
                         #set family name as clan information
                         if(!defined($clanInfo{$temp_familyname[1]})){ #clan detected the first time
                             $clanInfo{$temp_familyname[1]} = $temp_familyname[1];
@@ -545,7 +531,7 @@ sub pfam {
             }
 # take sorting into account
             my @keys = keys(%pfamDomainName);
-            foreach(@keys){
+            foreach(@keys){                
                 #print OUT "\t\t<feature type=\"$_\" instance=\"$pfamDomainName{$_}\">\n";
                 print OUT "\t\t<feature type=\"" . $_ . "\" instance=\"" . $pfamDomainName{$_} . "\" clan=\"" . $clanInfo{$_} . "\" evalue=\"" . $evalInfo{$_}. "\">\n";
                     my @temp_s = split(/, /, $starts{$_});
@@ -576,7 +562,7 @@ sub tempfile {
 # function returns an array with ID and sequence of each protein in the input file
     my $file = $fasta;
     my @return;
-
+    
     open(FILE, $file)
         or print("ERROR: could not find input file.\n");
     my @content = <FILE>;
@@ -592,7 +578,7 @@ sub tempfile {
                 $tempSeq.=$content[$i];    # add seq to temp save
                 $i++;
             }$i--;
-            push(@return, $tempSeq);        # save the sequence
+            push(@return, $tempSeq);        # save the sequence            
         }
     }
 
@@ -630,8 +616,8 @@ sub seg {
             $result[$i] =~ s/\Q$CR//g;      # substitute some weird character
 
             my $length = check_id_length($result[$i]);
-            print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";
-
+            print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";            
+            
             $i++;
 
             my $lcrCounter = 0;
@@ -641,7 +627,7 @@ sub seg {
                     my @temp = split(/ +/, $result[$i]);
                     if(defined($temp[0]) && $temp[0]=~/[a-z]/ && defined($temp[1]) && $temp[1]=~/[0-9]/){
                         $lcrCounter++;
-                        my @tempPos = split(/-/, $temp[1]);
+                        my @tempPos = split(/-/, $temp[1]);  
                         push(@output, "\n\t\t\t<start start=\"$tempPos[0]\"/>\n\t\t\t<end end=\"$tempPos[1]\"/>");
                     }
                 }
@@ -658,7 +644,7 @@ sub seg {
 }
 
 sub signalp {
-# this function calls the signalp.pl script to find signal peptides in protein
+# this function calls the signalp.pl script to find signal peptides in protein 
 # output will be parsed into xml format
     my $SigPpath = $fasPath."/SignalP";
     my @idlist;
@@ -667,7 +653,7 @@ sub signalp {
         or print("ERROR: function: signalp() / opening input file. $!\n");
     my @temp = <INPUT>;
     foreach(@temp){
-        if($_=~/\>/){$_=~s/\>//;push(@idlist, $_)}
+        if($_=~/\>/){$_=~s/\>//;push(@idlist, $_)}        
     }
     chomp(@idlist);
     close INPUT;
@@ -716,7 +702,7 @@ sub signalp {
                     }else{
                             #signalP output might be strange
                     }
-                }
+                }   
             }
         }
     }
@@ -739,9 +725,9 @@ sub coils {
     my @result = <RESULT>;
     chomp(@result);
     close RESULT;
-
+    
     chdir($fasPath);
-
+    
     open(OUT, ">".$dirOut."coils.xml")  # create output file, overwrite existing one
         or print("ERROR: could not write output file for coils.\n");
 
@@ -758,7 +744,7 @@ sub coils {
 
             my $length = check_id_length($result[$i]);
             print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";
-
+            
             $i++;   # go to next line where the sequence should start
 
             my $sequence;
@@ -806,8 +792,8 @@ sub coils {
     close OUTPUT;
 }
 
-sub TMHMM20 {
-# create TMHMM2.0 output - finds Transmembrane regions, doesnt say anything
+sub TMHMM20 {   
+# create TMHMM2.0 output - finds Transmembrane regions, doesnt say anything 
 # about proteins without TR-regions
     my $TMHMMpath=$fasPath."/TMHMM"; # path to compiled TMHMM file (decodeanhmm)
 
@@ -834,8 +820,8 @@ sub TMHMM20 {
             $result[$i] =~ s/\Q$CR//g;      # substitute some weird character
 
             my $length = check_id_length($result[$i]);
-            print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";
-
+            print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n"; 
+            
             $i++;
             if($result[$i]=~/\%/){  # find line with information of interest
                 my @temp = split(/\:/, $result[$i]);
@@ -868,7 +854,7 @@ sub TMHMM20 {
 #check for match/agreement/concurrence of identifier
 sub check_id_length{
 	my $current_id = $_[0];
-
+	
 	if (defined($any_ids{$current_id})){
             return $any_ids{$current_id};
 	}else{
@@ -876,18 +862,18 @@ sub check_id_length{
 	}
 }
 
-#TODO: infile documentation
+#TODO: infile documentation 
 # create CAST ouput - finds regions enriched for a paritcular AA, threshold is important!
-sub CASTing {
+sub CASTing {   
 	my $threshold=50; #default
-	my $castpath=$fasPath."/CAST"; # path to compiled cast file
+	my $castpath=$fasPath."/CAST"; # path to compiled cast file 
 
 	unless(-d "$castpath/tmp"){
 		system("mkdir $castpath/tmp");
 	}
 
-	my $result;
-
+	my $result; 
+	
 	# open protein fasta input
 	open(READ,$fasta) || die "Cannot open $fasta!\n";
 	my @fas = <READ>;
@@ -911,7 +897,7 @@ sub CASTing {
 			open(TMP,">$tempfasta");
 			print TMP ">",$seq;
 			close TMP;
-
+		
 			my $castOut =  qx($castpath/$CAST_tool $tempfasta -verbose -thr $threshold);
 			chomp($castOut);
 			$result .= $castOut."\n";
@@ -929,7 +915,7 @@ sub CASTing {
         ## results will be written in xml output file
 	for(my $i=0;$i<@result;$i++) {
 	    my @value;
-	    if($result[$i]=~/\>/){
+	    if($result[$i]=~/\>/){  
                 chomp($result[$i]);
                 $result[$i]=~s/\>//;
                 $result[$i] =~ s/\s+//g;	# substitute whitespaces
@@ -985,7 +971,7 @@ ADDITIONAL OPTIONS
  -extract=<>
             specify a path to the location where you want the extracted annotations to be stored.
  -redo=<>
-            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
-
+            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";      
+            
 return $message;
 }
