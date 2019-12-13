@@ -34,10 +34,12 @@ setup(
     author_email="Dosch@bio.uni-frankfurt.de",
     url="https://github.com/BIONF/FAS",
     packages=find_packages(),
+    package_data={'': ['*']},
     install_requires=[],
     entry_points={
         'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
-                            "parseInterPro = greedyFAS.parserInterPro:main"],
+                            "parseInterPro = greedyFAS.parserInterPro:main",
+                            "annoFAS = greedyFAS.annoFAS:main"],
     },
     license="GPL-3.0",
     classifiers=[
