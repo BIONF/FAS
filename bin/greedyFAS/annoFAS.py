@@ -20,15 +20,15 @@
 #
 #######################################################################
 
-import getopt
 import os
 import sys
+import re
 import subprocess
 import argparse
+import readline
+import glob
+from os.path import expanduser
 
-def subprocess_cmd(commands):
-	for cmd in commands:
-		subprocess.call(cmd, shell = True)
 
 def getPath():
     fasInfo = subprocess.check_output(['pip', 'show', 'greedyFAS']).decode(sys.stdout.encoding).strip()
@@ -36,10 +36,10 @@ def getPath():
         if 'Location' in line:
             return(line.replace('Location: ', '').rstrip() + '/greedyFAS')
 
-def downloadData(file, checksum, output):
+def downloadData(file, checksum):
     url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo' + '/' + file
     parameter = '--no-check-certificate'
-    subprocess.call(['wget', '-O', output, url, parameter])
+    subprocess.call(['wget', url, parameter])
     if os.path.isfile(file):
         checksumFile = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
         if checksumFile == checksum:
@@ -49,7 +49,46 @@ def downloadData(file, checksum, output):
     else:
         sys.exit('Cannot download annotation tools!')
 
-def parse_arguments():
+def query_yes_no(question, default = "yes"):
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
+def complete(text, state):
+    return (glob.glob(os.path.expanduser(text)+'*')+[None])[state]
+
+def installPath():
+    annoPath = expanduser("~") + "/annotation_fas"
+    print('Annotation dir:', end = ' ')
+    if query_yes_no(annoPath) == False:
+        readline.set_completer_delims(' \t\n;')
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer(complete)
+        annoPath = input('Enter annotation dir: ')
+    return(annoPath)
+
+def main():
+    currentDir = os.getcwd()
+
+    # get arguments
     parser = argparse.ArgumentParser()
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
@@ -60,59 +99,93 @@ def parse_arguments():
     optional.add_argument('--redo', help = 'Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. Only one selection allowed!', action = 'store', default = 0)
     optional.add_argument('--force', help = 'Force override annotations [1, default = 0]', action = 'store', default = 0)
     args = parser.parse_args()
-    return args
 
-def main(args):
-    currentDir = os.getcwd()
-    # create folders for annotation tools
-    fasPath = getPath()
-    folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
-    for folder in folders:
-        if not os.path.isdir(fasPath + '/' + folder):
-            os.mkdir(fasPath + '/' + folder)
-
-    # download annotation tools
-    os.chdir(fasPath)
-    print('Installed FAS folder:')
-    print(os.getcwd())
-    if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
-        file = 'data_HaMStR.tar'
-        checksum = '4100986910 5840435200 ' + file
-        if os.path.isfile(file):
-            checksumFile = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
-            if checksumFile == checksum:
-                subprocess.call(['tar', 'xfv', file])
-            else:
-                subprocess.call(['rm', file])
-                downloadData(file, checksum)
-        else:
-            downloadData(file, checksum)
-
-        # copy tools to their folders
-        tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
-        for tool in tools:
-            print('Moving %s ...' % tool)
-            sourceDir = 'data_HaMStR/' + tool + '/'
-            targetDir = tool + '/'
-            subprocess.call(['rsync', '-rva', '--include=*', sourceDir, targetDir])
-            print('---------------------')
-
-        # remove temp files
-        subprocess.call('rm', '-rf', 'data_HaMStR')
-        subprocess.call('rm', file)
-        print('Annotation tools downloaded!')
+    # get config status and annoPath (if availible)
+    perlScript = getPath() + '/annoFAS.pl'
+    status = subprocess.check_output("grep 'my $config' %s" % perlScript, shell = True).decode(sys.stdout.encoding).strip()
+    flag = 0
+    if status == 'my $config = 0;':
+        print('Annotation tools need to be downloaded!')
+        flag = 1
     else:
-        print('Annotation tools found!')
+        annoPathTmp = subprocess.check_output("grep 'my $annotationPath' %s" % perlScript, shell = True).decode(sys.stdout.encoding).strip()
+        annoPathTmp = annoPathTmp.replace('my $annotationPath =', '')
+        annoPathTmp = re.sub(r'[;"\s]', '', annoPathTmp)
+        if not os.path.isfile(annoPathTmp + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
+            flag = 1
+        else:
+            print('Annotation tools found in %s!' % annoPathTmp)
+
+    if flag == 1:
+        # annotation directory
+        annoPath = installPath()
+        if not os.path.isdir(annoPath):
+            os.mkdir(annoPath)
+
+        # create folders for annotation tools
+        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        for folder in folders:
+            if not os.path.isdir(annoPath + '/' + folder):
+                os.mkdir(annoPath + '/' + folder)
+
+        # download annotation tools
+        os.chdir(annoPath)
+        if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
+            file = 'data_HaMStR.tar'
+            checksum = '4100986910 5840435200 ' + file
+            if os.path.isfile(file):
+                checksumFile = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
+                if checksumFile == checksum:
+                    subprocess.call(['tar', 'xfv', file])
+                else:
+                    subprocess.call(['rm', file])
+                    downloadData(file, checksum)
+            else:
+                downloadData(file, checksum)
+
+            # copy tools to their folders
+            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
+            for tool in tools:
+                print('Moving %s ...' % tool)
+                sourceDir = 'data_HaMStR/' + tool + '/'
+                targetDir = tool + '/'
+                subprocess.call(['rsync', '-rva', '--include=*', sourceDir, targetDir])
+                print('---------------------')
+
+            # remove temp files
+            subprocess.call(['rm', '-rf', annoPath + '/data_HaMStR'])
+            subprocess.call(['rm', annoPath + '/' + file])
+
+            # add path to annotation dir to annFASpl script
+            modAnnoPath = annoPath.replace('/', '\/')
+            sedCMD1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (modAnnoPath, perlScript)
+            sedCMD2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % (perlScript)
+            subprocess.call([sedCMD1], shell = True)
+            subprocess.call([sedCMD2], shell = True)
+            print('Annotation tools downloaded!')
+        else:
+            print('Annotation tools found!')
+            # add path to annotation dir to annFASpl script
+            modAnnoPath = annoPath.replace('/', '\/')
+            sedCMD1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (modAnnoPath, perlScript)
+            sedCMD2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % (perlScript)
+            subprocess.call([sedCMD1], shell = True)
+            subprocess.call([sedCMD2], shell = True)
 
     # run annotation.pl script
     os.chdir(currentDir)
-    print('Current working dir:')
-    print(os.getcwd())
-    perlScript = fasPath + '/annoFAS.pl'
-    requiredArgs = '--fasta %s --path %s --name %s' % (args.fasta, args.path, args.name)
+    requiredArgs = '--fasta %s --path %s --name %s' % (os.path.abspath(args.fasta), args.path, args.name)
     optionalArgs = '--force %s --extract %s --redo %s' % (args.force, args.extract, args.redo)
-    subprocess.call(['perl', perlScript, requiredArgs, optionalArgs])
+    cmd = 'perl ' + perlScript + ' ' + requiredArgs
+    if args.force == 1:
+        cmd = cmd + ' --force ' + 1
+    if not args.extract == '':
+        if os.path.isdir(os.path.abspath(args.extract)):
+            cmd = cmd + ' --extract ' + os.path.abspath(args.extract)
+    if args.redo in ['cast', 'coils', 'seg', 'pfam', 'signalp','smart', 'tmhmm']:
+        cmd = cmd + ' --redo ' + args.redo
+    # print(cmd)
+    subprocess.call([cmd], shell = True)
 
 if __name__ == '__main__':
-    arguments = parse_arguments()
-    main(arguments)
+    main()
