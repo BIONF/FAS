@@ -19,12 +19,12 @@ The main FAS script is written in Python and should run on both Python 2 and Pyt
 FAS can be cloned from github here:
 
 ```
-git clone https://github.com/BIONF/FAS
+git clone --depth=1 https://github.com/BIONF/FAS
 ```
 
-Then change into the bin directory and run pip install:
+Then go to FAS directory and run pip install:
 ```
-cd FAS/bin
+cd FAS
 pip install .
 ```
 
