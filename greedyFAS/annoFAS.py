@@ -138,6 +138,8 @@ def main():
 
         # download annotation tools
         os.chdir(annoPath)
+        print('Annotation tools will be saved in', end = ' ')
+        print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
             file = 'data_HaMStR.tar'
             checksum = '4100986910 5840435200 ' + file
