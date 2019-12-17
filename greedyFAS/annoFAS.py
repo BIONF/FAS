@@ -99,6 +99,7 @@ def main():
     optional.add_argument('--redo', help = 'Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. Only one selection allowed!', action = 'store', default = 0)
     optional.add_argument('--force', help = 'Force override annotations [1, default = 0]', action = 'store', default = 0)
     optional.add_argument('--prepare', help = 'Download annotation tools and do configuration', action = 'store', default = 0)
+    optional.add_argument('--annoPath', help = 'Path to annotation dir', action = 'store', default = '')
     args = parser.parse_args()
 
     # get config status and annoPath (if availible)
@@ -119,7 +120,13 @@ def main():
 
     if flag == 1:
         # annotation directory
-        annoPath = installPath()
+        if not args.annoPath == '':
+            if os.path.isdir(os.path.abspath(args.annoPath)):
+                annoPath = os.path.abspath(args.annoPath)
+            else:
+                annoPath = installPath()
+        else:
+            annoPath = installPath()
         if not os.path.isdir(annoPath):
             os.mkdir(annoPath)
 
@@ -176,7 +183,7 @@ def main():
     # run annotation.pl script
     if args.prepare == 1:
         sys.exit('Config done!')
-        
+
     os.chdir(currentDir)
     requiredArgs = '--fasta %s --path %s --name %s' % (os.path.abspath(args.fasta), args.path, args.name)
     optionalArgs = '--force %s --extract %s --redo %s' % (args.force, args.extract, args.redo)
