@@ -2355,7 +2355,7 @@ def main():
                              " should be 1.0, the default is 0.7, 0.0, 0.3")
     parser.add_argument("-j", "--jobname", default="out", type=str,
                         help="Defines the name for the outputfile, can also be used to define the output path, if no "
-                             "path is given the output will be created in the FAS directory under out/")
+                             "path is given the output will be named out.xml and out_architecture.xml")
     parser.add_argument("-r", "--ref_proteome", default=None, type=str,
                         help="Path to a reference proteome which can be used for the weighting of features, "
                              "by default there is no reference proteome used, the weighting will be uniform")
