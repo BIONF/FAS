@@ -31,7 +31,7 @@ pip install .
 
 Alternatively, you can use Anaconda:
 ```
-conda install -c jurudo fas
+conda install -c BIONF fas
 ```
 
 # Usage
