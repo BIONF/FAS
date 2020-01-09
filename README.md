@@ -58,13 +58,10 @@ parseInterPro -i INPUT.tsv -s PATH/seed -j output
 A thorough guide to all FAS commands and options can be found at [our WIKI page](https://github.com/BIONF/FAS/wiki).
 
 # Contributors
-[Ingo Ebersberger](https://github.com/ebersber)
-
-[Julian Dosch](https://github.com/JuRuDo)
-
-[Vinh Tran](https://github.com/trvinh)
-
-[Holger Bergmann](https://github.com/holgerbgm)
+- [Ingo Ebersberger](https://github.com/ebersber)
+- [Julian Dosch](https://github.com/JuRuDo)
+- [Vinh Tran](https://github.com/trvinh)
+- [Holger Bergmann](https://github.com/holgerbgm)
 
 # Contact
 Julian Dosch dosch@bio.uni-frankfurt.de
