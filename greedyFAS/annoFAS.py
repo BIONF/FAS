@@ -94,10 +94,10 @@ def main():
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('--fasta',help = 'Input sequence in fasta format', action = 'store', default = '', required = True)
     required.add_argument('--path', help = 'Output directory', action = 'store', default = '', required = True)
-    required.add_argument('--name', help = 'Query or Proteom [q or p]', action = 'store', default = '', required = True)
+    required.add_argument('--name', help = 'Name of output annotation folder', action = 'store', default = '', required = True)
     optional.add_argument('--extract', help = 'Path to save the extracted annotation for input sequence', action = 'store', default = '')
     optional.add_argument('--redo', help = 'Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. Only one selection allowed!', action = 'store', default = 0)
-    optional.add_argument('--force', help = 'Force override annotations [1, default = 0]', action = 'store', default = 0)
+    optional.add_argument('--force', help = 'Force override annotations [y/n, default = n]', action = 'store', default = 'n')
     optional.add_argument('--prepare', help = 'Download annotation tools and do configuration', action = 'store', default = 0)
     optional.add_argument('--annoPath', help = 'Path to annotation dir', action = 'store', default = '')
     args = parser.parse_args()
@@ -187,11 +187,11 @@ def main():
         sys.exit('Config done!')
 
     os.chdir(currentDir)
-    requiredArgs = '--fasta %s --path %s --name %s' % (os.path.abspath(args.fasta), args.path, args.name)
+    requiredArgs = '--fasta %s --path %s --name %s' % (os.path.abspath(args.fasta), os.path.abspath(args.path), args.name)
     optionalArgs = '--force %s --extract %s --redo %s' % (args.force, args.extract, args.redo)
     cmd = 'perl ' + perlScript + ' ' + requiredArgs
-    if args.force == '1':
-        cmd = cmd + ' --force ' + 1
+    if args.force == 'y':
+        cmd = cmd + ' --force'
     if not args.extract == '':
         if os.path.isdir(os.path.abspath(args.extract)):
             cmd = cmd + ' --extract ' + os.path.abspath(args.extract)
