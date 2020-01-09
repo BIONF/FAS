@@ -7,6 +7,7 @@ The main FAS script is written in Python and should run on both Python 2 and Pyt
 * [Installation](#installation)
 * [Usage](#usage)
 * [Additional Information](#additional-information)
+* [Contributors](#contributors)
 * [Contact](#contact)
 
 
@@ -56,9 +57,12 @@ parseInterPro -i INPUT.tsv -s PATH/seed -j output
 
 A thorough guide to all FAS commands and options can be found at [our WIKI page](https://github.com/BIONF/FAS/wiki).
 
+# Contributors
+[Ingo Ebersberger](https://github.com/ebersber)
+[Julian Dosch](https://github.com/JuRuDo)
+[Vinh Tran](https://github.com/trvinh)
+[Holger Bergmann](https://github.com/holgerbgm)
+
 # Contact
-dosch@bio.uni-frankfurt.de
-
-tran@bio.uni-frankfurt.de
-
-ebersberger@bio.uni-frankfurt.de
+Julian Dosch dosch@bio.uni-frankfurt.de
+Ingo Ebersberger ebersberger@bio.uni-frankfurt.de
