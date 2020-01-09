@@ -39,7 +39,8 @@ FAS comes with three main scripts: annoFAS and parseInterPro, which generate the
 To get started using FAS you need the protein sequence of the two (or more) proteins you want to compare. You should have two file in (Multi-)Fasta format, one for the seed protein(s) and one for the ortholog(s). Begin by using the annoFAS command:
 
 ```
-annoFAS TO_BE_ADDED
+annoFAS --fasta seed.fasta --path PATH --name seed
+annoFAS --fasta orthologs.fasta --path PATH --name ortholog
 ```
 
 This should give you an output folder of the chosen name containing seven xml files, one for each feature type used in the default set from FACT. Once you have annotated the features of both, the seed and ortholog proteins, you are ready to use the actual FAS algorithm with the two output folders of annotation script. The -j variable allows you to set an outputname and output path. If no path is given the output will be named out:
@@ -57,10 +58,11 @@ parseInterPro -i INPUT.tsv -s PATH/seed -j output
 
 # Additional Information
 
-A thorough guide to all FAS options can be found at 'TOBEADDED'
-For more information on the algorithms in FAS you can check 'TOBEADDED'
+A thorough guide to all FAS commands and options can be found at [our WIKI page](https://github.com/BIONF/FAS/wiki).
 
 # Contact
 dosch@bio.uni-frankfurt.de
+
 tran@bio.uni-frankfurt.de
+
 ebersberger@bio.uni-frankfurt.de
