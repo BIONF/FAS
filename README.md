@@ -50,7 +50,7 @@ annoFAS --fasta orthologs.fasta --path PATH --name ortholog
 
 This will output two folders `seed` and `ortholog` (as being defined using the `--name` parameter), each contains 7 XML files corresponding for 7 reference databases/annotation tools. These folders will be the input for FAS.
 
-_**NOTE: annoFAS function requires [hmmscan](http://hmmer.org/) to do the annotation. Please install it if needed!!!**_
+_**NOTE: `annoFAS` function requires [hmmscan](http://hmmer.org/) to do the annotation. Please install it if needed!!!**_
 
 Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `parseInterPro` to convert the InterProScan's *tsv* output into *XML format* for using with FAS
 
