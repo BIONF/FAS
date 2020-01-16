@@ -35,28 +35,38 @@ conda install -c BIONF fas
 ```
 
 # Usage
-FAS comes with three main scripts: **annoFAS** and **parseInterPro**, which generate the standart input for FAS, and the actual FAS script **greedyFAS**.
-To get started using FAS you need the protein sequence of the two (or more) proteins you want to compare. You should have two file in (Multi-)Fasta format, one for the seed protein(s) and one for the ortholog(s). Begin by using the `annoFAS` command to perform the functional annotation (*):
+
+FAS comes with three main functions: **annoFAS** and **parseInterPro**, which generate the standard input for FAS, and the main FAS function **greedyFAS**.
+
+1) Annotate protein features
+To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [cast](https://academic.oup.com/bioinformatics/article/16/10/915/223582), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [SignalP](http://www.cbs.dtu.dk/services/SignalP/), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [PFAM](https://pfam.xfam.org/) and [SMART](http://smart.embl-heidelberg.de/).
+
+Your two input proteins (seed and ortholog) must be in FASTA format. Using the following commands to do the annotations for the two sequences:
 
 ```
 annoFAS --fasta seed.fasta --path PATH --name seed
 annoFAS --fasta orthologs.fasta --path PATH --name ortholog
 ```
 
-This should give you an output folder of the chosen name containing seven xml files, one for each feature type used in the default set from FACT. Once you have annotated the features of both, the seed and ortholog proteins, you are ready to use the actual FAS algorithm with the two output folders of annotation script. The `-j` variable allows you to set an outputname and output path. If no path is given the output will be named out:
+This will output two folders `seed` and `ortholog` (as being defined using the `--name` parameter), each contains 7 XML files corresponding for 7 reference databases/annotation tools. These folders will be the input for FAS.
 
-```
-greedyFAS -q PATH/ortholog -s PATH/seed -j PATH/JOBNAME
-```
+_**NOTE: annoFAS function requires [hmmscan](http://hmmer.org/) to do the annotation. Please install it if needed!!!**_
 
-This should give two xml files as output, `out.xml` and `out_architecture.xml`.
-The third command `parseInterPro` can be used to parse the interPro tsv format and create an input for FAS:
+Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `parseInterPro` to convert the InterProScan's *tsv* output into *XML format* for using with FAS
 
 ```
 parseInterPro -i INPUT.tsv -s PATH/seed -j output
 ```
 
-_**(\*) NOTE: annoFAS function requires [hmmscan](http://hmmer.org/) to do the annotation. Please install it if needed!!!**_
+2) Compare protein feature architectures
+
+Once you have annotated the features of the seed and ortholog proteins, you are ready to use FAS algorithm with the two output annotation folders
+
+```
+greedyFAS -q PATH/ortholog -s PATH/seed -j PATH/OUTPUTNAME
+```
+
+The `-j` variable allows you to set an *output name* and *output path*. If no path is given, the default outputs will be `out.xml` and `out_architecture.xml`.
 
 # Additional Information
 
