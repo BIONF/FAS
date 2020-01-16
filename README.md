@@ -2,11 +2,11 @@
 
 FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-417) algorithm. It calculates the so called FAS-score which is a measure of how similar the feature architectures of two proteins are. This is done by combining the Multiplicity Score (MS) and the Positional Score (PS) from FACT. Unlike the original FACT, FAS can resolve feature architectures that have overlapping features by searching for the best overlap-free path. This can be done either extensively or by using the priority mode, a greedy approach. FAS also allows for more options in the weighting of features.
 
-~The main FAS script is written in Python and should run on both Python 2 and Python 3. The additional annotation script that generates the standart input for FAS is written in Perl~
-
 # Table of Contents
 * [Installation](#installation)
 * [Usage](#usage)
+  * [Annotate protein features](#annotate-protein-features)
+  * [Compare protein feature architectures](#compare-protein-feature-architectures)
 * [Additional Information](#additional-information)
 * [Contributors](#contributors)
 * [Contact](#contact)
@@ -38,7 +38,7 @@ conda install -c BIONF fas
 
 FAS comes with three main functions: **annoFAS** and **parseInterPro**, which generate the standard input for FAS, and the main FAS function **greedyFAS**.
 
-1) Annotate protein features
+## Annotate protein features
 To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [cast](https://academic.oup.com/bioinformatics/article/16/10/915/223582), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [SignalP](http://www.cbs.dtu.dk/services/SignalP/), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [PFAM](https://pfam.xfam.org/) and [SMART](http://smart.embl-heidelberg.de/).
 
 Your two input proteins (seed and ortholog) must be in FASTA format. Using the following commands to do the annotations for the two sequences:
@@ -58,7 +58,7 @@ Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac
 parseInterPro -i INPUT.tsv -s PATH/seed -j output
 ```
 
-2) Compare protein feature architectures
+## Compare protein feature architectures
 
 Once you have annotated the features of the seed and ortholog proteins, you are ready to use FAS algorithm with the two output annotation folders
 
