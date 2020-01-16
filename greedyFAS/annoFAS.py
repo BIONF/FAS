@@ -43,7 +43,8 @@ def downloadData(file, checksum):
     if os.path.isfile(file):
         checksumFile = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
         if checksumFile == checksum:
-            subprocess.call(['tar', 'xfv', file])
+            print('Extracting %s ...' % file)
+            subprocess.call(['tar', 'xf', file])
         else:
             sys.exit('Downloaded file corrupted!')
     else:
@@ -98,7 +99,7 @@ def main():
     optional.add_argument('--extract', help = 'Path to save the extracted annotation for input sequence', action = 'store', default = '')
     optional.add_argument('--redo', help = 'Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. Only one selection allowed!', action = 'store', default = 0)
     optional.add_argument('--force', help = 'Force override annotations [y/n, default = n]', action = 'store', default = 'n')
-    optional.add_argument('--prepare', help = 'Download annotation tools and do configuration', action = 'store', default = 0)
+    optional.add_argument('--prepare', help = 'Download annotation tools and do configuration [y/n, default = n]', action = 'store', default = 'n')
     optional.add_argument('--annoPath', help = 'Path to annotation dir', action = 'store', default = '')
     args = parser.parse_args()
 
@@ -129,6 +130,7 @@ def main():
             annoPath = installPath()
         if not os.path.isdir(annoPath):
             os.mkdir(annoPath)
+        annoPath = os.path.abspath(annoPath)
 
         # create folders for annotation tools
         folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
@@ -141,12 +143,13 @@ def main():
         print('Annotation tools will be saved in', end = ' ')
         print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
-            file = 'data_HaMStR.tar'
-            checksum = '4100986910 5840435200 ' + file
+            file = 'annotation_FAS2018b.tar.gz'
+            checksum = '1548260242 1055860344 ' + file
             if os.path.isfile(file):
                 checksumFile = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
                 if checksumFile == checksum:
-                    subprocess.call(['tar', 'xfv', file])
+                    print('Extracting %s ...' % file)
+                    subprocess.call(['tar', 'xf', file])
                 else:
                     subprocess.call(['rm', file])
                     downloadData(file, checksum)
@@ -157,13 +160,13 @@ def main():
             tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
             for tool in tools:
                 print('Moving %s ...' % tool)
-                sourceDir = 'data_HaMStR/' + tool + '/'
+                sourceDir = 'annotation_FAS/' + tool + '/'
                 targetDir = tool + '/'
                 subprocess.call(['rsync', '-rva', '--include=*', sourceDir, targetDir])
                 print('---------------------')
 
             # remove temp files
-            subprocess.call(['rm', '-rf', annoPath + '/data_HaMStR'])
+            subprocess.call(['rm', '-rf', annoPath + '/annotation_FAS'])
             subprocess.call(['rm', annoPath + '/' + file])
 
             # add path to annotation dir to annFASpl script
@@ -183,7 +186,7 @@ def main():
             subprocess.call([sedCMD2], shell = True)
 
     # run annotation.pl script
-    if args.prepare == '1':
+    if args.prepare == 'y':
         sys.exit('Config done!')
 
     os.chdir(currentDir)
