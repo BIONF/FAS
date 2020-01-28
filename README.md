@@ -34,7 +34,7 @@ In case you do not have admin rights you need to use the --user option:
 pip install --user .
 ```
 
-and then add the following line to the end of your `.bashrc` or `.bash_profile` file, restart your terminal to apply the change:
+and then add the following line to the end of your `.bashrc` or `.bash_profile` file, restart the current terminal to apply the change:
 ```
 export PATH=$HOME/.local/bin:$PATH
 ```
