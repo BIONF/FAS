@@ -28,11 +28,13 @@ Then go to FAS directory and run pip install:
 cd FAS
 pip install .
 ```
-If you do not have admin rights you need to use the --user option:
+
+In case you do not have admin rights you need to use the --user option:
 ```
 pip install --user .
 ```
-Then add the following line to your .bashrc and restart your terminal:
+
+and then add the following line to the end of your `.bashrc` or `.bash_profile` file, restart your terminal to apply the change:
 ```
 export PATH=$HOME/.local/bin:$PATH
 ```
