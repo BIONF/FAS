@@ -78,7 +78,7 @@ def complete(text, state):
 
 def installPath():
     annoPath = expanduser("~") + "/annotation_fas"
-    print('Annotation dir:', end = ' ')
+    print('Annotation dir: ')
     if query_yes_no(annoPath) == False:
         readline.set_completer_delims(' \t\n;')
         readline.parse_and_bind("tab: complete")
@@ -140,7 +140,7 @@ def main():
 
         # download annotation tools
         os.chdir(annoPath)
-        print('Annotation tools will be saved in', end = ' ')
+        print('Annotation tools will be saved in ')
         print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
             file = 'annotation_FAS2018b.tar.gz'
