@@ -162,7 +162,7 @@ def main():
                 print('Moving %s ...' % tool)
                 sourceDir = 'annotation_FAS/' + tool + '/'
                 targetDir = tool + '/'
-                subprocess.call(['rsync', '-rva', '--include=*', sourceDir, targetDir])
+                subprocess.call(['rsync', '-ra', '--include=*', sourceDir, targetDir])
                 print('---------------------')
 
             # remove temp files
