@@ -15,7 +15,7 @@ FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcent
 
 # Installation
 
-FAS is provided as a python package. You need Python 3 to run all functions of FAS.
+FAS is provided as a python package and compatible with both Python2 and Python3.
 
 First, get the source code of FAS from our github:
 
