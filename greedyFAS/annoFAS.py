@@ -66,7 +66,7 @@ def query_yes_no(question, default="yes"):
 
     while True:
         sys.stdout.write(question + prompt)
-        choice = input().lower()
+        choice = sys.stdin.readline().rstrip().lower()
         if default is not None and choice == '':
             return valid[default]
         elif choice in valid:
