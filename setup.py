@@ -39,7 +39,8 @@ setup(
     entry_points={
         'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
                             "parseInterPro = greedyFAS.parserInterPro:main",
-                            "annoFAS = greedyFAS.annoFAS:main"],
+                            "annoFAS = greedyFAS.annoFAS:main",
+                            "easyFAS = greedyFAS.easyFAS:main"],
     },
     license="GPL-3.0",
     classifiers=[
