@@ -1388,6 +1388,7 @@ def sf_cs_score(path, clan_dict, query_clans, features):
 def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_features):
     """calculates clan score
 
+    :param query_path:
     :param path: Path to score
     :param query_features: all features to be linearized in the query protein
     :param search_features: all features to be linearized in the seed protein
@@ -2511,6 +2512,7 @@ def main():
         option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
 
     fc_start(option_dict)
+
 
 if __name__ == '__main__':
     main()

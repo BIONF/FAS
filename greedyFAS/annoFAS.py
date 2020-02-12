@@ -91,6 +91,114 @@ def install_path():
     return anno_path
 
 
+def easyfas_entry(options):
+    current_dir = os.getcwd()
+
+    # get config status and anno_path (if availible)
+    perl_script = get_path() + '/annoFAS.pl'
+    status = subprocess.check_output("grep 'my $config' %s" % perl_script,
+                                     shell=True).decode(sys.stdout.encoding).strip()
+    flag = 0
+    if status == 'my $config = 0;':
+        print('Annotation tools need to be downloaded!')
+        flag = 1
+    else:
+        anno_path_tmp = subprocess.check_output("grep 'my $annotationPath' %s" % perl_script,
+                                                shell=True).decode(sys.stdout.encoding).strip()
+        anno_path_tmp = anno_path_tmp.replace('my $annotationPath =', '')
+        anno_path_tmp = re.sub(r'[;"\s]', '', anno_path_tmp)
+        if not os.path.isfile(anno_path_tmp + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
+            flag = 1
+        else:
+            print('Annotation tools found in %s!' % anno_path_tmp)
+
+    if flag == 1:
+        # annotation directory
+        if not options['annoPath'] == '':
+            if os.path.isdir(os.path.abspath(options['annoPath'])):
+                anno_path = os.path.abspath(options['annoPath'])
+            else:
+                anno_path = install_path()
+        else:
+            anno_path = install_path()
+        if not os.path.isdir(anno_path):
+            os.mkdir(anno_path)
+        anno_path = os.path.abspath(anno_path)
+
+        # create folders for annotation tools
+        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        for folder in folders:
+            if not os.path.isdir(anno_path + '/' + folder):
+                os.mkdir(anno_path + '/' + folder)
+
+        # download annotation tools
+        os.chdir(anno_path)
+        print('Annotation tools will be saved in ')
+        print(os.getcwd())
+        if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
+            file = 'annotation_FAS2018b.tar.gz'
+            checksum = '1548260242 1055860344 ' + file
+            if os.path.isfile(file):
+                checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
+                if checksum_file == checksum:
+                    print('Extracting %s ...' % file)
+                    subprocess.call(['tar', 'xf', file])
+                else:
+                    subprocess.call(['rm', file])
+                    download_data(file, checksum)
+            else:
+                download_data(file, checksum)
+
+            # copy tools to their folders
+            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
+            for tool in tools:
+                print('Moving %s ...' % tool)
+                source_dir = 'annotation_FAS/' + tool + '/'
+                target_dir = tool + '/'
+                subprocess.call(['rsync', '-ra', '--include=*', source_dir, target_dir])
+                print('---------------------')
+
+            # remove temp files
+            subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
+            subprocess.call(['rm', anno_path + '/' + file])
+
+            # add path to annotation dir to annFASpl script
+            mod_anno_path = anno_path.replace('/', '\/')
+            sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
+                                                                                                     perl_script)
+            sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
+            subprocess.call([sed_cmd1], shell=True)
+            subprocess.call([sed_cmd2], shell=True)
+            print('Annotation tools downloaded!')
+        else:
+            print('Annotation tools found!')
+            # add path to annotation dir to annFASpl script
+            mod_anno_path = anno_path.replace('/', '\/')
+            sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
+                                                                                                     perl_script)
+            sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
+            subprocess.call([sed_cmd1], shell=True)
+            subprocess.call([sed_cmd2], shell=True)
+
+    # run annotation.pl script
+    if options['prepare'] == 'y':
+        sys.exit('Config done!')
+
+    os.chdir(current_dir)
+    required_args = '--fasta %s --path %s --name %s' % (os.path.abspath(options['fasta']),
+                                                        os.path.abspath(options['path']), options['name'])
+    optional_args = '--force %s --extract %s --redo %s' % (options['force'], options['extract'], options['redo'])
+    cmd = 'perl ' + perl_script + ' ' + required_args
+    if options['force']:
+        cmd = cmd + ' --force'
+    if not options['extract'] == '':
+        if os.path.isdir(os.path.abspath(options['extract'])):
+            cmd = cmd + ' --extract ' + os.path.abspath(options['extract'])
+    if options['redo'] in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
+        cmd = cmd + ' --redo ' + options['redo']
+    subprocess.call([cmd], shell=True)
+
+
 def main():
     current_dir = os.getcwd()
 
@@ -107,8 +215,7 @@ def main():
                           action='store', default='')
     optional.add_argument('--redo', help='Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. '
                                          'Only one selection allowed!', action='store', default=0)
-    optional.add_argument('--force', help='Force override annotations [y/n, default = n]', action='store',
-                          default='n')
+    optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('--prepare', help='Download annotation tools and do configuration [y/n, default = n]',
                           action='store', default='n')
     optional.add_argument('--annoPath', help='Path to annotation dir', action='store', default='')
@@ -209,7 +316,7 @@ def main():
                                                         args.name)
     optional_args = '--force %s --extract %s --redo %s' % (args.force, args.extract, args.redo)
     cmd = 'perl ' + perl_script + ' ' + required_args
-    if args.force == 'y':
+    if args.force:
         cmd = cmd + ' --force'
     if not args.extract == '':
         if os.path.isdir(os.path.abspath(args.extract)):
