@@ -27,14 +27,17 @@ import subprocess
 import argparse
 import readline
 import glob
+import inspect
+import greedyFAS
 from os.path import expanduser
 
 
 def get_path():
-    fas_info = subprocess.check_output(['pip', 'show', 'greedyFAS']).decode(sys.stdout.encoding).strip()
-    for line in fas_info.split('\n'):
-        if 'Location' in line:
-            return line.replace('Location: ', '').rstrip() + '/greedyFAS'
+    return os.path.dirname(inspect.getfile(greedyFAS)).strip()
+    # fas_info = subprocess.check_output(['pip', 'show', 'greedyFAS']).decode(sys.stdout.encoding).strip()
+    # for line in fas_info.split('\n'):
+    #     if 'Location' in line:
+    #         return line.replace('Location: ', '').rstrip() + '/greedyFAS'
 
 
 def download_data(file, checksum):
