@@ -329,8 +329,9 @@ def main():
     if args.force:
         cmd = cmd + ' --force'
     if not args.extract == '':
-        if os.path.isdir(os.path.abspath(args.extract)):
-            cmd = cmd + ' --extract ' + os.path.abspath(args.extract)
+        if not os.path.isdir(os.path.abspath(args.extract)):
+            os.mkdir(os.path.abspath(args.extract))
+        cmd = cmd + ' --extract ' + os.path.abspath(args.extract)
     if args.redo in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
         cmd = cmd + ' --redo ' + args.redo
     # print(cmd)
