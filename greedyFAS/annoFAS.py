@@ -31,6 +31,7 @@ import inspect
 import greedyFAS
 from os.path import expanduser
 
+home = expanduser("~")
 
 def get_path():
     return os.path.dirname(inspect.getfile(greedyFAS)).strip()
@@ -315,7 +316,13 @@ def main():
         sys.exit('Config done!')
 
     os.chdir(current_dir)
-    required_args = '--fasta %s --path %s --name %s' % (os.path.abspath(args.fasta), os.path.abspath(args.path),
+    inputFullPath = os.path.abspath(args.fasta)
+    if "~" in args.fasta:
+        inputFullPath = args.fasta.replace("~", home)
+    outputFullPath = os.path.abspath(args.path)
+    if "~" in args.path:
+        outputFullPath = args.path.replace("~", home)
+    required_args = '--fasta %s --path %s --name %s' % (inputFullPath, outputFullPath,
                                                         args.name)
     optional_args = '--force %s --extract %s --redo %s' % (args.force, args.extract, args.redo)
     cmd = 'perl ' + perl_script + ' ' + required_args
