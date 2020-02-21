@@ -141,7 +141,7 @@ def fc_start(option):
         fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_proteome, protein_lengths, clan_dict,
                 option)
         if option["domain"]:
-            domain_out(org_outpath, False, extmp, option["MS_uni"])
+            domain_out(option["outpath"], False, option["e_output"], option["MS_uni"])
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], option["e_output"], option["MS_uni"])
 
