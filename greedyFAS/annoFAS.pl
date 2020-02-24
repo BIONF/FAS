@@ -144,12 +144,7 @@ if ($extract ne ''){
     }
 }
 
-if (defined $cores){
-    if (!(isnumber $cores)){
-        print "ERROR: cores needs to be an integer";
-        exit;
-    }
-}else{
+if (!(defined $cores)){
     my $cores = '1'
 }
 
