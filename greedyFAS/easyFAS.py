@@ -84,13 +84,14 @@ def get_options():
     optional.add_argument("--ref_2", dest="ref_2", default=None, type=str,
                           help="Give a second reference for bidirectional mode, does not do anything if bidirectional "
                                "mode is not active or if no main reference was given")
+    optional.add_argument('--cores', help='number of cores', action='store', default='')
     args = parser.parse_args()
     return args
 
 
-def anno(annojobs, projectdir, force):
+def anno(annojobs, projectdir, force, cores):
     anno_options = {'prepare': 'n', 'path': projectdir.rstrip('/') + '/annotations/', 'annoPath': '', 'redo': 0,
-                    'extract': '', 'force': force}
+                    'extract': '', 'force': force, 'cores': cores}
     for annojob in annojobs:
         name = ''.join(annojob.split('/')[-1].split('.')[:-1])
         annotate = True
@@ -199,7 +200,7 @@ def main():
     annojobs = [args.seed, args.query]
     if args.ref_proteome:
         annojobs.append(args.ref_proteome)
-    anno(annojobs, args.projectdir, args.force)
+    anno(annojobs, args.projectdir, args.force, args.cores)
     fas(args)
 
 
