@@ -994,7 +994,7 @@ ADDITIONAL OPTIONS
  -cores=<>
             specify number of cores used by hmmscan.
  -redo=<>
-            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n
+            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
 
 
 return $message;
