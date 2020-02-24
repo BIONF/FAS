@@ -991,10 +991,11 @@ ADDITIONAL OPTIONS
             set this flag if you want to force annotations (override),
  -extract=<>
             specify a path to the location where you want the extracted annotations to be stored.
- -redo=<>
-            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
  -cores=<>
-            specify number of cores used by hmmscan
+            specify number of cores used by hmmscan.
+ -redo=<>
+            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n
+
 
 return $message;
 }
