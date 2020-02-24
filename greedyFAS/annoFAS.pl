@@ -353,7 +353,7 @@ sub smart{
     my $smartPATH    = $annotationPath."/SMART";
     my $OutFilesPATH = $smartPATH."/output_files";
     my @content = ();
-    my $cores = @_[0];
+    my $cores = $_;
     chdir($smartPATH);
 
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
@@ -458,7 +458,7 @@ sub smart{
 sub pfam {
     my $PfamPATH = $annotationPath."/Pfam";
     my $OutFilesPATH = $PfamPATH."/output_files";
-    my $cores = @_[0];
+    my $cores = $_;
     chdir($PfamPATH);
 
     require($PfamPATH."/".$PFAM_tool);
