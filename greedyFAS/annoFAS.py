@@ -193,6 +193,8 @@ def easyfas_entry(options):
                                                         os.path.abspath(options['path']), options['name'])
     optional_args = '--force %s --extract %s --redo %s' % (options['force'], options['extract'], options['redo'])
     cmd = 'perl ' + perl_script + ' ' + required_args
+    if options['cores']:
+        cmd = cmd + ' --cores ' + options['cores']
     if options['force']:
         cmd = cmd + ' --force'
     if not options['extract'] == '':
@@ -223,6 +225,8 @@ def main():
     optional.add_argument('--prepare', help='Download annotation tools and do configuration [y/n, default = n]',
                           action='store', default='n')
     optional.add_argument('--annoPath', help='Path to annotation dir', action='store', default='')
+    optional.add_argument('--cores', help='number of cores', action='store', default='')
+
     args = parser.parse_args()
 
     # get config status and anno_path (if availible)
@@ -326,6 +330,8 @@ def main():
                                                         args.name)
     optional_args = '--force %s --extract %s --redo %s' % (args.force, args.extract, args.redo)
     cmd = 'perl ' + perl_script + ' ' + required_args
+    if args.cores:
+        cmd = cmd + ' --cores ' + args.cores
     if args.force:
         cmd = cmd + ' --force'
     if not args.extract == '':
