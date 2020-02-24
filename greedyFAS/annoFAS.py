@@ -267,8 +267,8 @@ def main():
         print('Annotation tools will be saved in ')
         print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
-            file = 'annotation_FAS2018b.tar.gz'
-            checksum = '1548260242 1055860344 ' + file
+            file = 'annotation_FAS2020.tar.gz'
+            checksum = '353401834 1117848071 ' + file
             if os.path.isfile(file):
                 checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
                 if checksum_file == checksum:
