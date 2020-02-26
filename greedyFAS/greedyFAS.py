@@ -2517,7 +2517,7 @@ def main():
         option_dict = featuretypes(options.featuretypes, option_dict)
     else:
         option_dict["input_linearized"] = ["pfam", "smart"]
-        option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
+        option_dict["input_normal"] = ["flps", "coils", "seg", "signalp", "tmhmm"]
 
     fc_start(option_dict)
 
