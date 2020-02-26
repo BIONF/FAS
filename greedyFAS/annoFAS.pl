@@ -1023,6 +1023,7 @@ sub FLPSing {
                 print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
                 print OUT "\t\t</feature>\n";
             }
+            print OUT "\t</protein>"
         }
 	}
     print OUT "</tool>\n";
