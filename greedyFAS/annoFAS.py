@@ -130,7 +130,7 @@ def easyfas_entry(options):
         anno_path = os.path.abspath(anno_path)
 
         # create folders for annotation tools
-        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM', 'fLPS']
         for folder in folders:
             if not os.path.isdir(anno_path + '/' + folder):
                 os.mkdir(anno_path + '/' + folder)
@@ -154,7 +154,7 @@ def easyfas_entry(options):
                 download_data(file, checksum)
 
             # copy tools to their folders
-            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
+            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM', 'fLPS']
             for tool in tools:
                 print('Moving %s ...' % tool)
                 source_dir = 'annotation_FAS/' + tool + '/'
@@ -200,7 +200,7 @@ def easyfas_entry(options):
     if not options['extract'] == '':
         if os.path.isdir(os.path.abspath(options['extract'])):
             cmd = cmd + ' --extract ' + os.path.abspath(options['extract'])
-    if options['redo'] in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
+    if options['redo'] in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm', 'flps']:
         cmd = cmd + ' --redo ' + options['redo']
     subprocess.call([cmd], shell=True)
 
@@ -219,7 +219,7 @@ def main():
                           required=True)
     optional.add_argument('--extract', help='Path to save the extracted annotation for input sequence',
                           action='store', default='')
-    optional.add_argument('--redo', help='Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. '
+    optional.add_argument('--redo', help='Re-annotation the sequence with flps|cast|coils|seg|pfam|signalp|smart|tmhmm. '
                                          'Only one selection allowed!', action='store', default=0)
     optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('--prepare', help='Download annotation tools and do configuration [y/n, default = n]',
@@ -261,7 +261,7 @@ def main():
         anno_path = os.path.abspath(anno_path)
 
         # create folders for annotation tools
-        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        folders = ['fLPS', 'CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
         for folder in folders:
             if not os.path.isdir(anno_path + '/' + folder):
                 os.mkdir(anno_path + '/' + folder)
@@ -285,7 +285,7 @@ def main():
                 download_data(file, checksum)
 
             # copy tools to their folders
-            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
+            tools = ['fLPS', 'Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
             for tool in tools:
                 print('Moving %s ...' % tool)
                 source_dir = 'annotation_FAS/' + tool + '/'
@@ -338,7 +338,7 @@ def main():
         if not os.path.isdir(os.path.abspath(args.extract)):
             os.mkdir(os.path.abspath(args.extract))
         cmd = cmd + ' --extract ' + os.path.abspath(args.extract)
-    if args.redo in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
+    if args.redo in ['flps', 'cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
         cmd = cmd + ' --redo ' + args.redo
     # print(cmd)
     subprocess.call([cmd], shell=True)

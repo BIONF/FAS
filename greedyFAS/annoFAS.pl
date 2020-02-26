@@ -70,6 +70,7 @@ use File::Basename;
 
 #### SETUP TOOL BOX ####
 my $CAST_tool       = "cast";
+my $flps_tool       = "fLPS";
 my $TMHMM_tool      = "decodeanhmm";
 my $COILS_tool      = "COILS2";
 my $SIGNALP_tool    = "signalp.pl";
@@ -81,8 +82,8 @@ my $tool_count      = 7;
 my $version         = 0.99.9;
 
 #### SETUP PATH ####
-my $annotationPath = "path/to/annotation/tools";
-my $config = 0;
+my $annotationPath = "/home/vinh/annotation_fas";
+my $config = 1;
 unless ($config == 1) {
     exit("No annotation tools found in $annotationPath!!!\n");
 }
@@ -108,7 +109,6 @@ my $force = 0;      #default
 my $extract = '';   #default
 my $empty = 0;      #default
 my $regular = 0;    #default
-my $cores;
 # command line arguments:
 GetOptions( "h"         => \$help,
             "fasta=s"	=> \$fasta,
@@ -116,8 +116,7 @@ GetOptions( "h"         => \$help,
             "name=s"    => \$qORp,
             "extract=s" => \$extract,
             "redo=s"    => \$redo,
-            "force"     => \$force,
-            "cores"     => \$cores
+            "force"     => \$force
 );
 
 # help
@@ -142,10 +141,6 @@ if ($extract ne ''){
         print "ERROR: Given annotations do not exist or may be incomplete.\n";
         exit;
     }
-}
-
-if (!(defined $cores)){
-    my $cores = '1'
 }
 
 # create given output directory
@@ -181,7 +176,7 @@ if(!(-d($dirOut))){
 	my $delCommand = "rm -f $dirOut/*";
 	system($delCommand);
     }elsif ($redo){
-        if ($redo eq "cast" or $redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart"){
+        if ($redo eq "cast" or $redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps"){
             print "Directory:\n\t$dirOut already exists,\n\t$redo annotations will be redone due to option -redo=$redo.\n";
             my $delCommand = "rm -f $dirOut/$redo.xml";
             system($delCommand);
@@ -220,6 +215,11 @@ if (($redo eq 'cast') or $force or $empty or $regular){
     CASTing();
 }
 
+if (($redo eq 'flps') or $force or $empty or $regular){
+    print "--> starting: $flps_tool\n";
+    FLPSing();
+}
+
 if (($redo eq 'tmhmm') or $force or $empty or $regular){
     print "--> starting: $TMHMM_tool\n";
     TMHMM20();
@@ -242,12 +242,12 @@ if (($redo eq 'seg') or $force or $empty or $regular){
 
 if (($redo eq 'pfam') or $force or $empty or $regular){
     print "--> starting: $PFAM_tool\n";
-    pfam($cores);
+    pfam();
 }
 
 if (($redo eq 'smart') or $force or $empty or $regular){
     print "--> starting: $SMART_tool\n";
-    smart($cores);
+    smart();
 }
 
 print "--> annotation finished.\n";
@@ -348,11 +348,10 @@ sub smart{
     my $smartPATH    = $annotationPath."/SMART";
     my $OutFilesPATH = $smartPATH."/output_files";
     my @content = ();
-    my $cores = @_;
     chdir($smartPATH);
 
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
-    my $outName = main_smart($fasta, $qORp, $cores);
+    my $outName = main_smart($fasta, $qORp);
 
     if(-e $OutFilesPATH."/".$outName){
         open(SMART, $OutFilesPATH."/".$outName);
@@ -453,12 +452,11 @@ sub smart{
 sub pfam {
     my $PfamPATH = $annotationPath."/Pfam";
     my $OutFilesPATH = $PfamPATH."/output_files";
-    my $cores = @_;
+
     chdir($PfamPATH);
 
     require($PfamPATH."/".$PFAM_tool);
-    my $outName = main($fasta,$qORp,$cores);
-
+    my $outName = main($fasta,$qORp);
 
     open(PFAM, $OutFilesPATH."/".$outName) or print("ERROR: could not find or open $outName. $!\n $OutFilesPATH/$outName\n");
     my @content = <PFAM>;
@@ -958,6 +956,81 @@ sub CASTing {
 	close RESULT;
 	system("rm -f $tempfasta");
 }
+
+sub FLPSing {
+    my $flpspath=$annotationPath."/fLPS"; # path to compiled flps file
+
+	unless(-d "$flpspath/tmp"){
+		system("mkdir $flpspath/tmp");
+	}
+
+	my $result;
+
+	# open protein fasta input
+	open(READ,$fasta) || die "Cannot open $fasta!\n";
+	my @fas = <READ>;
+	close (READ);
+
+	# get speciesName
+	my @fastaTMP = split(/\//,$fasta);
+	my @speciesNameTMP = split(/\./,$fastaTMP[@fastaTMP-1]);
+	my $specName = $speciesNameTMP[0];
+
+	# split into multiple sequences
+	my $fas = join("",@fas);
+	my @allSeq = split(">",$fas);
+
+	# run flps for each sequence and save output into @result
+    my $pid = $$;
+    my $tempfasta = $flpspath."/tmp/".$specName."_".$pid."tmp.fa";
+	foreach my $seq (@allSeq){
+		if(length($seq)>2){
+			chomp($seq);
+			open(TMP,">$tempfasta");
+			print TMP ">",$seq;
+			close TMP;
+
+            $result .= ">".$seq."\n";
+
+			my $flpsOut =  qx($flpspath/$flps_tool $tempfasta);
+			chomp($flpsOut);
+			$result .= $flpsOut."\n";
+		}
+	}
+
+    chomp($result);
+	my @result = split(/>/,$result);
+
+	# write output into XML format
+	open(OUT, ">".$dirOut."flps.xml")   # create output file, overwriting if one exists
+	    or print ("ERROR: could not write output file for fLPS. $!\n");
+
+	print OUT "<?xml version=\"1.0\"?>\n<tool name=\"fLPS\">\n";
+    # results will be written in xml output file
+	for(my $i=0;$i<@result;$i++) {
+        if (length($result[$i]) > 0) {
+            print($result[$i],"\n");
+            my @tmp = split(/\n/, $result[$i]);
+            my $id = shift(@tmp);
+            my $seq = shift(@tmp);
+            print OUT "\t<protein id=\"" . $id . "\" length=\"" . check_id_length($id) . "\">\n";
+            foreach my $hit (@tmp) {
+                # print $hit,"\n";
+                my @value = split(/\s+/, $hit);
+                # print($value[0]);<>;
+                print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
+                print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
+                print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
+                print OUT "\t\t</feature>\n";
+            }
+        }
+	}
+    print OUT "</tool>\n";
+	close OUTPUT;
+	close RESULT;
+	system("rm -f $tempfasta");
+}
+
 ################
 sub getHelpMessage{
     my $message=
@@ -986,11 +1059,8 @@ ADDITIONAL OPTIONS
             set this flag if you want to force annotations (override),
  -extract=<>
             specify a path to the location where you want the extracted annotations to be stored.
- -cores=<>
-            specify number of cores used by hmmscan.
  -redo=<>
             specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
-
 
 return $message;
 }
