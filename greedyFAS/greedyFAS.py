@@ -131,6 +131,8 @@ def fc_start(option):
         else:
             option["feature_info"] = False
         fc_main(relevant_features, prot_count, domain_count, query_proteome, seed_proteome, tmp, clan_dict, option)
+        if option["domain"]:
+            domain_out(org_outpath, True, extmp, option["MS_uni"])
         if option["phyloprofile"]:
             phyloprofile_out(org_outpath, True, option["phyloprofile"], extmp, option["MS_uni"])
         else:
@@ -138,6 +140,8 @@ def fc_start(option):
     else:
         fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_proteome, protein_lengths, clan_dict,
                 option)
+        if option["domain"]:
+            domain_out(option["outpath"], False, option["e_output"], option["MS_uni"])
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], option["e_output"], option["MS_uni"])
 
@@ -1388,6 +1392,7 @@ def sf_cs_score(path, clan_dict, query_clans, features):
 def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_features):
     """calculates clan score
 
+    :param query_path:
     :param path: Path to score
     :param query_features: all features to be linearized in the query protein
     :param search_features: all features to be linearized in the seed protein
@@ -2159,13 +2164,7 @@ def bidirectionout(outpath):
                   outdict[pair][2] + "," + outdict[pair][3] + "\n")
     out.close()
 
-
-def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
-    with open(mapping_file) as infile:
-        map = {}
-        for line in infile.readlines():
-            cells = line.rstrip("\n").split("\t")
-            map[cells[0]] = cells[1]
+def domain_out(outpath, bidirectional, extendedout, noref):
     arc = {}
     if extendedout:
         arctree = ElTre.parse(outpath + "_architecture.xml")
@@ -2179,7 +2178,7 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                 for inst in feature:
                     arc[pid][type].append((inst.attrib["start"], inst.attrib["end"]))
     outdict = {}
-    groupname = outpath.split("/")[-1]
+    # groupname = outpath.split("/")[-1]
     d0_out = open(outpath + "_forward.domains", "w")
     forwardtree = ElTre.parse(outpath + ".xml")
     forwardroot = forwardtree.getroot()
@@ -2193,15 +2192,15 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
             seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
             outdict[(seed_id, query_id)] = (forward_score, "0.0")
             if extendedout:
-                weights = {}
+                # weights = {}
                 for path in seed:
                     if path.tag == "template_path":
                         forward_s_path = {}
                         for feature in path:
-                            if noref:
-                                weights[feature.attrib["type"]] = str(1.0 / len(path))
-                            else:
-                                weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
+                            # if noref:
+                            #     weights[feature.attrib["type"]] = str(1.0 / len(path))
+                            # else:
+                            #     weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
                             forward_s_path[feature.attrib["type"]] = []
                             for instance in feature:
                                 forward_s_path[feature.attrib["type"]].append((instance.attrib["start"],
@@ -2210,16 +2209,16 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                             if feature in forward_s_path:
                                 for inst in arc[seed_id][feature]:
                                     if inst in forward_s_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                        d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     weights[feature] + "\tY\n")
+                                                     "NA\tY\n") #weights[feature] + "\tY\n")
                                     else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                        d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     weights[feature] + "\tN\n")
+                                                     "NA\tY\n") #weights[feature] + "\tN\n")
                             else:
                                 for inst in arc[seed_id][feature]:
-                                    d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                    d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                  "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                     if path.tag == "query_path":
@@ -2233,24 +2232,24 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                             if feature in forward_q_path and feature in forward_s_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
-                                                     + weights[feature] + "\tY\n")
+                                                     + "NA\tY\n") #weights[feature] + "\tY\n")
                                     else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
-                                                     + weights[feature] + "\tN\n")
+                                                     + "NA\tY\n") #weights[feature] + "\tN\n")
                             elif feature in forward_q_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tY\n")
                                     else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
                             else:
                                 for inst in arc[query_id][feature]:
-                                    d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
+                                    d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length +
                                                  "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
     if extendedout:
         d0_out.close()
@@ -2262,12 +2261,12 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                                                         query.attrib["length"]
                 outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
                 if extendedout:
-                    weights = {}
+                    # weights = {}
                     for path in query:
                         if path.tag == "template_path":
                             reverse_q_path = {}
                             for feature in path:
-                                weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
+                                # weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
                                 reverse_q_path[feature.attrib["type"]] = []
                                 for instance in feature:
                                     reverse_q_path[feature.attrib["type"]].append((instance.attrib["start"],
@@ -2276,16 +2275,16 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                                 if feature in reverse_q_path:
                                     for inst in arc[query_id][feature]:
                                         if inst in reverse_q_path[feature]:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" +
+                                            d1_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" +
                                                          query_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + weights[feature] + "\tY\n")
+                                                         inst[1] + "\t" + "NA\tY\n") #weights[feature] + "\tY\n")
                                         else:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" +
+                                            d1_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" +
                                                          query_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + weights[feature] + "\tN\n")
+                                                         inst[1] + "\t" + "NA\tY\n") #weights[feature] + "\tN\n")
                                 else:
                                     for inst in arc[query_id][feature]:
-                                        d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d1_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                         if path.tag == "query_path":
@@ -2299,29 +2298,37 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
                                 if feature in reverse_s_path and feature in reverse_q_path:
                                     for inst in arc[seed_id][feature]:
                                         if inst in reverse_s_path[feature]:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + weights[feature] + "\tY\n")
+                                                         inst[1] + "\t" + "NA\tY\n") #weights[feature] + "\tY\n")
                                         else:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + weights[feature] + "\tN\n")
+                                                         inst[1] + "\t" + "NA\tY\n") #weights[feature] + "\tN\n")
                                 elif feature in reverse_s_path:
                                     for inst in arc[seed_id][feature]:
                                         if inst in reverse_s_path[feature]:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\tNA\tY\n")
                                         else:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\tNA\tN\n")
                                 else:
                                     for inst in arc[seed_id][feature]:
-                                        d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                        d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
         if extendedout:
             d1_out.close()
+
+def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
+    with open(mapping_file) as infile:
+        map = {}
+        for line in infile.readlines():
+            cells = line.rstrip("\n").split("\t")
+            map[cells[0]] = cells[1]
+    groupname = outpath.split("/")[-1]
     out = open(outpath + ".phyloprofile", "w")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
     for pair in outdict:
@@ -2355,7 +2362,7 @@ def main():
                              " should be 1.0, the default is 0.7, 0.0, 0.3")
     parser.add_argument("-j", "--jobname", default="out", type=str,
                         help="Defines the name for the outputfile, can also be used to define the output path, if no "
-                             "path is given the output will be created in the FAS directory under out/")
+                             "path is given the output will be named out.xml and out_architecture.xml")
     parser.add_argument("-r", "--ref_proteome", default=None, type=str,
                         help="Path to a reference proteome which can be used for the weighting of features, "
                              "by default there is no reference proteome used, the weighting will be uniform")
@@ -2416,6 +2423,8 @@ def main():
     parser.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
                         help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
                              "only, will run with more but output won't work without editing")
+    parser.add_argument("--domain", dest="domain", action="store_true",
+                        help="activate domain tabular output")
     options = parser.parse_args()
 
     # READ OPTIONS #
@@ -2426,7 +2435,7 @@ def main():
                    "inst_efilter": options.inst_efilter, "e_output": options.no_arch,
                    "feature_info": options.feature_info, "bidirectional": options.bidirectional,
                    "max_overlap": options.max_overlap, "classicMS": options.classicMS, "timelimit": options.timelimit,
-                   "ref_2": options.ref_2, "phyloprofile": options.phyloprofile}
+                   "ref_2": options.ref_2, "phyloprofile": options.phyloprofile, "domain": options.domain}
     loglevel = options.loglevel.upper()
     if options.phyloprofile and not os.path.exists(options.phyloprofile):
         raise Exception(str(options.phyloprofile) + " does not exist")
@@ -2511,6 +2520,7 @@ def main():
         option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
 
     fc_start(option_dict)
+
 
 if __name__ == '__main__':
     main()
