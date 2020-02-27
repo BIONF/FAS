@@ -83,8 +83,8 @@ my $tool_count      = 7;
 my $version         = 0.99.9;
 
 #### SETUP PATH ####
-my $annotationPath = "/home/vinh/Desktop/programs/bionf/FAS/test";
-my $config = 1;
+my $annotationPath = "path/to/annotation/tools";
+my $config = 0;
 unless ($config == 1) {
     exit("No annotation tools found in $annotationPath!!!\n");
 }
