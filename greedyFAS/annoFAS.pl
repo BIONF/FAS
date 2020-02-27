@@ -66,10 +66,11 @@ use File::Basename;
 #   Version 9 (adding annotation directory by Vinh Tran, December 2019)
 #           - annotation tools are now not necessary to be in the same directory of this annotation script
 #           - config variable for checking if the annotation path correctly set
+#   Version 10 (replace CAST by fLPS by Vinh Tran, February 2020)
+#           - replace CAST by fLPS (http://biology.mcgill.ca/faculty/harrison/flps.html)
 ##########
 
 #### SETUP TOOL BOX ####
-my $CAST_tool       = "cast";
 my $flps_tool       = "fLPS";
 my $TMHMM_tool      = "decodeanhmm";
 my $COILS_tool      = "COILS2";
@@ -176,7 +177,7 @@ if(!(-d($dirOut))){
 	my $delCommand = "rm -f $dirOut/*";
 	system($delCommand);
     }elsif ($redo){
-        if ($redo eq "cast" or $redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps"){
+        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps"){
             print "Directory:\n\t$dirOut already exists,\n\t$redo annotations will be redone due to option -redo=$redo.\n";
             my $delCommand = "rm -f $dirOut/$redo.xml";
             system($delCommand);
@@ -209,11 +210,6 @@ my $START = $time[3]."/".$time[4]."/".($time[5]+1900)." ".$time[2].":".$time[1].
 print "--> acquiring sequence lengths\n";
 seq_id_len($fasta);
 print "...done: sequence lengths are calculated for input file.\n";
-
-if (($redo eq 'cast') or $force or $empty or $regular){
-    print "--> starting: $CAST_tool\n";
-    CASTing();
-}
 
 if (($redo eq 'flps') or $force or $empty or $regular){
     print "--> starting: $flps_tool\n";
@@ -864,98 +860,6 @@ sub TMHMM20 {
     print OUT "</tool>\n";
     close OUTPUT;
 }
-#check_id_length:   acquire length from precalculated hash
-#check for match/agreement/concurrence of identifier
-sub check_id_length{
-	my $current_id = $_[0];
-
-	if (defined($any_ids{$current_id})){
-            return $any_ids{$current_id};
-	}else{
-            die ( "\nError: " . $current_id . " is a strange identifier ... exiting. Annotation went wrong. Please check your sequence IDs/header.\n\n");
-	}
-}
-
-#TODO: infile documentation
-# create CAST ouput - finds regions enriched for a paritcular AA, threshold is important!
-sub CASTing {
-	my $threshold=50; #default
-	my $castpath=$annotationPath."/CAST"; # path to compiled cast file
-
-	unless(-d "$castpath/tmp"){
-		system("mkdir $castpath/tmp");
-	}
-
-	my $result;
-
-	# open protein fasta input
-	open(READ,$fasta) || die "Cannot open $fasta!\n";
-	my @fas = <READ>;
-	close (READ);
-
-	# get speciesName
-	my @fastaTMP = split(/\//,$fasta);
-	my @speciesNameTMP = split(/\./,$fastaTMP[@fastaTMP-1]);
-	my $specName = $speciesNameTMP[0];
-
-	# split into multiple sequences
-	my $fas = join("",@fas);
-	my @allSeq = split(">",$fas);
-
-	# run CAST for each sequence and save output into @result
-        my $pid = $$;
-        my $tempfasta = $castpath."/tmp/".$specName."_".$pid."tmp.fa";
-	foreach my $seq (@allSeq){
-		if(length($seq)>2){
-			chomp($seq);
-			open(TMP,">$tempfasta");
-			print TMP ">",$seq;
-			close TMP;
-
-			my $castOut =  qx($castpath/$CAST_tool $tempfasta -verbose -thr $threshold);
-			chomp($castOut);
-			$result .= $castOut."\n";
-		}
-	}
-
-	chomp($result);
-	my @result = split(/\n/,$result);
-
-	# write output into XML format
-	open(OUT, ">".$dirOut."cast.xml")   # create output file, overwriting if one exists
-	    or print ("ERROR: could not write output file for CAST. $!\n");
-
-	print OUT "<?xml version=\"1.0\"?>\n<tool name=\"CAST\">\n";
-        ## results will be written in xml output file
-	for(my $i=0;$i<@result;$i++) {
-	    my @value;
-	    if($result[$i]=~/\>/){
-                chomp($result[$i]);
-                $result[$i]=~s/\>//;
-                $result[$i] =~ s/\s+//g;	# substitute whitespaces
-                my $CR = chr(13);		# define some weird character
-                $result[$i] =~ s/\Q$CR//g;	# substitute some weird character
-
-                my $length = check_id_length($result[$i]);
-                print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";   # print id
-                $i++;
-                while($result[$i] =~ m/(.*) region from (\d*) to (\d*) corrected with score (\d*)/){
-                    @value = split(/ +/, $result[$i]);
-                    chomp(@value);
-                    print OUT "\t\t<feature type=\"$value[0]\" instance=\"1\">\n";
-                    print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
-                    print OUT "\t\t\t<end end=\"$value[5]\"/>\n";
-                    print OUT "\t\t</feature>\n";
-                    $i++;
-                }
-                print OUT "\t</protein>\n";
-	    }
-	}
-    print OUT "</tool>\n";
-	close OUTPUT;
-	close RESULT;
-	system("rm -f $tempfasta");
-}
 
 sub FLPSing {
     my $flpspath=$annotationPath."/fLPS"; # path to compiled flps file
@@ -1015,13 +919,13 @@ sub FLPSing {
             my $seq = shift(@tmp);
             print OUT "\t<protein id=\"" . $id . "\" length=\"" . check_id_length($id) . "\">\n";
             foreach my $hit (@tmp) {
-                # print $hit,"\n";
                 my @value = split(/\s+/, $hit);
-                # print($value[0]);<>;
-                print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
-                print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
-                print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
-                print OUT "\t\t</feature>\n";
+                if ($value[1] ne "WHOLE") {
+                    print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
+                    print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
+                    print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
+                    print OUT "\t\t</feature>\n";
+                }
             }
             print OUT "\t</protein>"
         }
@@ -1030,6 +934,18 @@ sub FLPSing {
 	close OUTPUT;
 	close RESULT;
 	system("rm -f $tempfasta");
+}
+
+#check_id_length:   acquire length from precalculated hash
+#check for match/agreement/concurrence of identifier
+sub check_id_length{
+	my $current_id = $_[0];
+
+	if (defined($any_ids{$current_id})){
+            return $any_ids{$current_id};
+	}else{
+            die ( "\nError: " . $current_id . " is a strange identifier ... exiting. Annotation went wrong. Please check your sequence IDs/header.\n\n");
+	}
 }
 
 ################
@@ -1061,7 +977,7 @@ ADDITIONAL OPTIONS
  -extract=<>
             specify a path to the location where you want the extracted annotations to be stored.
  -redo=<>
-            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
+            specifiy for which feature database you want to re-annotate the sequence file. [flps|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
 
 return $message;
 }
