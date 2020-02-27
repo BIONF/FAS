@@ -267,7 +267,7 @@ def main():
         print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
             file = 'annotation_FAS2020.tar.gz'
-            checksum = '353401834 1117848071 ' + file
+            checksum = '220158188 1118201644 ' + file
             if os.path.isfile(file):
                 checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
                 if checksum_file == checksum:
@@ -291,7 +291,7 @@ def main():
                     subprocess.call(['rm', fLPS_file])
                 else:
                     print('Moving %s ...' % tool)
-                    source_dir = 'annotation_fas/' + tool + '/'
+                    source_dir = 'annotation_FAS/' + tool + '/'
                     target_dir = tool + '/'
                     subprocess.call(['rsync', '-ra', '--include=*', source_dir, target_dir])
                 print('---------------------')
@@ -307,7 +307,7 @@ def main():
                 subprocess.call(['ln', '-fs', source, target])
 
             # remove temp files
-            subprocess.call(['rm', '-rf', anno_path + '/annotation_fas'])
+            subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
             subprocess.call(['rm', anno_path + '/' + file])
 
             # add path to annotation dir to annFASpl script
