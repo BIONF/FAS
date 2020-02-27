@@ -566,35 +566,6 @@ sub pfam {
     close OUT;
 }
 
-
-
-sub tempfile {
-# function returns an array with ID and sequence of each protein in the input file
-    my $file = $fasta;
-    my @return;
-
-    open(FILE, $file)
-        or print("ERROR: could not find input file.\n");
-    my @content = <FILE>;
-    chomp(@content);
-    close FILE;
-
-    for(my $i=0;$i<@content;$i++){  # loop through input file
-        if(defined($content[$i]) && $content[$i]=~/^\>/){   # if an id was found
-            push(@return, $content[$i]);    # save the id
-            $i++;                           # go to next line
-            my $tempSeq="";                    # temp save for the sequence
-            while(defined($content[$i]) && !($content[$i]=~/^\>/)){ # while this line is not a new ID
-                $tempSeq.=$content[$i];    # add seq to temp save
-                $i++;
-            }$i--;
-            push(@return, $tempSeq);        # save the sequence
-        }
-    }
-
-    return(@return);    # @return (ID, seq, ID2, seq2...)
-}
-
 sub seg {
 # this function calls seg (compiled c++) which identifies low complexity regions
 # on a protein sequence;
@@ -863,11 +834,9 @@ sub TMHMM20 {
 
 sub FLPSing {
     my $flpspath=$annotationPath."/fLPS"; # path to compiled flps file
-
 	unless(-d "$flpspath/tmp"){
 		system("mkdir $flpspath/tmp");
 	}
-
 	my $result;
 
 	# open protein fasta input
@@ -895,7 +864,6 @@ sub FLPSing {
 			close TMP;
 
             $result .= ">".$seq."\n";
-
 			my $flpsOut =  qx($flpspath/$flps_tool $tempfasta);
 			chomp($flpsOut);
 			$result .= $flpsOut."\n";
@@ -946,6 +914,32 @@ sub check_id_length{
 	}else{
             die ( "\nError: " . $current_id . " is a strange identifier ... exiting. Annotation went wrong. Please check your sequence IDs/header.\n\n");
 	}
+}
+
+# function returns an array with ID and sequence of each protein in the input file
+sub tempfile {
+    my $file = $fasta;
+    my @return;
+
+    open(FILE, $file)
+        or print("ERROR: could not find input file.\n");
+    my @content = <FILE>;
+    chomp(@content);
+    close FILE;
+
+    for(my $i=0;$i<@content;$i++){  # loop through input file
+        if(defined($content[$i]) && $content[$i]=~/^\>/){   # if an id was found
+            push(@return, $content[$i]);    # save the id
+            $i++;                           # go to next line
+            my $tempSeq="";                    # temp save for the sequence
+            while(defined($content[$i]) && !($content[$i]=~/^\>/)){ # while this line is not a new ID
+                $tempSeq.=$content[$i];    # add seq to temp save
+                $i++;
+            }$i--;
+            push(@return, $tempSeq);        # save the sequence
+        }
+    }
+    return(@return);    # @return (ID, seq, ID2, seq2...)
 }
 
 ################
