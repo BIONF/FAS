@@ -80,7 +80,7 @@ my $PFAM_tool       = "pfam_scan.pl";
 my $SMART_tool      = "smart_scan_v4.pl";
 ## number of above stated programs for annotation
 my $tool_count      = 7;
-my $version         = 0.99.9;
+my $version         = 0.99.10;
 
 #### SETUP PATH ####
 my $annotationPath = "path/to/annotation/tools";
