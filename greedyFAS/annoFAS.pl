@@ -83,8 +83,8 @@ my $tool_count      = 7;
 my $version         = 0.99.10;
 
 #### SETUP PATH ####
-my $annotationPath = "path/to/annotation/tools";
-my $config = 0;
+my $annotationPath = "/home/vinh/annotation_fas";
+my $config = 1;
 unless ($config == 1) {
     exit("No annotation tools found in $annotationPath!!!\n");
 }
@@ -117,7 +117,8 @@ GetOptions( "h"         => \$help,
             "name=s"    => \$qORp,
             "extract=s" => \$extract,
             "redo=s"    => \$redo,
-            "force"     => \$force
+            "force"     => \$force,
+            "cores"     => \$cores
 );
 
 # help
@@ -142,6 +143,10 @@ if ($extract ne ''){
         print "ERROR: Given annotations do not exist or may be incomplete.\n";
         exit;
     }
+}
+
+if (!(defined $cores)){
+    my $cores = '1'
 }
 
 # create given output directory
@@ -238,12 +243,12 @@ if (($redo eq 'seg') or $force or $empty or $regular){
 
 if (($redo eq 'pfam') or $force or $empty or $regular){
     print "--> starting: $PFAM_tool\n";
-    pfam();
+    pfam($cores);
 }
 
 if (($redo eq 'smart') or $force or $empty or $regular){
     print "--> starting: $SMART_tool\n";
-    smart();
+    smart($cores);
 }
 
 print "--> annotation finished.\n";
@@ -344,10 +349,11 @@ sub smart{
     my $smartPATH    = $annotationPath."/SMART";
     my $OutFilesPATH = $smartPATH."/output_files";
     my @content = ();
+    my $cores = @_;
     chdir($smartPATH);
 
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
-    my $outName = main_smart($fasta, $qORp);
+    my $outName = main_smart($fasta, $qORp, $cores);
 
     if(-e $OutFilesPATH."/".$outName){
         open(SMART, $OutFilesPATH."/".$outName);
@@ -448,11 +454,11 @@ sub smart{
 sub pfam {
     my $PfamPATH = $annotationPath."/Pfam";
     my $OutFilesPATH = $PfamPATH."/output_files";
-
+    my $cores = @_;
     chdir($PfamPATH);
 
     require($PfamPATH."/".$PFAM_tool);
-    my $outName = main($fasta,$qORp);
+    my $outName = main($fasta,$qORp,$cores);
 
     open(PFAM, $OutFilesPATH."/".$outName) or print("ERROR: could not find or open $outName. $!\n $OutFilesPATH/$outName\n");
     my @content = <PFAM>;
