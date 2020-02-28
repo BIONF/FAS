@@ -119,7 +119,7 @@ GetOptions( "h"         => \$help,
             "extract=s" => \$extract,
             "redo=s"    => \$redo,
             "force"     => \$force,
-            "cores"     => \$cores
+            "cores=s"     => \$cores
 );
 
 # help
@@ -147,7 +147,7 @@ if ($extract ne ''){
 }
 
 if (!(defined $cores)){
-    my $cores = '1'
+    my $cores = 1;
 }
 
 # create given output directory
@@ -350,7 +350,7 @@ sub smart{
     my $smartPATH    = $annotationPath."/SMART";
     my $OutFilesPATH = $smartPATH."/output_files";
     my @content = ();
-    my $cores = @_;
+    my $cores = $_[0];
     chdir($smartPATH);
 
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
@@ -455,7 +455,7 @@ sub smart{
 sub pfam {
     my $PfamPATH = $annotationPath."/Pfam";
     my $OutFilesPATH = $PfamPATH."/output_files";
-    my $cores = @_;
+    my $cores = $_[0];
     chdir($PfamPATH);
 
     require($PfamPATH."/".$PFAM_tool);
