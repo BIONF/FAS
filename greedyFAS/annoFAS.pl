@@ -83,8 +83,8 @@ my $tool_count      = 7;
 my $version         = 0.99.10;
 
 #### SETUP PATH ####
-my $annotationPath = "/home/vinh/annotation_fas";
-my $config = 1;
+my $annotationPath = "/path/to/annotation_fas";
+my $config = 0;
 unless ($config == 1) {
     exit("No annotation tools found in $annotationPath!!!\n");
 }
@@ -871,7 +871,7 @@ sub FLPSing {
 			close TMP;
 
             $result .= ">".$seq."\n";
-			my $flpsOut =  qx($flpspath/$flps_tool $tempfasta);
+			my $flpsOut =  `$flpspath/$flps_tool $tempfasta`;
 			chomp($flpsOut);
 			$result .= $flpsOut."\n";
 		}
@@ -879,7 +879,6 @@ sub FLPSing {
 
     chomp($result);
 	my @result = split(/>/,$result);
-
 	# write output into XML format
 	open(OUT, ">".$dirOut."flps.xml")   # create output file, overwriting if one exists
 	    or print ("ERROR: could not write output file for fLPS. $!\n");
@@ -888,7 +887,6 @@ sub FLPSing {
     # results will be written in xml output file
 	for(my $i=0;$i<@result;$i++) {
         if (length($result[$i]) > 0) {
-            print($result[$i],"\n");
             my @tmp = split(/\n/, $result[$i]);
             my $id = shift(@tmp);
             my $seq = shift(@tmp);
@@ -902,7 +900,7 @@ sub FLPSing {
                     print OUT "\t\t</feature>\n";
                 }
             }
-            print OUT "\t</protein>"
+            print OUT "\t</protein>\n"
         }
 	}
     print OUT "</tool>\n";
