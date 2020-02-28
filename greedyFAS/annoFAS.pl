@@ -110,6 +110,7 @@ my $force = 0;      #default
 my $extract = '';   #default
 my $empty = 0;      #default
 my $regular = 0;    #default
+my $cores = 1;
 # command line arguments:
 GetOptions( "h"         => \$help,
             "fasta=s"	=> \$fasta,
