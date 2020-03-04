@@ -117,7 +117,7 @@ GetOptions( "h"         => \$help,
             "extract=s" => \$extract,
             "redo=s"    => \$redo,
             "force"     => \$force,
-            "cores"     => \$cores
+            "cores=s"     => \$cores
 );
 
 # help
@@ -145,7 +145,7 @@ if ($extract ne ''){
 }
 
 if (!(defined $cores)){
-    my $cores = '1'
+    my $cores = 1
 }
 
 # create given output directory

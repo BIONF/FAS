@@ -272,7 +272,7 @@ def main():
         print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
             file = 'annotation_FAS2020.tar.gz'
-            checksum = '353401834 1117848071 ' + file
+            checksum = '220158188 1118201644 ' + file
             if os.path.isfile(file):
                 checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
                 if checksum_file == checksum:
