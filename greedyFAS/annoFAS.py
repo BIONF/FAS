@@ -40,6 +40,11 @@ def get_path():
     #     if 'Location' in line:
     #         return line.replace('Location: ', '').rstrip() + '/greedyFAS'
 
+def search_string_in_file(file_name, string_to_search):
+    with open(file_name, 'r') as read_obj:
+        for line in read_obj:
+            if string_to_search in line:
+                return(line.rstrip())
 
 def download_data(file, checksum):
     url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo' + '/' + file
@@ -204,7 +209,6 @@ def easyfas_entry(options):
         cmd = cmd + ' --redo ' + options['redo']
     subprocess.call([cmd], shell=True)
 
-
 def main():
     current_dir = os.getcwd()
 
@@ -231,15 +235,13 @@ def main():
 
     # get config status and anno_path (if availible)
     perl_script = get_path() + '/annoFAS.pl'
-    status = subprocess.check_output("grep 'my $config' %s" % perl_script,
-                                     shell=True).decode(sys.stdout.encoding).strip()
+    status = search_string_in_file(perl_script, "my $config")
     flag = 0
     if status == 'my $config = 0;':
         print('Annotation tools need to be downloaded!')
         flag = 1
     else:
-        anno_path_tmp = subprocess.check_output("grep 'my $annotationPath' %s" % perl_script,
-                                                shell=True).decode(sys.stdout.encoding).strip()
+        anno_path_tmp = search_string_in_file(perl_script, "my $annotationPath")
         anno_path_tmp = anno_path_tmp.replace('my $annotationPath =', '')
         anno_path_tmp = re.sub(r'[;"\s]', '', anno_path_tmp)
         if not os.path.isfile(anno_path_tmp + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
