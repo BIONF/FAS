@@ -118,6 +118,7 @@ def fc_start(option):
         org_outpath = option["outpath"]
         option["outpath"] += "_reverse"
         if option["MS_uni"] == 0 and option["ref_2"]:
+            ref_proteome, clan_dict = {}, {}
             for ftype in option["input_linearized"]:
                 ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2,
                                                                       ftype, True, ref_proteome, protein_lengths,
