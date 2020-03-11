@@ -130,7 +130,7 @@ def fc_start(option):
         else:
             option["feature_info"] = False
             domain_count_2 = domain_count
-        option['ref_proteome'] = option['ref2']
+        option['ref_proteome'] = option['ref_2']
         fc_main(relevant_features, prot_count, domain_count_2, query_proteome, seed_proteome, tmp, clan_dict, option)
         if option["domain"]:
             domain_out(org_outpath, True, extmp, option["MS_uni"])
