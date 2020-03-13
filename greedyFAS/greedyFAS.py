@@ -549,8 +549,8 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                 # hidden
                 if taciturn == 1 and option["output"] != 2:
                     out.write(protein + "\t" + str(score[3]) + "\n")
-        if option["output"] == 0 or option["output"] == 2:
-            out.write("\t</query>\n")
+            if option["output"] == 0 or option["output"] == 2:
+                out.write("\t</query>\n")
 
 
     else:
@@ -888,8 +888,7 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                 for feature in seed_proteome[protein]:
                     if option["MS_uni"] == 0:
                         a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                            seed_proteome[protein][feature][1]) + "\" weight=\"" + str(
-                            weights[feature]) + "\">\n")
+                            seed_proteome[protein][feature][1]) + "\">\n")
                     else:
                         a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
                             seed_proteome[protein][feature][1]) + "\">\n")
