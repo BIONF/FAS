@@ -174,7 +174,6 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
     # entire mode
     # both proteins (search and query) will be linearized
     mode = {}
-    turn = 0
     weights = {}
     adjusted_weights = {}
     weight_tmp = {}
@@ -464,25 +463,6 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                     score[0]) + "\" PS=\"" + str(score[1]) + "\" CS=\"" + str(score[2]) + "\" LS=\"" + str(
                     score[6]) + "\" length=\"" + str(int(protein_lengths["seed_" + str(protein)])) + "\" mode=\"" +
                           mode_out + "\" calculationTime=\"" + runtime + "\" >\n")
-                if option["e_output"] and turn == 0:
-                    a_out.write("\t<template id=\"" + protein + "\" length=\"" + str(
-                        int(protein_lengths["seed_" + str(protein)])) + "\">\n")
-                    a_out.write("\t\t<architecture>\n")
-
-                    for feature in seed_proteome[protein]:
-                        if option["MS_uni"] == 0:
-                            a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                                seed_proteome[protein][feature][1]) + "\" weight=\"" + str(
-                                weights[feature]) + "\">\n")
-                        else:
-                            a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                                seed_proteome[protein][feature][1]) + "\">\n")
-                        for instance in seed_proteome[protein][feature][2:]:
-                            a_out.write("\t\t\t\t<instance inst_eval=\"" + str(instance[0]) + "\" start=\"" + str(
-                                instance[1]) + "\" end=\"" + str(instance[2]) + "\"/>\n")
-                        a_out.write("\t\t\t</feature>\n")
-                    a_out.write("\t\t</architecture>\n")
-                    a_out.write("\t</template>\n")
 
             best_template_path = []
             best_query_path = []
@@ -571,7 +551,7 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                     out.write(protein + "\t" + str(score[3]) + "\n")
         if option["output"] == 0 or option["output"] == 2:
             out.write("\t</query>\n")
-        turn = 1
+
 
     else:
         for query in query_proteome:
@@ -809,25 +789,7 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                         score[0]) + "\" PS=\"" + str(score[1]) + "\" CS=\"" + str(score[2]) + "\" LS=\"" + str(
                         score[6]) + "\" length=\"" + str(int(protein_lengths["seed_" + str(protein)])) + "\" mode=\"" +
                         mode_out + "\" calculationTime=\"" + runtime + "\" >\n")
-                    if option["e_output"] and turn == 0:
-                        a_out.write("\t<template id=\"" + protein + "\" length=\"" + str(
-                            int(protein_lengths["seed_" + str(protein)])) + "\">\n")
-                        a_out.write("\t\t<architecture>\n")
 
-                        for feature in seed_proteome[protein]:
-                            if option["MS_uni"] == 0:
-                                a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                                    seed_proteome[protein][feature][1]) + "\" weight=\"" + str(
-                                    weights[feature]) + "\">\n")
-                            else:
-                                a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                                    seed_proteome[protein][feature][1]) + "\">\n")
-                            for instance in seed_proteome[protein][feature][2:]:
-                                a_out.write("\t\t\t\t<instance inst_eval=\"" + str(instance[0]) + "\" start=\"" + str(
-                                    instance[1]) + "\" end=\"" + str(instance[2]) + "\"/>\n")
-                            a_out.write("\t\t\t</feature>\n")
-                        a_out.write("\t\t</architecture>\n")
-                        a_out.write("\t</template>\n")
 
                 best_template_path = []
                 best_query_path = []
@@ -914,11 +876,29 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                         out.write(protein + "\t" + str(score[3]) + "\n")
             if option["output"] == 0 or option["output"] == 2:
                 out.write("\t</query>\n")
-            turn = 1
     if option["output"] == 0 or option["output"] == 2:
         out.write("</out>")
         out.close()
         if option["e_output"]:
+            for protein in seed_proteome:
+                a_out.write("\t<template id=\"" + protein + "\" length=\"" + str(
+                    int(protein_lengths["seed_" + str(protein)])) + "\">\n")
+                a_out.write("\t\t<architecture>\n")
+
+                for feature in seed_proteome[protein]:
+                    if option["MS_uni"] == 0:
+                        a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
+                            seed_proteome[protein][feature][1]) + "\" weight=\"" + str(
+                            weights[feature]) + "\">\n")
+                    else:
+                        a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
+                            seed_proteome[protein][feature][1]) + "\">\n")
+                    for instance in seed_proteome[protein][feature][2:]:
+                        a_out.write("\t\t\t\t<instance inst_eval=\"" + str(instance[0]) + "\" start=\"" + str(
+                            instance[1]) + "\" end=\"" + str(instance[2]) + "\"/>\n")
+                    a_out.write("\t\t\t</feature>\n")
+                a_out.write("\t\t</architecture>\n")
+                a_out.write("\t</template>\n")
             for query in query_proteome:
                 a_out.write(
                     "\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
