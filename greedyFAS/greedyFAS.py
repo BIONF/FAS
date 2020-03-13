@@ -118,19 +118,23 @@ def fc_start(option):
         org_outpath = option["outpath"]
         option["outpath"] += "_reverse"
         if option["MS_uni"] == 0 and option["ref_2"]:
+            ref_proteome = {}
             for ftype in option["input_linearized"]:
-                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2,
-                                                                      ftype, True, ref_proteome, protein_lengths,
-                                                                      clan_dict, option)
+                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2, ftype, True,
+                                                            ref_proteome, protein_lengths, clan_dict, option)
             for ftype in option["input_normal"]:
-                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2,
-                                                                      ftype, True, ref_proteome, protein_lengths,
-                                                                      clan_dict, option)
+                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2, ftype, True,
+                                                            ref_proteome, protein_lengths, clan_dict, option)
 
-            prot_count, domain_count = w_count_ref(ref_proteome)
+            prot_count, domain_count_2 = w_count_ref(ref_proteome)
+            if option["weight_correction"]:
+                domain_count_2 = w_weight_correction(option["weight_correction"],
+                                                   domain_count_2)  # use correction function on counts
         else:
             option["feature_info"] = False
-        fc_main(relevant_features, prot_count, domain_count, query_proteome, seed_proteome, tmp, clan_dict, option)
+            domain_count_2 = domain_count
+        option['ref_proteome'] = option['ref_2']
+        fc_main(relevant_features, prot_count, domain_count_2, query_proteome, seed_proteome, tmp, clan_dict, option)
         if option["domain"]:
             domain_out(org_outpath, True, extmp, option["MS_uni"])
         if option["phyloprofile"]:
