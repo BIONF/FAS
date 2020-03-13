@@ -871,7 +871,7 @@ sub FLPSing {
 			close TMP;
 
             $result .= ">".$seq."\n";
-			my $flpsOut =  `$flpspath/$flps_tool $tempfasta`;
+			my $flpsOut =  `$flpspath/$flps_tool $tempfasta -t 0.0000001`;
 			chomp($flpsOut);
 			$result .= $flpsOut."\n";
 		}
@@ -893,7 +893,7 @@ sub FLPSing {
             print OUT "\t<protein id=\"" . $id . "\" length=\"" . check_id_length($id) . "\">\n";
             foreach my $hit (@tmp) {
                 my @value = split(/\s+/, $hit);
-                if ($value[1] ne "WHOLE") {
+                if ($value[1] ne "WHOLE" && $value[1] ne "MULTIPLE") {
                     print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
                     print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
                     print OUT "\t\t\t<end end=\"$value[4]\"/>\n";

@@ -2177,7 +2177,7 @@ def domain_out(outpath, bidirectional, extendedout, noref):
                 arc[pid][type] = []
                 for inst in feature:
                     arc[pid][type].append((inst.attrib["start"], inst.attrib["end"]))
-    outdict = {}
+    # outdict = {}
     # groupname = outpath.split("/")[-1]
     d0_out = open(outpath + "_forward.domains", "w")
     forwardtree = ElTre.parse(outpath + ".xml")
@@ -2328,7 +2328,22 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
         for line in infile.readlines():
             cells = line.rstrip("\n").split("\t")
             map[cells[0]] = cells[1]
+    outdict = {}
     groupname = outpath.split("/")[-1]
+    
+    for query in forwardroot:
+        query_id, query_length = query.attrib["id"], query.attrib["length"]
+        for seed in query:
+            seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
+            outdict[(seed_id, query_id)] = (forward_score, "0.0")
+    if bidirectional:
+        for seed in reverseroot:
+            seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
+            for query in seed:
+                query_id, reverse_score, query_length = query.attrib["id"], query.attrib["score"], \
+                                                        query.attrib["length"]
+                outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
+
     out = open(outpath + ".phyloprofile", "w")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
     for pair in outdict:
