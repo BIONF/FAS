@@ -1,0 +1,264 @@
+#!/bin/env python
+
+#######################################################################
+# Copyright (C) 2019 Julian Dosch
+#
+# This file is part of FAS.
+#
+#  FAS is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  FAS is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with FAS.  If not, see <http://www.gnu.org/licenses/>.
+#
+#######################################################################
+
+
+import math
+import logging
+
+
+def w_count(prot_count, domain_count, seed_proteome, query_proteome):
+    """Goes through all feature in query_proteome and seed_proteome and groups them by rarity (according to the
+    reference), also adds features that are not in the reference proteome with a count of 1
+
+    :param prot_count: number of proteins in reference
+    :param domain_count: count for each feature in reference
+    :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
+    :param query_proteome: dictionary that contains the feature architecture of all query proteins
+    :return: relevant_feature, domain_count
+    """
+    logging.debug("w_count: processing query and search domains.")
+    relevant_features = {}
+    for query in query_proteome:
+        for feature in query_proteome[query]:
+            if feature not in domain_count:
+                domain_count[feature] = 1
+                relevant_features[feature] = 1
+            elif feature not in relevant_features:
+                if domain_count[feature] == 1:
+                    relevant_features[feature] = 1
+                elif float(domain_count[feature]) / prot_count <= 0.1:
+                    relevant_features[feature] = domain_count[feature]
+                elif float(domain_count[feature]) / prot_count <= 0.5:
+                    relevant_features[feature] = domain_count[feature]
+                else:
+                    relevant_features[feature] = domain_count[feature]
+    for template in seed_proteome:
+        protein = seed_proteome[template]
+        for feature in protein:
+            if feature not in domain_count:
+                domain_count[feature] = 1
+                relevant_features[feature] = 1
+            elif feature not in relevant_features:
+                if float(domain_count[feature]) / prot_count <= 0.1:
+                    relevant_features[feature] = domain_count[feature]
+                if float(domain_count[feature]) / prot_count <= 0.5:
+                    relevant_features[feature] = domain_count[feature]
+                else:
+                    relevant_features[feature] = domain_count[feature]
+
+    logging.debug("domain counts: " + str(domain_count))
+    return relevant_features, domain_count
+
+
+def w_count_ref(proteome):
+    """Counts all features in reference proteome
+
+    :param proteome: dictionary that contains the feature architecture of all ref proteins
+    :return: prot_count, domain_count
+    """
+    logging.debug("w_count_ref: counting domains in reference gene set.")
+
+    domain_count = {}
+    prot_count = 0
+    for i in proteome:
+        prot_count += 1
+        protein = proteome[i]
+        for feature in protein:
+            # counting instances (subtracts 2 because first and second entry contain assess(bool) and feat_eval(float))
+            count = len(protein[feature]) - 2
+            if feature in domain_count:
+                domain_count[feature] += count
+            else:
+                domain_count[feature] = count
+    logging.debug("domains counts: " + str(domain_count))
+    return float(prot_count), domain_count
+
+
+def w_weighting(protein, domain_count, proteome):
+    """Calculates weights
+
+    :param protein: protein id
+    :param domain_count: feature counts of the reference
+    :param proteome: seed or query proteome
+    :return: weights, domain_count
+    """
+    weights = {}
+    features = []
+    scaling_factor = 0.0
+    sum_of_features = 0.0
+    for feature in proteome[protein]:
+        features.append(feature)
+    for feature in features:
+        try:
+            domain_count[feature]
+        except KeyError:
+            # print "feature not found in ref " + feature
+            domain_count[feature] = 1
+            sum_of_features += float(domain_count[feature])
+        else:
+            sum_of_features += float(domain_count[feature])
+    for feature in features:
+        weights[feature] = round(float(sum_of_features) / float(domain_count[feature]), 4)
+        scaling_factor += round(float(sum_of_features) / float(domain_count[feature]), 4)
+    for feature in features:
+        weights[feature] = round(float(weights[feature]) / float(scaling_factor), 4)
+    return weights, domain_count
+
+
+def w_weighting_constraints(protein, domain_count, proteome, option):
+    """Calculates weights, while fulfilling the constraints
+
+    :param protein: protein id
+    :param domain_count: feature counts of the reference
+    :param proteome: seed or query proteome
+    :param option: dictionary that contains the main option variables of FAS
+    :return: weights, domain_count
+    """
+    weights = {}
+    tools = {}
+    for tool in (option["input_linearized"] + option["input_normal"]):
+        tools[tool] = []
+    features = []
+    single_constraints = []
+    filled = 0.0
+    for feature in proteome[protein]:
+        features.append(feature)
+    for feature in features:
+        if feature in option["constraints"]:
+            filled += option["constraints"][feature]
+            weights[feature] = option["constraints"][feature]
+            single_constraints.append(feature)
+        elif feature.split('_')[0] in option["constraints"]:
+            tools[feature.split('_')[0]].append(feature)
+    for tool in tools:
+        if len(tools[tool]) > 0:
+            filled += option["constraints"][tool]
+            sum_of_features = 0
+            scaling_factor = 0.0
+            for feature in tools[tool]:
+                features.remove(feature)
+                try:
+                    domain_count[feature]
+                except KeyError:
+                    domain_count[feature] = 1
+                    sum_of_features += float(domain_count[feature])
+                else:
+                    sum_of_features += float(domain_count[feature])
+            for feature in tools[tool]:
+                weights[feature] = round(float(sum_of_features) / float(domain_count[feature]), 4)
+                scaling_factor += round(float(sum_of_features) / float(domain_count[feature]), 4)
+            for feature in tools[tool]:
+                weights[feature] = round(float(weights[feature]) / float(scaling_factor) * option["constraints"][tool],
+                                         4)
+    for feature in single_constraints:
+        features.remove(feature)
+    sum_of_features = 0.0
+    for feature in features:
+        try:
+            domain_count[feature]
+        except KeyError:
+            # print "feature not found in ref " + feature
+            domain_count[feature] = 1
+            sum_of_features += float(domain_count[feature])
+        else:
+            sum_of_features += float(domain_count[feature])
+    scaling_factor = 0.0
+    for feature in features:
+        weights[feature] = round(float(sum_of_features) / float(domain_count[feature]), 4)
+        scaling_factor += round(float(sum_of_features) / float(domain_count[feature]), 4)
+    for feature in features:
+        weights[feature] = round(float(weights[feature]) / float(scaling_factor) * (1.0 - filled), 4)
+    return weights, domain_count
+
+
+def w_weight_correction(method, domain_count):
+    """Rescales counts by applying one of the 4 functions (loge, log10, root4, root8)
+
+    :param method: rescaling-function
+    :param domain_count: feature counts of the reference
+    :return: domain_count
+    """
+    if method == "loge":
+        for feature in domain_count:
+            domain_count[feature] = int(round(math.log(domain_count[feature]), 0) + 1)
+    elif method == "log10":
+        for feature in domain_count:
+            domain_count[feature] = int(round(math.log10(domain_count[feature]), 0) + 1)
+    elif method == "root4":
+        for feature in domain_count:
+            domain_count[feature] = int(round(math.pow(domain_count[feature], 0.25), 0))
+    elif method == "root8":
+        for feature in domain_count:
+            domain_count[feature] = int(round(math.pow(domain_count[feature], 0.125), 0))
+    return domain_count
+
+
+def w_weight_const_rescale(path, weights, search_features, final, option):
+    """Rescales weights to 1 after linearization
+
+    :param path: Path to rescale
+    :param weights: feature weights
+    :param search_features: all features to be linearized in the seed protein
+    :param final: final calculation? (1/0)
+    :param option: dictionary that contains the main option variables of FAS
+    :return: rescaled_weights
+    """
+    lindict = {}
+    for ftype in option["input_linearized"]:
+        lindict[ftype] = []
+    if final:
+        for ftype in option["input_normal"]:
+            lindict[ftype] = []
+    tmp = 0.0
+    rescaled_weights = {}
+    if final:
+        for feature in path:
+            if feature not in option["constraints"]:
+                if feature not in lindict[feature.split('_')[0]]:
+                    lindict[feature.split('_')[0]].append(feature)
+        for ftype in option["input_linearized"]:
+            if ftype in option["constraints"]:
+                for feature in lindict[ftype]:
+                    tmp += weights[feature]
+                if option["constraints"][ftype] > tmp > 0.0:
+                    scale = option["constraints"][ftype] / tmp
+                    for feature in lindict[ftype]:
+                        rescaled_weights[feature] = weights[feature] * scale
+                tmp = 0.0
+    else:
+        for feature in path:
+            if feature in search_features:
+                if search_features[feature][0] not in option["constraints"]:
+                    if feature not in lindict[search_features[feature][0].split('_')[0]]:
+                        lindict[search_features[feature][0].split('_')[0]].append(feature)
+
+        for ftype in option["input_linearized"]:
+            if ftype in option["constraints"]:
+                for feature in lindict[ftype]:
+                    tmp += weights[search_features[feature][0]]
+                if option["constraints"][ftype] > tmp > 0.0:
+                    scale = option["constraints"][ftype] / tmp
+                    for feature in lindict[ftype]:
+                        rescaled_weights[search_features[feature][0]] = weights[search_features[feature][0]] * scale
+                tmp = 0.0
+
+    return rescaled_weights

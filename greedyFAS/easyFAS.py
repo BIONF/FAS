@@ -20,8 +20,8 @@
 #
 #######################################################################
 
-import annoFAS
-import greedyFAS
+from greedyFAS import annoFAS
+from greedyFAS import greedyFAS
 import os
 import argparse
 import logging
