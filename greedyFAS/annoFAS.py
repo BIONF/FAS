@@ -206,7 +206,6 @@ def easyfas_entry(options):
         cmd = cmd + ' --redo ' + options['redo']
     subprocess.call([cmd], shell=True)
 
-
 def main():
     version = "1.0.1"
     current_dir = os.getcwd()
