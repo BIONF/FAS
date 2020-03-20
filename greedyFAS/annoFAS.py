@@ -22,6 +22,7 @@
 
 import os
 import sys
+from sys import platform
 import re
 import subprocess
 import argparse
@@ -35,10 +36,6 @@ home = expanduser("~")
 
 def get_path():
     return os.path.dirname(inspect.getfile(greedyFAS)).strip()
-    # fas_info = subprocess.check_output(['pip', 'show', 'greedyFAS']).decode(sys.stdout.encoding).strip()
-    # for line in fas_info.split('\n'):
-    #     if 'Location' in line:
-    #         return line.replace('Location: ', '').rstrip() + '/greedyFAS'
 
 def search_string_in_file(file_name, string_to_search):
     with open(file_name, 'r') as read_obj:
@@ -135,7 +132,7 @@ def easyfas_entry(options):
         anno_path = os.path.abspath(anno_path)
 
         # create folders for annotation tools
-        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        folders = ['COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM', 'fLPS']
         for folder in folders:
             if not os.path.isdir(anno_path + '/' + folder):
                 os.mkdir(anno_path + '/' + folder)
@@ -159,7 +156,7 @@ def easyfas_entry(options):
                 download_data(file, checksum)
 
             # copy tools to their folders
-            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
+            tools = ['Pfam', 'SMART', 'COILS2', 'SEG', 'SignalP', 'TMHMM', 'fLPS']
             for tool in tools:
                 print('Moving %s ...' % tool)
                 source_dir = 'annotation_FAS/' + tool + '/'
@@ -205,15 +202,16 @@ def easyfas_entry(options):
     if not options['extract'] == '':
         if os.path.isdir(os.path.abspath(options['extract'])):
             cmd = cmd + ' --extract ' + os.path.abspath(options['extract'])
-    if options['redo'] in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
+    if options['redo'] in ['coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm', 'flps']:
         cmd = cmd + ' --redo ' + options['redo']
     subprocess.call([cmd], shell=True)
 
 def main():
+    version = "1.0.1"
     current_dir = os.getcwd()
 
     # get arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('--fasta', help='Input sequence in fasta format', action='store', default='',
@@ -223,11 +221,10 @@ def main():
                           required=True)
     optional.add_argument('--extract', help='Path to save the extracted annotation for input sequence',
                           action='store', default='')
-    optional.add_argument('--redo', help='Re-annotation the sequence with cast|coils|seg|pfam|signalp|smart|tmhmm. '
+    optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils|seg|pfam|signalp|smart|tmhmm. '
                                          'Only one selection allowed!', action='store', default=0)
     optional.add_argument('--force', help='Force override annotations', action='store_true')
-    optional.add_argument('--prepare', help='Download annotation tools and do configuration [y/n, default = n]',
-                          action='store', default='n')
+    optional.add_argument('--prepare', help='Download annotation tools and do configuration', action='store_true')
     optional.add_argument('--annoPath', help='Path to annotation dir', action='store', default='')
     optional.add_argument('--cores', help='number of cores', action='store', default='')
 
@@ -263,7 +260,7 @@ def main():
         anno_path = os.path.abspath(anno_path)
 
         # create folders for annotation tools
-        folders = ['CAST', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        folders = ['fLPS', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
         for folder in folders:
             if not os.path.isdir(anno_path + '/' + folder):
                 os.mkdir(anno_path + '/' + folder)
@@ -287,13 +284,31 @@ def main():
                 download_data(file, checksum)
 
             # copy tools to their folders
-            tools = ['Pfam', 'SMART', 'CAST', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
+            tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
             for tool in tools:
-                print('Moving %s ...' % tool)
-                source_dir = 'annotation_FAS/' + tool + '/'
-                target_dir = tool + '/'
-                subprocess.call(['rsync', '-ra', '--include=*', source_dir, target_dir])
+                if tool == "fLPS":
+                    print('Downloading fLPS ...')
+                    fLPS_file = 'fLPS.tar.gz'
+                    fLPS_url = 'http://biology.mcgill.ca/faculty/harrison/' + fLPS_file
+                    subprocess.call(['wget', fLPS_url, '--no-check-certificate'])
+                    subprocess.call(['tar', 'xf', fLPS_file])
+                    subprocess.call(['rm', fLPS_file])
+                else:
+                    print('Moving %s ...' % tool)
+                    source_dir = 'annotation_FAS/' + tool + '/'
+                    target_dir = tool + '/'
+                    subprocess.call(['rsync', '-ra', '--include=*', source_dir, target_dir])
                 print('---------------------')
+
+            # make symlink for fLPS (depend on OS system)
+            source = os.getcwd() + "/fLPS/bin"
+            target = os.getcwd() + "/fLPS/"
+            if platform == "darwin":
+                source = source + "/mac64/fLPS"
+                subprocess.call(['ln', '-fs', source, target])
+            else:
+                source = source + "/linux/fLPS"
+                subprocess.call(['ln', '-fs', source, target])
 
             # remove temp files
             subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
@@ -340,7 +355,7 @@ def main():
         if not os.path.isdir(os.path.abspath(args.extract)):
             os.mkdir(os.path.abspath(args.extract))
         cmd = cmd + ' --extract ' + os.path.abspath(args.extract)
-    if args.redo in ['cast', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
+    if args.redo in ['flps', 'coils', 'seg', 'pfam', 'signalp', 'smart', 'tmhmm']:
         cmd = cmd + ' --redo ' + args.redo
     # print(cmd)
     subprocess.call([cmd], shell=True)

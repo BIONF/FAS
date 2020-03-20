@@ -86,6 +86,9 @@ def get_options():
                                "mode is not active or if no main reference was given")
     optional.add_argument('--cores', help='number of cores', action='store', default='')
     optional.add_argument("--domain", dest="domain", action="store_true", help="activate domain tabular output")
+    optional.add_argument("--pairwise", dest="pairwise", default=None, type=str,
+                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
+                             " compared (one pair per line tab seperated)")
     args = parser.parse_args()
     return args
 
@@ -176,6 +179,11 @@ def fas(args):
     option_dict['outpath'] = args.projectdir.rstrip('/') + '/out/' + seedname + '_' + queryname
     option_dict["input_linearized"] = ["pfam", "smart"]
     option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
+
+    if options.pairwise:
+        option_dict["pairwise"] = greedyFAS.read_pairwise(options.pairwise)
+    else:
+        option_dict["pairwise"] = None
 
     logging.basicConfig(level=loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(

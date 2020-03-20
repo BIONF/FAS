@@ -118,19 +118,23 @@ def fc_start(option):
         org_outpath = option["outpath"]
         option["outpath"] += "_reverse"
         if option["MS_uni"] == 0 and option["ref_2"]:
+            ref_proteome = {}
             for ftype in option["input_linearized"]:
-                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2,
-                                                                      ftype, True, ref_proteome, protein_lengths,
-                                                                      clan_dict, option)
+                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2, ftype, True,
+                                                            ref_proteome, protein_lengths, clan_dict, option)
             for ftype in option["input_normal"]:
-                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2,
-                                                                      ftype, True, ref_proteome, protein_lengths,
-                                                                      clan_dict, option)
+                ref_proteome, tmp2, clan_dict = xmlreader(option["ref_2"] + "/" + ftype + ".xml", 2, ftype, True,
+                                                            ref_proteome, protein_lengths, clan_dict, option)
 
-            prot_count, domain_count = w_count_ref(ref_proteome)
+            prot_count, domain_count_2 = w_count_ref(ref_proteome)
+            if option["weight_correction"]:
+                domain_count_2 = w_weight_correction(option["weight_correction"],
+                                                   domain_count_2)  # use correction function on counts
         else:
             option["feature_info"] = False
-        fc_main(relevant_features, prot_count, domain_count, query_proteome, seed_proteome, tmp, clan_dict, option)
+            domain_count_2 = domain_count
+        option['ref_proteome'] = option['ref_2']
+        fc_main(relevant_features, prot_count, domain_count_2, query_proteome, seed_proteome, tmp, clan_dict, option)
         if option["domain"]:
             domain_out(org_outpath, True, extmp, option["MS_uni"])
         if option["phyloprofile"]:
@@ -170,7 +174,6 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
     # entire mode
     # both proteins (search and query) will be linearized
     mode = {}
-    turn = 0
     weights = {}
     adjusted_weights = {}
     weight_tmp = {}
@@ -217,39 +220,44 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                   settings_out["filters"] + "\" timelimit=\"" + settings_out["time"] + "\" scoreweights=\"" +
                   str(option["score_weights"]) + "\" cores=\"" + str(option["cores"]) + "\" linearized=\"" +
                   settings_out["lin"] + "\" normal=\"" + settings_out["norm"] + "\">\n")
-    for query in query_proteome:
-        go_priority = False
-        if option["MS_uni"] == 0:
-            if option["weight_const"]:
-                weights, domain_count = w_weighting_constraints(query, domain_count, query_proteome, option)
-            else:
-                weights, domain_count = w_weighting(query, domain_count, query_proteome)
-        lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(query, query_proteome,
-                                                                                            protein_lengths, clan_dict)
-        tmp_query_graph = pb_region_paths_nongreedy(pb_region_mapper(lin_query_set, query_features,
-                                                                     option["max_overlap"],
-                                                                     option["max_overlap_percentage"]))
-        # PRIORITY CHECK 1: checking for number of instances - assess complexity of the feature graph
-        if int(len(query_features)) > int(option["priority_threshold"]) and option["priority_mode"]:
-            go_priority = True
-            all_query_paths = "PRIORITY"
-        elif option["priority_mode"]:
-            # creating all paths
-            all_query_paths = pb_graphtraversal(tmp_query_graph, [], [], option)
-            # PRIORITY CHECK 2: checking for number of paths in the feature graph
-            if int(len(all_query_paths)) > int(option["max_cardinality"]):
-                logging.info("Switched to priority mode due to number of paths.")
+    if option['pairwise']:
+        for pair in option['pairwise']:
+            query = pair[1]
+            protein = pair[0]
+            go_priority = False
+            if option["MS_uni"] == 0:
+                if option["weight_const"]:
+                    weights, domain_count = w_weighting_constraints(query, domain_count, query_proteome, option)
+                else:
+                    weights, domain_count = w_weighting(query, domain_count, query_proteome)
+            lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(query, query_proteome,
+                                                                                                protein_lengths,
+                                                                                                clan_dict)
+            tmp_query_graph = pb_region_paths_nongreedy(pb_region_mapper(lin_query_set, query_features,
+                                                                         option["max_overlap"],
+                                                                         option["max_overlap_percentage"]))
+            # PRIORITY CHECK 1: checking for number of instances - assess complexity of the feature graph
+            if int(len(query_features)) > int(option["priority_threshold"]) and option["priority_mode"]:
                 go_priority = True
-        elif len(tmp_query_graph) == 0:
-            all_query_paths = []
-        else:
-            all_query_paths = "NOPRIORITY"
-        if option["output"] == 0 or option["output"] == 2:
-            out.write("\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
-        elif taciturn == 1:
-            out = open(option["outpath"], "w+")
-        query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
-        for protein in seed_proteome:
+                all_query_paths = "PRIORITY"
+            elif option["priority_mode"]:
+                # creating all paths
+                all_query_paths = pb_graphtraversal(tmp_query_graph, [], [], option)
+                # PRIORITY CHECK 2: checking for number of paths in the feature graph
+                if int(len(all_query_paths)) > int(option["max_cardinality"]):
+                    logging.info("Switched to priority mode due to number of paths.")
+                    go_priority = True
+            elif len(tmp_query_graph) == 0:
+                all_query_paths = []
+            else:
+                all_query_paths = "NOPRIORITY"
+            if option["output"] == 0 or option["output"] == 2:
+                out.write(
+                    "\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
+            elif taciturn == 1:
+                out = open(option["outpath"], "w+")
+            query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
+            ####
             go_priority_2 = False
             calcstart = time.time()
             timeover = 0
@@ -283,7 +291,8 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                     # case M2.1.2: empty(query)-graph(search)
                     logging.warning("CASE M2.1.2: empty vs graph.")
                     tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, [], search_features, weights,
-                                                              query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
+                                                              query_features, seed_proteome, a_s_f, a_q_f,
+                                                              clan_dict,
                                                               query_clans, protein_lengths, "OFF", option)
                     path = tmp_path_score[0][0]
                     score_w = tmp_path_score[0][1]
@@ -337,7 +346,7 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
 
                             # check for max scoring fixture of path and query_path
                             if (score_w[4] >= max_fixture[1][4] and score_w[3] == max_fixture[1][3]) or \
-                               score_w[3] >= max_fixture[1][3]:
+                                    score_w[3] >= max_fixture[1][3]:
                                 max_fixture = (path, score_w, query_path_ad, protein)
                     else:
                         # case M2.2.2 graph(query)-graph(search)
@@ -358,8 +367,10 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                                 counter = (i + 1) * jobcount[0]
                             for i in range(jobcount[1]):
                                 jobs[i].append(jobpaths[-(i + 1)])
-                        func = partial(pb_calc_sub, search_protein, protein, search_features, weights, query_features,
-                                       seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, protein_lengths, timelimit,
+                        func = partial(pb_calc_sub, search_protein, protein, search_features, weights,
+                                       query_features,
+                                       seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, protein_lengths,
+                                       timelimit,
                                        option)
                         pool_results = jobpool.map_async(func, jobs)
                         jobpool.close()
@@ -423,7 +434,7 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
 
                     # check for max scoring fixture of path and query_path
                     if (score_w[4] >= max_fixture[1][4] and score_w[3] == max_fixture[1][3]) or \
-                       score_w[3] >= max_fixture[1][3]:
+                            score_w[3] >= max_fixture[1][3]:
                         max_fixture = (path, score_w, query_path_ad, protein)
 
                 logging.info("Found: " + str(pathcount) + " path(s) for query.")
@@ -451,34 +462,16 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                 out.write("\t\t<template id=\"" + protein + "\" score=\"" + str(score[3]) + "\" MS=\"" + str(
                     score[0]) + "\" PS=\"" + str(score[1]) + "\" CS=\"" + str(score[2]) + "\" LS=\"" + str(
                     score[6]) + "\" length=\"" + str(int(protein_lengths["seed_" + str(protein)])) + "\" mode=\"" +
-                    mode_out + "\" calculationTime=\"" + runtime + "\" >\n")
-                if option["e_output"] and turn == 0:
-                    a_out.write("\t<template id=\"" + protein + "\" length=\"" + str(
-                        int(protein_lengths["seed_" + str(protein)])) + "\">\n")
-                    a_out.write("\t\t<architecture>\n")
-
-                    for feature in seed_proteome[protein]:
-                        if option["MS_uni"] == 0:
-                            a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                                seed_proteome[protein][feature][1]) + "\" weight=\"" + str(
-                                weights[feature]) + "\">\n")
-                        else:
-                            a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
-                                seed_proteome[protein][feature][1]) + "\">\n")
-                        for instance in seed_proteome[protein][feature][2:]:
-                            a_out.write("\t\t\t\t<instance inst_eval=\"" + str(instance[0]) + "\" start=\"" + str(
-                                instance[1]) + "\" end=\"" + str(instance[2]) + "\"/>\n")
-                        a_out.write("\t\t\t</feature>\n")
-                    a_out.write("\t\t</architecture>\n")
-                    a_out.write("\t</template>\n")
+                          mode_out + "\" calculationTime=\"" + runtime + "\" >\n")
 
             best_template_path = []
             best_query_path = []
 
             for feature in max_fixture[0]:
                 if feature in search_features:
-                    logging.debug(str(search_features[feature][0]) + " " + str(search_features[feature][1]) + " " + str(
-                        search_features[feature][2]) + " " + str(search_features[feature][3]))
+                    logging.debug(
+                        str(search_features[feature][0]) + " " + str(search_features[feature][1]) + " " + str(
+                            search_features[feature][2]) + " " + str(search_features[feature][3]))
                     best_template_path.append((search_features[feature][0], search_features[feature][1],
                                                search_features[feature][2], search_features[feature][3]))
                 else:
@@ -490,7 +483,8 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                     best_query_path.append((query_features[feature][0], query_features[feature][1],
                                             query_features[feature][2], query_features[feature][3]))
                 else:
-                    best_query_path.append((a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
+                    best_query_path.append(
+                        (a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
             if option["output"] == 0 or option["output"] == 2:
                 path_tmp = {}
                 path_tmp_query = {}
@@ -555,13 +549,355 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                 # hidden
                 if taciturn == 1 and option["output"] != 2:
                     out.write(protein + "\t" + str(score[3]) + "\n")
-        if option["output"] == 0 or option["output"] == 2:
-            out.write("\t</query>\n")
-        turn = 1
+            if option["output"] == 0 or option["output"] == 2:
+                out.write("\t</query>\n")
+
+
+    else:
+        for query in query_proteome:
+            go_priority = False
+            if option["MS_uni"] == 0:
+                if option["weight_const"]:
+                    weights, domain_count = w_weighting_constraints(query, domain_count, query_proteome, option)
+                else:
+                    weights, domain_count = w_weighting(query, domain_count, query_proteome)
+            lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(query, query_proteome,
+                                                                                                protein_lengths, clan_dict)
+            tmp_query_graph = pb_region_paths_nongreedy(pb_region_mapper(lin_query_set, query_features,
+                                                                         option["max_overlap"],
+                                                                         option["max_overlap_percentage"]))
+            # PRIORITY CHECK 1: checking for number of instances - assess complexity of the feature graph
+            if int(len(query_features)) > int(option["priority_threshold"]) and option["priority_mode"]:
+                go_priority = True
+                all_query_paths = "PRIORITY"
+            elif option["priority_mode"]:
+                # creating all paths
+                all_query_paths = pb_graphtraversal(tmp_query_graph, [], [], option)
+                # PRIORITY CHECK 2: checking for number of paths in the feature graph
+                if int(len(all_query_paths)) > int(option["max_cardinality"]):
+                    logging.info("Switched to priority mode due to number of paths.")
+                    go_priority = True
+            elif len(tmp_query_graph) == 0:
+                all_query_paths = []
+            else:
+                all_query_paths = "NOPRIORITY"
+            if option["output"] == 0 or option["output"] == 2:
+                out.write("\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
+            elif taciturn == 1:
+                out = open(option["outpath"], "w+")
+            query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
+            for protein in seed_proteome:
+                go_priority_2 = False
+                calcstart = time.time()
+                timeover = 0
+                mode[protein] = 0
+                pathcount = 0
+                if option["MS_uni"] == 0:
+                    if option["weight_const"]:
+                        weights, domain_count = w_weighting_constraints(protein, domain_count, seed_proteome, option)
+                    else:
+                        weights, domain_count = w_weighting(protein, domain_count, seed_proteome)
+                search_protein, search_features, a_s_f = su_search_protein(protein, seed_proteome, protein_lengths)
+                search_protein = tuple(search_protein)
+                max_fixture = ([], (0.0, 0.0, 0.0, 0.0, 0, 0, False), [], protein)
+
+                # check for available paths
+                # query <--VS-- seed
+                # case M2.1: empty(query)
+
+                if int(len(all_query_paths)) == 0 or int(len(query_features) == 0):
+                    logging.warning("CASE M2.1: No paths (pfam or smart annotations) in query.")
+                    # case M2.1.1: empty(query)-empty(search)
+                    # should be the best fix independent from weight
+                    if int(len(search_features)) == 0:
+                        logging.warning("CASE M2.1.1: empty vs empty.")
+                        path = list(a_s_f.keys())
+                        query_architecture = list(a_q_f.keys())
+                        score_w = sf_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
+                                                       query_features, a_q_f, clan_dict, option)
+                        mode[protein] = 2
+                    else:
+                        # case M2.1.2: empty(query)-graph(search)
+                        logging.warning("CASE M2.1.2: empty vs graph.")
+                        tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, [], search_features, weights,
+                                                                  query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
+                                                                  query_clans, protein_lengths, "OFF", option)
+                        path = tmp_path_score[0][0]
+                        score_w = tmp_path_score[0][1]
+                        query_architecture = tmp_path_score[0][2]
+                        mode[protein] = 2
+
+                    # set max_fixture according to
+                    max_fixture = (path, score_w, query_architecture, protein)
+
+                # handle all paths
+                # case M2.2: graph(query)
+                elif not option["priority_mode"] and not int(len(query_features)) == 0:
+                    mode[protein] = 0
+                    stack, jobpaths = pb_create_jobs(tmp_query_graph, option)
+                    timelimit = 0.0
+                    if len(stack) > 0:
+                        jobpool = multiprocessing.Pool(processes=option["cores"])
+                        if option["timelimit"] > 0:
+                            timelimit = option["timelimit"] / len(stack)
+                            func = partial(pb_graph_traversal_sub, search_protein, protein, search_features, weights,
+                                           query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
+                                           protein_lengths, timelimit, tmp_query_graph, option)
+                        else:
+                            func = partial(pb_graph_traversal_sub, search_protein, protein, search_features, weights,
+                                           query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
+                                           protein_lengths, 0, tmp_query_graph, option)
+                        pool_results = jobpool.map_async(func, stack)
+                        jobpool.close()
+                        jobpool.join()
+                        pool_results.wait()
+                        for pool_result in pool_results.get():
+                            if pool_result[1] > timelimit and option["timelimit"] > 0:
+                                timeover += 1
+                                go_priority_2 = True
+                            if pool_result[0][1][3] >= max_fixture[1][3]:
+                                max_fixture = deepcopy(pool_result[0])
+                    timecheck = time.time()
+                    if len(jobpaths) > 0:
+                        # case M2.2.1: graph(query)-empty(search)
+                        if int(len(search_features)) == 0:
+                            for jobpath in jobpaths:
+                                logging.warning("CASE M2.2: graph.")
+                                pathcount += 1
+                                logging.warning("CASE M2.2.1: graph vs empty.")
+                                # special case: protein with no pfam or smart domains
+                                # get score for a_s_f and query_path directly
+                                path = list(a_s_f.keys())
+                                query_path_ad = jobpath + list(a_q_f.keys())
+                                score_w = sf_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
+                                                               query_features, a_q_f, clan_dict, option)
+
+                                # check for max scoring fixture of path and query_path
+                                if (score_w[4] >= max_fixture[1][4] and score_w[3] == max_fixture[1][3]) or \
+                                   score_w[3] >= max_fixture[1][3]:
+                                    max_fixture = (path, score_w, query_path_ad, protein)
+                        else:
+                            # case M2.2.2 graph(query)-graph(search)
+                            # regular traversal of graph based on search_protein
+                            jobpool = multiprocessing.Pool(processes=option["cores"])
+                            logging.warning("CASE M2.2.2: graph vs graph.")
+                            jobs = []
+                            jobcount = (int(len(jobpaths) / option["cores"]), len(jobpaths) % option["cores"])
+                            if jobcount[0] == 0:
+                                timelimit = (option["timelimit"] - (timecheck - calcstart)) / float(jobcount[1])
+                                for i in range(jobcount[1]):
+                                    jobs.append([jobpaths[-(i + 1)]])
+                            else:
+                                timelimit = (option["timelimit"] - (timecheck - calcstart)) / float(option["cores"])
+                                counter = 0
+                                for i in range(option["cores"]):
+                                    jobs.append(jobpaths[counter: (i + 1) * jobcount[0]])
+                                    counter = (i + 1) * jobcount[0]
+                                for i in range(jobcount[1]):
+                                    jobs[i].append(jobpaths[-(i + 1)])
+                            func = partial(pb_calc_sub, search_protein, protein, search_features, weights, query_features,
+                                           seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, protein_lengths, timelimit,
+                                           option)
+                            pool_results = jobpool.map_async(func, jobs)
+                            jobpool.close()
+                            jobpool.join()
+                            pool_results.wait()
+                            for pool_result in pool_results.get():
+                                if pool_result[1] > timelimit:
+                                    timeover += 1
+                                    go_priority_2 = True
+                                if pool_result[0][1][3] >= max_fixture[1][3]:
+                                    max_fixture = deepcopy(pool_result[0])
+                if go_priority or go_priority_2:
+                    mode[protein] = 1
+                    all_query_paths = []
+                    priority_list = []
+                    for domain_type in query_proteome[query]:
+                        if query_proteome[query][domain_type][0]:
+                            priority_list.append(domain_type)
+                    priority_list.append("NONE")
+                    for domain_type in priority_list:
+                        all_query_paths += (
+                            pb_entire_graphtraversal_priority(tmp_query_graph, domain_type, protein, 1, search_features,
+                                                              weights, query_features, seed_proteome, a_s_f, a_q_f,
+                                                              clan_dict, query_clans, protein_lengths, option))
+                        logging.info("domain_type: " + str(domain_type))
+                        logging.debug("all_query_paths: " + str(all_query_paths))
+                        # max fixture of (search_path, score, query_path)
+                if option["priority_mode"] or go_priority_2:
+                    for query_path in all_query_paths:
+                        logging.warning("CASE M2.2: graph.")
+                        pathcount += 1
+
+                        # case M2.2.1: graph(query)-empty(search)
+                        if int(len(search_features)) == 0:
+                            logging.warning("CASE M2.2.1: graph vs empty.")
+                            # special case: protein with no pfam or smart domains
+                            # get score for a_s_f and query_path directly
+                            path = list(a_s_f.keys())
+                            query_path_ad = query_path + list(a_q_f.keys())
+                            score_w = sf_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
+                                                           query_features, a_q_f, clan_dict, option)
+                        else:
+                            # case M2.2.2 graph(query)-graph(search)
+                            # regular traversal of graph based on search_protein
+                            logging.warning("CASE M2.2.2: graph vs graph.")
+                            if option["priority_mode"]:
+                                tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path,
+                                                                          search_features, weights, query_features,
+                                                                          seed_proteome, a_s_f, a_q_f, clan_dict,
+                                                                          query_clans, protein_lengths, "OFF", option)
+                            else:
+                                tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path,
+                                                                          search_features, weights, query_features,
+                                                                          seed_proteome, a_s_f, a_q_f, clan_dict,
+                                                                          query_clans, protein_lengths, "OVER", option)
+                            path = tmp_path_score[0][0]
+                            score_w = tmp_path_score[0][1]
+                            query_path_ad = tmp_path_score[0][2]
+                            mode[protein] = tmp_path_score[1]
+                            logging.debug("tmp_path_score " + str(tmp_path_score))  # search path, score, mode
+
+                        # check for max scoring fixture of path and query_path
+                        if (score_w[4] >= max_fixture[1][4] and score_w[3] == max_fixture[1][3]) or \
+                           score_w[3] >= max_fixture[1][3]:
+                            max_fixture = (path, score_w, query_path_ad, protein)
+
+                    logging.info("Found: " + str(pathcount) + " path(s) for query.")
+                    logging.debug("Path fixture: " + str(max_fixture))
+
+                timecheck = time.time()
+                score = max_fixture[1]
+                if option["output"] == 0 or option["output"] == 2:
+                    try:
+                        if mode[protein] == 2:
+                            mode_out = "greedy"
+                        elif mode[protein] == 1:
+                            mode_out = "priority"
+                        else:
+                            mode_out = "exhaustive"
+                    except KeyError:
+                        mode_out = "default"
+                    if go_priority or go_priority_2:
+                        mode_out += "/priority"
+                    else:
+                        mode_out += "/exhaustive"
+                    runtime = str(round(timecheck - calcstart, 4)) + "s"
+                    if timeover >= 1:
+                        runtime += "/exceeded_timelimit"
+                    out.write("\t\t<template id=\"" + protein + "\" score=\"" + str(score[3]) + "\" MS=\"" + str(
+                        score[0]) + "\" PS=\"" + str(score[1]) + "\" CS=\"" + str(score[2]) + "\" LS=\"" + str(
+                        score[6]) + "\" length=\"" + str(int(protein_lengths["seed_" + str(protein)])) + "\" mode=\"" +
+                        mode_out + "\" calculationTime=\"" + runtime + "\" >\n")
+
+
+                best_template_path = []
+                best_query_path = []
+
+                for feature in max_fixture[0]:
+                    if feature in search_features:
+                        logging.debug(str(search_features[feature][0]) + " " + str(search_features[feature][1]) + " " + str(
+                            search_features[feature][2]) + " " + str(search_features[feature][3]))
+                        best_template_path.append((search_features[feature][0], search_features[feature][1],
+                                                   search_features[feature][2], search_features[feature][3]))
+                    else:
+                        best_template_path.append(
+                            (a_s_f[feature][0], a_s_f[feature][1], a_s_f[feature][2], a_s_f[feature][3]))
+
+                for feature in max_fixture[2]:
+                    if feature in query_features:
+                        best_query_path.append((query_features[feature][0], query_features[feature][1],
+                                                query_features[feature][2], query_features[feature][3]))
+                    else:
+                        best_query_path.append((a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
+                if option["output"] == 0 or option["output"] == 2:
+                    path_tmp = {}
+                    path_tmp_query = {}
+                    scale = 0
+                    if option["weight_const"] == 1:
+                        path_tmp2 = []
+                        for feature in best_template_path:
+                            if feature[0] not in path_tmp2:
+                                path_tmp2.append(feature[0])
+                        adjusted_weights = w_weight_const_rescale(path_tmp2, weights, search_features, True, option)
+                        weight_tmp = {}
+                        for adj_feature in adjusted_weights:
+                            weight_tmp[adj_feature] = weights[adj_feature]
+                            weights[adj_feature] = adjusted_weights[adj_feature]
+                    for feature in best_template_path:
+                        if feature[0] in path_tmp:
+                            path_tmp[feature[0]].append((feature[2], feature[3]))
+                        else:
+                            path_tmp[feature[0]] = [(feature[2], feature[3])]
+                            if option["MS_uni"] == 0:
+                                scale += weights[feature[0]]
+                    for feature in best_query_path:
+                        if feature[0] in path_tmp_query:
+                            path_tmp_query[feature[0]].append((feature[2], feature[3]))
+                        else:
+                            path_tmp_query[feature[0]] = [(feature[2], feature[3])]
+                    logging.debug("path_tmp: " + str(path_tmp))
+
+                    # unweighted case
+                    if option["MS_uni"] == 0:
+                        if scale > 0:
+                            scale = 1.0 / float(scale)
+                        else:
+                            scale = 1.0
+                    # print path
+                    out.write("\t\t\t<template_path>\n")
+                    for feature in path_tmp:
+                        if option["MS_uni"] == 0:
+                            out.write("\t\t\t\t<feature type=\"" + feature + "\" corrected_weight=\"" + str(
+                                weights[feature] * scale) + "\">\n")
+                        else:
+                            out.write("\t\t\t\t<feature type=\"" + feature + "\">\n")
+                        for tmp_inst in path_tmp[feature]:
+                            out.write("\t\t\t\t\t<instance start=\"" + str(tmp_inst[0]) + "\" end=\"" + str(
+                                tmp_inst[1]) + "\"/>\n")
+                        out.write("\t\t\t\t</feature>\n")
+                    out.write("\t\t\t</template_path>\n")
+                    out.write("\t\t\t<query_path>\n")
+                    for feature in path_tmp_query:
+                        out.write("\t\t\t\t<feature type=\"" + feature + "\">\n")
+                        for tmp_inst in path_tmp_query[feature]:
+                            out.write("\t\t\t\t\t<instance start=\"" + str(tmp_inst[0]) + "\" end=\"" + str(
+                                tmp_inst[1]) + "\"/>\n")
+                        out.write("\t\t\t\t</feature>\n")
+                    out.write("\t\t\t</query_path>\n")
+                    out.write("\t\t</template>\n")
+                    if option["weight_const"] == 1:
+                        for adj_feature in adjusted_weights:
+                            weights[adj_feature] = weight_tmp[adj_feature]
+                if option["output"] == 1 or option["output"] == 2:
+                    print(score[3])
+                    # hidden
+                    if taciturn == 1 and option["output"] != 2:
+                        out.write(protein + "\t" + str(score[3]) + "\n")
+            if option["output"] == 0 or option["output"] == 2:
+                out.write("\t</query>\n")
     if option["output"] == 0 or option["output"] == 2:
         out.write("</out>")
         out.close()
         if option["e_output"]:
+            for protein in seed_proteome:
+                a_out.write("\t<template id=\"" + protein + "\" length=\"" + str(
+                    int(protein_lengths["seed_" + str(protein)])) + "\">\n")
+                a_out.write("\t\t<architecture>\n")
+
+                for feature in seed_proteome[protein]:
+                    if option["MS_uni"] == 0:
+                        a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
+                            seed_proteome[protein][feature][1]) + "\">\n")
+                    else:
+                        a_out.write("\t\t\t<feature type=\"" + feature + "\" evalue=\"" + str(
+                            seed_proteome[protein][feature][1]) + "\">\n")
+                    for instance in seed_proteome[protein][feature][2:]:
+                        a_out.write("\t\t\t\t<instance inst_eval=\"" + str(instance[0]) + "\" start=\"" + str(
+                            instance[1]) + "\" end=\"" + str(instance[2]) + "\"/>\n")
+                    a_out.write("\t\t\t</feature>\n")
+                a_out.write("\t\t</architecture>\n")
+                a_out.write("\t</template>\n")
             for query in query_proteome:
                 a_out.write(
                     "\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
@@ -2177,7 +2513,7 @@ def domain_out(outpath, bidirectional, extendedout, noref):
                 arc[pid][type] = []
                 for inst in feature:
                     arc[pid][type].append((inst.attrib["start"], inst.attrib["end"]))
-    outdict = {}
+    # outdict = {}
     # groupname = outpath.split("/")[-1]
     d0_out = open(outpath + "_forward.domains", "w")
     forwardtree = ElTre.parse(outpath + ".xml")
@@ -2322,13 +2658,29 @@ def domain_out(outpath, bidirectional, extendedout, noref):
         if extendedout:
             d1_out.close()
 
+
 def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
     with open(mapping_file) as infile:
         map = {}
         for line in infile.readlines():
             cells = line.rstrip("\n").split("\t")
             map[cells[0]] = cells[1]
+    outdict = {}
     groupname = outpath.split("/")[-1]
+    
+    for query in forwardroot:
+        query_id, query_length = query.attrib["id"], query.attrib["length"]
+        for seed in query:
+            seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
+            outdict[(seed_id, query_id)] = (forward_score, "0.0")
+    if bidirectional:
+        for seed in reverseroot:
+            seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
+            for query in seed:
+                query_id, reverse_score, query_length = query.attrib["id"], query.attrib["score"], \
+                                                        query.attrib["length"]
+                outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
+
     out = open(outpath + ".phyloprofile", "w")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
     for pair in outdict:
@@ -2338,6 +2690,16 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
         except KeyError:
             raise Exception(pair[1] + " not in mapping file")
     out.close()
+
+
+def read_pairwise(path):
+    with open(path, 'r') as infile:
+        pairwise = []
+        line = infile.readline()
+        while line:
+            pairwise.append(line.rstrip('\n').split('\t'))
+            line = infile.readline()
+    return pairwise
 
 
 # start #
@@ -2425,6 +2787,9 @@ def main():
                              "only, will run with more but output won't work without editing")
     parser.add_argument("--domain", dest="domain", action="store_true",
                         help="activate domain tabular output")
+    parser.add_argument("--pairwise", dest="pairwise", default=None, type=str,
+                        help="deactivate all against all comparison, needs a pairing file with the ids that should be "
+                             "compared (one pair per line tab seperated)")
     options = parser.parse_args()
 
     # READ OPTIONS #
@@ -2517,7 +2882,11 @@ def main():
         option_dict = featuretypes(options.featuretypes, option_dict)
     else:
         option_dict["input_linearized"] = ["pfam", "smart"]
-        option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
+        option_dict["input_normal"] = ["flps", "coils", "seg", "signalp", "tmhmm"]
+    if options.pairwise:
+        option_dict["pairwise"] = read_pairwise(options.pairwise)
+    else:
+        option_dict["pairwise"] = None
 
     fc_start(option_dict)
 

@@ -66,10 +66,12 @@ use File::Basename;
 #   Version 9 (adding annotation directory by Vinh Tran, December 2019)
 #           - annotation tools are now not necessary to be in the same directory of this annotation script
 #           - config variable for checking if the annotation path correctly set
+#   Version 10 (replace CAST by fLPS by Vinh Tran, February 2020)
+#           - replace CAST by fLPS (http://biology.mcgill.ca/faculty/harrison/flps.html)
 ##########
 
 #### SETUP TOOL BOX ####
-my $CAST_tool       = "cast";
+my $flps_tool       = "fLPS";
 my $TMHMM_tool      = "decodeanhmm";
 my $COILS_tool      = "COILS2";
 my $SIGNALP_tool    = "signalp.pl";
@@ -78,10 +80,10 @@ my $PFAM_tool       = "pfam_scan.pl";
 my $SMART_tool      = "smart_scan_v4.pl";
 ## number of above stated programs for annotation
 my $tool_count      = 7;
-my $version         = 0.99.9;
+my $version         = 0.99.10;
 
 #### SETUP PATH ####
-my $annotationPath = "path/to/annotation/tools";
+my $annotationPath = "/path/to/annotation_fas";
 my $config = 0;
 unless ($config == 1) {
     exit("No annotation tools found in $annotationPath!!!\n");
@@ -108,7 +110,7 @@ my $force = 0;      #default
 my $extract = '';   #default
 my $empty = 0;      #default
 my $regular = 0;    #default
-my $cores;
+my $cores = 1;
 # command line arguments:
 GetOptions( "h"         => \$help,
             "fasta=s"	=> \$fasta,
@@ -145,7 +147,7 @@ if ($extract ne ''){
 }
 
 if (!(defined $cores)){
-    my $cores = 1
+    my $cores = 1;
 }
 
 # create given output directory
@@ -181,7 +183,7 @@ if(!(-d($dirOut))){
 	my $delCommand = "rm -f $dirOut/*";
 	system($delCommand);
     }elsif ($redo){
-        if ($redo eq "cast" or $redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart"){
+        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps"){
             print "Directory:\n\t$dirOut already exists,\n\t$redo annotations will be redone due to option -redo=$redo.\n";
             my $delCommand = "rm -f $dirOut/$redo.xml";
             system($delCommand);
@@ -215,9 +217,9 @@ print "--> acquiring sequence lengths\n";
 seq_id_len($fasta);
 print "...done: sequence lengths are calculated for input file.\n";
 
-if (($redo eq 'cast') or $force or $empty or $regular){
-    print "--> starting: $CAST_tool\n";
-    CASTing();
+if (($redo eq 'flps') or $force or $empty or $regular){
+    print "--> starting: $flps_tool\n";
+    FLPSing();
 }
 
 if (($redo eq 'tmhmm') or $force or $empty or $regular){
@@ -348,7 +350,7 @@ sub smart{
     my $smartPATH    = $annotationPath."/SMART";
     my $OutFilesPATH = $smartPATH."/output_files";
     my @content = ();
-    my $cores = @_;
+    my $cores = $_[0];
     chdir($smartPATH);
 
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
@@ -453,12 +455,11 @@ sub smart{
 sub pfam {
     my $PfamPATH = $annotationPath."/Pfam";
     my $OutFilesPATH = $PfamPATH."/output_files";
-    my $cores = @_;
+    my $cores = $_[0];
     chdir($PfamPATH);
 
     require($PfamPATH."/".$PFAM_tool);
     my $outName = main($fasta,$qORp,$cores);
-
 
     open(PFAM, $OutFilesPATH."/".$outName) or print("ERROR: could not find or open $outName. $!\n $OutFilesPATH/$outName\n");
     my @content = <PFAM>;
@@ -570,35 +571,6 @@ sub pfam {
     }
     print OUT "</tool>\n";
     close OUT;
-}
-
-
-
-sub tempfile {
-# function returns an array with ID and sequence of each protein in the input file
-    my $file = $fasta;
-    my @return;
-
-    open(FILE, $file)
-        or print("ERROR: could not find input file.\n");
-    my @content = <FILE>;
-    chomp(@content);
-    close FILE;
-
-    for(my $i=0;$i<@content;$i++){  # loop through input file
-        if(defined($content[$i]) && $content[$i]=~/^\>/){   # if an id was found
-            push(@return, $content[$i]);    # save the id
-            $i++;                           # go to next line
-            my $tempSeq="";                    # temp save for the sequence
-            while(defined($content[$i]) && !($content[$i]=~/^\>/)){ # while this line is not a new ID
-                $tempSeq.=$content[$i];    # add seq to temp save
-                $i++;
-            }$i--;
-            push(@return, $tempSeq);        # save the sequence
-        }
-    }
-
-    return(@return);    # @return (ID, seq, ID2, seq2...)
 }
 
 sub seg {
@@ -866,28 +838,12 @@ sub TMHMM20 {
     print OUT "</tool>\n";
     close OUTPUT;
 }
-#check_id_length:   acquire length from precalculated hash
-#check for match/agreement/concurrence of identifier
-sub check_id_length{
-	my $current_id = $_[0];
 
-	if (defined($any_ids{$current_id})){
-            return $any_ids{$current_id};
-	}else{
-            die ( "\nError: " . $current_id . " is a strange identifier ... exiting. Annotation went wrong. Please check your sequence IDs/header.\n\n");
+sub FLPSing {
+    my $flpspath=$annotationPath."/fLPS"; # path to compiled flps file
+	unless(-d "$flpspath/tmp"){
+		system("mkdir $flpspath/tmp");
 	}
-}
-
-#TODO: infile documentation
-# create CAST ouput - finds regions enriched for a paritcular AA, threshold is important!
-sub CASTing {
-	my $threshold=50; #default
-	my $castpath=$annotationPath."/CAST"; # path to compiled cast file
-
-	unless(-d "$castpath/tmp"){
-		system("mkdir $castpath/tmp");
-	}
-
 	my $result;
 
 	# open protein fasta input
@@ -904,9 +860,9 @@ sub CASTing {
 	my $fas = join("",@fas);
 	my @allSeq = split(">",$fas);
 
-	# run CAST for each sequence and save output into @result
-        my $pid = $$;
-        my $tempfasta = $castpath."/tmp/".$specName."_".$pid."tmp.fa";
+	# run flps for each sequence and save output into @result
+    my $pid = $$;
+    my $tempfasta = $flpspath."/tmp/".$specName."_".$pid."tmp.fa";
 	foreach my $seq (@allSeq){
 		if(length($seq)>2){
 			chomp($seq);
@@ -914,50 +870,83 @@ sub CASTing {
 			print TMP ">",$seq;
 			close TMP;
 
-			my $castOut =  qx($castpath/$CAST_tool $tempfasta -verbose -thr $threshold);
-			chomp($castOut);
-			$result .= $castOut."\n";
+            $result .= ">".$seq."\n";
+			my $flpsOut =  `$flpspath/$flps_tool $tempfasta -t 0.0000001 -s`;
+			chomp($flpsOut);
+			$result .= $flpsOut."\n";
 		}
 	}
 
-	chomp($result);
-	my @result = split(/\n/,$result);
-
+    chomp($result);
+	my @result = split(/>/,$result);
 	# write output into XML format
-	open(OUT, ">".$dirOut."cast.xml")   # create output file, overwriting if one exists
-	    or print ("ERROR: could not write output file for CAST. $!\n");
+	open(OUT, ">".$dirOut."flps.xml")   # create output file, overwriting if one exists
+	    or print ("ERROR: could not write output file for fLPS. $!\n");
 
-	print OUT "<?xml version=\"1.0\"?>\n<tool name=\"CAST\">\n";
-        ## results will be written in xml output file
+	print OUT "<?xml version=\"1.0\"?>\n<tool name=\"fLPS\">\n";
+    # results will be written in xml output file
 	for(my $i=0;$i<@result;$i++) {
-	    my @value;
-	    if($result[$i]=~/\>/){
-                chomp($result[$i]);
-                $result[$i]=~s/\>//;
-                $result[$i] =~ s/\s+//g;	# substitute whitespaces
-                my $CR = chr(13);		# define some weird character
-                $result[$i] =~ s/\Q$CR//g;	# substitute some weird character
-
-                my $length = check_id_length($result[$i]);
-                print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";   # print id
-                $i++;
-                while($result[$i] =~ m/(.*) region from (\d*) to (\d*) corrected with score (\d*)/){
-                    @value = split(/ +/, $result[$i]);
-                    chomp(@value);
-                    print OUT "\t\t<feature type=\"$value[0]\" instance=\"1\">\n";
+        if (length($result[$i]) > 0) {
+            my @tmp = split(/\n/, $result[$i]);
+            my $id = shift(@tmp);
+            my $seq = shift(@tmp);
+            print OUT "\t<protein id=\"" . $id . "\" length=\"" . check_id_length($id) . "\">\n";
+            foreach my $hit (@tmp) {
+                my @value = split(/\s+/, $hit);
+                if ($value[1] ne "WHOLE" && $value[1] ne "MULTIPLE") {
+                    print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
                     print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
-                    print OUT "\t\t\t<end end=\"$value[5]\"/>\n";
+                    print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
                     print OUT "\t\t</feature>\n";
-                    $i++;
                 }
-                print OUT "\t</protein>\n";
-	    }
+            }
+            print OUT "\t</protein>\n"
+        }
 	}
     print OUT "</tool>\n";
 	close OUTPUT;
 	close RESULT;
 	system("rm -f $tempfasta");
 }
+
+#check_id_length:   acquire length from precalculated hash
+#check for match/agreement/concurrence of identifier
+sub check_id_length{
+	my $current_id = $_[0];
+
+	if (defined($any_ids{$current_id})){
+            return $any_ids{$current_id};
+	}else{
+            die ( "\nError: " . $current_id . " is a strange identifier ... exiting. Annotation went wrong. Please check your sequence IDs/header.\n\n");
+	}
+}
+
+# function returns an array with ID and sequence of each protein in the input file
+sub tempfile {
+    my $file = $fasta;
+    my @return;
+
+    open(FILE, $file)
+        or print("ERROR: could not find input file.\n");
+    my @content = <FILE>;
+    chomp(@content);
+    close FILE;
+
+    for(my $i=0;$i<@content;$i++){  # loop through input file
+        if(defined($content[$i]) && $content[$i]=~/^\>/){   # if an id was found
+            push(@return, $content[$i]);    # save the id
+            $i++;                           # go to next line
+            my $tempSeq="";                    # temp save for the sequence
+            while(defined($content[$i]) && !($content[$i]=~/^\>/)){ # while this line is not a new ID
+                $tempSeq.=$content[$i];    # add seq to temp save
+                $i++;
+            }$i--;
+            push(@return, $tempSeq);        # save the sequence
+        }
+    }
+    return(@return);    # @return (ID, seq, ID2, seq2...)
+}
+
 ################
 sub getHelpMessage{
     my $message=
@@ -986,11 +975,8 @@ ADDITIONAL OPTIONS
             set this flag if you want to force annotations (override),
  -extract=<>
             specify a path to the location where you want the extracted annotations to be stored.
- -cores=<>
-            specify number of cores used by hmmscan.
  -redo=<>
-            specifiy for which feature database you want to re-annotate the sequence file. [cast|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
-
+            specifiy for which feature database you want to re-annotate the sequence file. [flps|coils|seg|pfam|signalp|smart|tmhmm] (Only one selection possible)\n";
 
 return $message;
 }
