@@ -870,7 +870,7 @@ sub FLPSing {
 			print TMP ">",$seq;
 			close TMP;
       $result .= ">".$seq."\n";
-			my $flpsOut =  `$flpspath/$flps_tool $tempfasta -t 0.0000001 -s`;
+			my $flpsOut =  `$flpspath/$flps_tool -t 0.0000001 -s $tempfasta`;
 			chomp($flpsOut);
 			$result .= $flpsOut."\n";
 		}
