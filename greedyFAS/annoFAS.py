@@ -85,6 +85,9 @@ def query_yes_no(question, default="yes"):
 def complete(text, state):
     return (glob.glob(os.path.expanduser(text)+'*')+[None])[state]
 
+def subprocess_cmd(commands):
+	for cmd in commands:
+		subprocess.call(cmd, shell = True)
 
 def install_path():
     anno_path = expanduser("~") + "/annotation_fas"
@@ -207,7 +210,7 @@ def easyfas_entry(options):
     subprocess.call([cmd], shell=True)
 
 def main():
-    version = "1.0.1"
+    version = "1.0.2"
     current_dir = os.getcwd()
 
     # get arguments
@@ -270,8 +273,8 @@ def main():
         print('Annotation tools will be saved in ')
         print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
-            file = 'annotation_FAS2020.tar.gz'
-            checksum = '220158188 1118201644 ' + file
+            file = 'annotation_FAS2020b.tar.gz'
+            checksum = '4256933429 1119115794 ' + file
             if os.path.isfile(file):
                 checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
                 if checksum_file == checksum:
@@ -309,6 +312,22 @@ def main():
             else:
                 source = source + "/linux/fLPS"
                 subprocess.call(['ln', '-fs', source, target])
+
+            # re-compile COILS2 for mac OS
+            if platform == "darwin":
+                coils_path = anno_path + "/COILS2"
+                os.chdir(coils_path)
+                subprocess.call(['tar', 'xf', 'ncoils.tar.gz'])
+                coils_bin = coils_path + "/coils"
+                os.chdir(coils_bin)
+                compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm'
+                COILSDIR = 'echo \"export COILSDIR=%s\" >> ~/.bash_profile' % coils_bin
+                subprocess_cmd((compile_cmd, COILSDIR))
+                os.chdir(coils_path)
+                makelink_cmd = 'ln -s -f coils/ncoils-osf ./COILS2'
+                source_cmd = 'source ~/.bash_profile'
+                subprocess_cmd((makelink_cmd, source_cmd))
+                os.chdir(anno_path)
 
             # remove temp files
             subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
