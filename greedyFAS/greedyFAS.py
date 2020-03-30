@@ -229,13 +229,13 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                   settings_out["lin"] + "\" normal=\"" + settings_out["norm"] + "\">\n")
     if option['pairwise']:
         for pair in option['pairwise']:
+            query = pair[1]
+            protein = pair[0]
             if option["output"] == 0 or option["output"] == 2:
                 out.write(
                     "\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
             elif taciturn == 1:
                 out = open(option["outpath"], "w+")
-            query = pair[1]
-            protein = pair[0]
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict, protein_lengths)
             query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
             go_priority, domain_count = tmp_query[7:9]
