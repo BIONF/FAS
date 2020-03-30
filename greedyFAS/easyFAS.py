@@ -178,10 +178,10 @@ def fas(args):
 
     option_dict['outpath'] = args.projectdir.rstrip('/') + '/out/' + seedname + '_' + queryname
     option_dict["input_linearized"] = ["pfam", "smart"]
-    option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
+    option_dict["input_normal"] = ["flps", "coils", "seg", "signalp", "tmhmm"]
 
-    if options.pairwise:
-        option_dict["pairwise"] = greedyFAS.read_pairwise(options.pairwise)
+    if args.pairwise:
+        option_dict["pairwise"] = greedyFAS.read_pairwise(args.pairwise)
     else:
         option_dict["pairwise"] = None
 

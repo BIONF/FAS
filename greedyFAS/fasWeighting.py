@@ -124,6 +124,19 @@ def w_weighting(protein, domain_count, proteome):
     return weights, domain_count
 
 
+def w_count_add_domains(protein, domain_count, proteome):
+    features = []
+    for feature in proteome[protein]:
+        features.append(feature)
+    for feature in features:
+        try:
+            domain_count[feature]
+        except KeyError:
+            # print "feature not found in ref " + feature
+            domain_count[feature] = 1
+    return domain_count
+
+
 def w_weighting_constraints(protein, domain_count, proteome, option):
     """Calculates weights, while fulfilling the constraints
 

@@ -45,6 +45,9 @@ from greedyFAS.fasWeighting import w_weight_const_rescale
 from greedyFAS.fasWeighting import w_weight_correction
 from greedyFAS.fasWeighting import w_weighting
 from greedyFAS.fasWeighting import w_weighting_constraints
+from greedyFAS.fasWeighting import w_count_add_domains
+from greedyFAS.fasPathing import pb_region_mapper
+from greedyFAS.fasPathing import pb_region_paths
 
 
 # important vars #             ###  var looks ###
@@ -178,10 +181,6 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
     """
     logging.info("fc_main")
 
-    # score model M2 - used for iteration/incremental evaluation
-
-    # entire mode
-    # both proteins (search and query) will be linearized
     mode = {}
     out = None
     a_out = None
@@ -230,83 +229,36 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
                   settings_out["lin"] + "\" normal=\"" + settings_out["norm"] + "\">\n")
     if option['pairwise']:
         for pair in option['pairwise']:
-            query = pair[1]
-            protein = pair[0]
-            go_priority = False
-            if option["MS_uni"] == 0:
-                if option["weight_const"]:
-                    weights, domain_count = w_weighting_constraints(query, domain_count, query_proteome, option)
-                else:
-                    weights, domain_count = w_weighting(query, domain_count, query_proteome)
-            lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(query, query_proteome,
-                                                                                                protein_lengths,
-                                                                                                clan_dict)
-            tmp_query_graph = pb_region_paths_nongreedy(pb_region_mapper(lin_query_set, query_features,
-                                                                         option["max_overlap"],
-                                                                         option["max_overlap_percentage"]))
-            # PRIORITY CHECK 1: checking for number of instances - assess complexity of the feature graph
-            if int(len(query_features)) > int(option["priority_threshold"]) and option["priority_mode"]:
-                go_priority = True
-                all_query_paths = "PRIORITY"
-            elif option["priority_mode"]:
-                # creating all paths
-                all_query_paths = pb_graphtraversal(tmp_query_graph, [], [], option)
-                # PRIORITY CHECK 2: checking for number of paths in the feature graph
-                if int(len(all_query_paths)) > int(option["max_cardinality"]):
-                    logging.info("Switched to priority mode due to number of paths.")
-                    go_priority = True
-            elif len(tmp_query_graph) == 0:
-                all_query_paths = []
-            else:
-                all_query_paths = "NOPRIORITY"
             if option["output"] == 0 or option["output"] == 2:
                 out.write(
                     "\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) + "\">\n")
             elif taciturn == 1:
                 out = open(option["outpath"], "w+")
-            query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
+            query = pair[1]
+            protein = pair[0]
+            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict, protein_lengths)
+            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
+            go_priority, domain_count = tmp_query[7:9]
+
+#            query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
             ####
             fc_main_sub(protein, domain_count, seed_proteome, option, protein_lengths, all_query_paths, query_features,
-                        out,
-                        go_priority, a_q_f, clan_dict, mode, tmp_query_graph, query_proteome, query, query_clans)
+                        out, go_priority, a_q_f, clan_dict, mode, query_graph, query_proteome, query, query_clans)
     else:
         for query in query_proteome:
-            go_priority = False
-            if option["MS_uni"] == 0:
-                if option["weight_const"]:
-                    weights, domain_count = w_weighting_constraints(query, domain_count, query_proteome, option)
-                else:
-                    weights, domain_count = w_weighting(query, domain_count, query_proteome)
-            lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(query, query_proteome,
-                                                                                                protein_lengths,
-                                                                                                clan_dict)
-            tmp_query_graph = pb_region_paths_nongreedy(pb_region_mapper(lin_query_set, query_features,
-                                                                         option["max_overlap"],
-                                                                         option["max_overlap_percentage"]))
-            # PRIORITY CHECK 1: checking for number of instances - assess complexity of the feature graph
-            if int(len(query_features)) > int(option["priority_threshold"]) and option["priority_mode"]:
-                go_priority = True
-                all_query_paths = "PRIORITY"
-            elif option["priority_mode"]:
-                # creating all paths
-                all_query_paths = pb_graphtraversal(tmp_query_graph, [], [], option)
-                # PRIORITY CHECK 2: checking for number of paths in the feature graph
-                if int(len(all_query_paths)) > int(option["max_cardinality"]):
-                    logging.info("Switched to priority mode due to number of paths.")
-                    go_priority = True
-            elif len(tmp_query_graph) == 0:
-                all_query_paths = []
-            else:
-                all_query_paths = "NOPRIORITY"
             if option["output"] == 0 or option["output"] == 2:
                 out.write("\t<query id=\"" + query + "\" length=\"" + str(int(protein_lengths["query_" + query])) +
                           "\">\n")
             elif taciturn == 1:
                 out = open(option["outpath"], "w+")
-            query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
+            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict, protein_lengths)
+            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
+            go_priority, domain_count = tmp_query[7:9]
+
+#            query_protein, query_clans, clan_dict = su_query_protein(query, query_proteome, protein_lengths, clan_dict)
             for protein in seed_proteome:
                 fc_main_sub(protein, domain_count, seed_proteome, option, protein_lengths, all_query_paths,
-                            query_features, out, go_priority, a_q_f, clan_dict, mode, tmp_query_graph, query_proteome,
+                            query_features, out, go_priority, a_q_f, clan_dict, mode, query_graph, query_proteome,
                             query, query_clans)
             if option["output"] == 0 or option["output"] == 2:
                 out.write("\t</query>\n")
@@ -358,6 +310,32 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
             for feature in tmp:
                 f_out.write(feature[0] + "\t" + str(feature[1]) + "\n")
             f_out.close()
+
+
+def fc_prep_query(query, domain_count, query_proteome, option, clan_dict, protein_lengths):
+    go_priority = False
+    if option["MS_uni"] == 0:
+        domain_count = w_count_add_domains(query, domain_count, query_proteome)
+    lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(query, query_proteome,
+                                                                                        protein_lengths,
+                                                                                        clan_dict)
+    tmp_query_graph, path_number = pb_region_paths(pb_region_mapper(lin_query_set, query_features,
+                                                                    option["max_overlap"],
+                                                                    option["max_overlap_percentage"]))
+    # PRIORITY CHECK: checking for number of instances - assess complexity of the feature graph
+    if (len(query_features) > option["priority_threshold"] or path_number > option["max_cardinality"]) and \
+            option["priority_mode"]:
+        go_priority = True
+        all_query_paths = "PRIORITY"
+    elif option["priority_mode"]:
+        # creating all paths
+        all_query_paths = pb_graphtraversal(tmp_query_graph, [], [], option)
+    elif len(tmp_query_graph) == 0:
+        all_query_paths = []
+    else:
+        all_query_paths = "NOPRIORITY"
+    return tmp_query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict, \
+           go_priority, domain_count
 
 
 def fc_main_sub(protein, domain_count, seed_proteome, option, protein_lengths, all_query_paths, query_features, out,
@@ -683,7 +661,7 @@ def su_query_protein(protein_id, query_proteome, protein_lengths, clan_dict):
 
 
 def su_lin_query_protein(protein_id, query_proteome, protein_lengths, clan_dict):
-    """Initializes variables for the current query protein (linerization version)
+    """Initializes variables for the current query protein (linearization version)
 
     :param protein_id: String that contains the identifier of the query protein
     :param query_proteome: dictionary that contains the feature architecture of all query proteins
@@ -926,7 +904,7 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
     """Main Path-building function,
     creates graph with all paths(for seed/search protein), checks priority mode activation if necessary retrieves best
     path from graph traversal function, returns best path, score and mode
-    Function calls: pb_region_mapper(), pb_region_paths_nongreedy(), pb_entire_priority_mode(),
+    Function calls: pb_region_mapper(), pb_region_paths(), pb_entire_priority_mode(),
                     pb_entire_graphtraversal()
 
     :param tmp_timelimit: timelimit for exhaustive mode
@@ -952,7 +930,7 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
 
     region = pb_region_mapper(list(search_protein), search_features, option["max_overlap"],
                               option["max_overlap_percentage"])
-    search_graph = pb_region_paths_nongreedy(region)
+    search_graph, path_number = pb_region_paths(region)
     logging.debug(region)
     logging.debug(search_graph)
 
@@ -1023,63 +1001,6 @@ def pb_entire_priority_mode(protein, query_path, search_graph, search_features, 
             if (not best_path[1][5]) and (path_score_w[1][4] >= best_path[1][4]):
                 best_path = (path_score_w[0], path_score_w[1], path_score_w[2])
     return best_path
-
-
-def pb_region_paths_nongreedy(overlap_map):
-    """Uses overlap information to build a directional, acyclic graph that contains all linear paths
-
-    :param overlap_map: contains overlap information
-    :return: graph
-    """
-    graph = {}
-    reached_list = {}
-    for feature in overlap_map:
-        reached = []
-        links = []
-        for candidate in feature[1]:
-            links.append(candidate)
-            reached.append(candidate)
-            for i in reached_list[candidate]:
-                if i in feature[1]:
-                    feature[1].remove(i)
-                if i not in reached:
-                    reached.append(i)
-        reached_list[feature[0]] = reached
-        graph[feature[0]] = links
-    return graph
-
-
-def pb_region_mapper(overlap_region, features, max_overlap, max_overlap_percentage):
-    """ Finds all (relevant) overlaps in the feature architecture
-
-    :param max_overlap_percentage: overlap_threshold in percentage
-    :param max_overlap: overlap threshold in amino acids
-    :param overlap_region: region that is looked at
-    :param features: feature information [start/stop]
-    :return: overlap_map
-    """
-    logging.info("pb_region_mapper")
-    logging.debug(overlap_region)
-
-    overlap_map = [("START", overlap_region)]
-    for i in range(0, len(overlap_region)):
-        end = features[overlap_region[i]][3]
-        length_i = features[overlap_region[i]][3] - features[overlap_region[i]][2]
-        length_i = length_i * max_overlap_percentage
-        overlap = []
-        x = i + 1
-        while x < len(overlap_region):
-            length_x = features[overlap_region[x]][3] - features[overlap_region[x]][2]
-            length_x = length_x * max_overlap_percentage
-            overlap_size = end - features[overlap_region[x]][2]
-            if overlap_size <= max_overlap and overlap_size <= length_i and overlap_size <= length_x:
-                overlap.append(overlap_region[x])
-            x += 1
-        overlap.append("END")
-        overlap_map.append((overlap_region[i], overlap))
-    overlap_map.append(("END", []))
-    overlap_map.reverse()
-    return overlap_map
 
 
 def pb_entire_graphtraversal(search_graph, query_path, search_features, weights, query_features, a_s_f, a_q_f,
