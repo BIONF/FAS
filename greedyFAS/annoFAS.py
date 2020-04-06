@@ -312,7 +312,6 @@ def main():
             else:
                 source = source + "/linux/fLPS"
                 subprocess.call(['ln', '-fs', source, target])
-
             # re-compile COILS2 for mac OS
             if platform == "darwin":
                 coils_path = anno_path + "/COILS2"

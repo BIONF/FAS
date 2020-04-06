@@ -20,8 +20,8 @@
 #
 #######################################################################
 
-import annoFAS
-import greedyFAS
+from greedyFAS import annoFAS
+from greedyFAS import greedyFAS
 import os
 import argparse
 import logging
@@ -125,7 +125,7 @@ def fas(args):
                    "inst_efilter": args.inst_efilter, "e_output": args.no_arch, "feature_info": args.feature_info,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
                    "timelimit": 7200, "ref_2": args.ref_2, "phyloprofile": None, "score_weights": [], "output": 0,
-                   "max_overlap_percentage": 0.0, "domain": args.domain
+                   "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None
                    }
 
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
@@ -178,7 +178,7 @@ def fas(args):
 
     option_dict['outpath'] = args.projectdir.rstrip('/') + '/out/' + seedname + '_' + queryname
     option_dict["input_linearized"] = ["pfam", "smart"]
-    option_dict["input_normal"] = ["cast", "coils", "seg", "signalp", "tmhmm"]
+    option_dict["input_normal"] = ["flps", "coils", "seg", "signalp", "tmhmm"]
 
     if options.pairwise:
         option_dict["pairwise"] = greedyFAS.read_pairwise(options.pairwise)
