@@ -861,28 +861,27 @@ sub FLPSing {
 	my @allSeq = split(">",$fas);
 
 	# run flps for each sequence and save output into @result
-    my $pid = $$;
-    my $tempfasta = $flpspath."/tmp/".$specName."_".$pid."tmp.fa";
+  my $pid = $$;
+  my $tempfasta = $flpspath."/tmp/".$specName."_".$pid."tmp.fa";
 	foreach my $seq (@allSeq){
 		if(length($seq)>2){
 			chomp($seq);
 			open(TMP,">$tempfasta");
 			print TMP ">",$seq;
 			close TMP;
-
-            $result .= ">".$seq."\n";
-			my $flpsOut =  `$flpspath/$flps_tool $tempfasta -t 0.0000001 -s`;
+      $result .= ">".$seq."\n";
+			my $flpsOut =  `$flpspath/$flps_tool -t 0.0000001 -s $tempfasta`;
 			chomp($flpsOut);
 			$result .= $flpsOut."\n";
 		}
 	}
 
-    chomp($result);
+  chomp($result);
 	my @result = split(/>/,$result);
+
 	# write output into XML format
 	open(OUT, ">".$dirOut."flps.xml")   # create output file, overwriting if one exists
 	    or print ("ERROR: could not write output file for fLPS. $!\n");
-
 	print OUT "<?xml version=\"1.0\"?>\n<tool name=\"fLPS\">\n";
     # results will be written in xml output file
 	for(my $i=0;$i<@result;$i++) {
@@ -892,12 +891,12 @@ sub FLPSing {
             my $seq = shift(@tmp);
             print OUT "\t<protein id=\"" . $id . "\" length=\"" . check_id_length($id) . "\">\n";
             foreach my $hit (@tmp) {
-                my @value = split(/\s+/, $hit);
-                if ($value[1] ne "WHOLE" && $value[1] ne "MULTIPLE") {
-                    print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
-                    print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
-                    print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
-                    print OUT "\t\t</feature>\n";
+                if ($hit =~ /^$id/) {
+                  my @value = split(/\s+/, $hit);
+                  print OUT "\t\t<feature type=\"$value[1]_$value[7]\" instance=\"1\">\n";
+                  print OUT "\t\t\t<start start=\"$value[3]\"/>\n";
+                  print OUT "\t\t\t<end end=\"$value[4]\"/>\n";
+                  print OUT "\t\t</feature>\n";
                 }
             }
             print OUT "\t</protein>\n"

@@ -182,6 +182,9 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
     logging.info("fc_main")
 
     mode = {}
+    weights = {}
+    adjusted_weights = {}
+    weight_tmp = {}
     out = None
     a_out = None
     if option["output"] == 0 or option["output"] == 2:
