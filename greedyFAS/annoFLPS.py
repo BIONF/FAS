@@ -26,7 +26,13 @@ from sys import argv
 
 
 def main(fastapath, outpath, flpspath, threshold, prot_lengths):
-    flps_out = subprocess.run([flpspath + ' ' + fastapath + ' -s -t ' + threshold], shell=True, capture_output=True)
+    run_flps(flpspath, threshold, fastapath, prot_lengths)
+    write_xml(outpath, proteome, prot_lengths)
+    ### to be added: somehow get all prot ids from sequence files to stop proteins from disappearing (should be in the main anno script)
+
+
+def run_flps(flpspath, threshold, fastapath, prot_lengths):
+    flps_out = subprocess.run([flpspath + ' -s -t ' + threshold + ' ' + fastapath], shell=True, capture_output=True)
     lines = flps_out.stdout.decode().split('\n')
     proteome = {}
     for i in prot_lengths:
@@ -38,8 +44,6 @@ def main(fastapath, outpath, flpspath, threshold, prot_lengths):
             proteome[cells[0]][feature].append((cells[3], cells[4]))
         else:
             proteome[cells[0]][feature] = [(cells[3], cells[4])]
-    write_xml(outpath, proteome, prot_lengths)
-    ### to be added: somehow get all prot ids from sequence files to stop proteins from disappearing (should be in the main anno script)
 
 
 def write_xml(outpath, proteome, prot_lengths):

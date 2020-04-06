@@ -86,9 +86,6 @@ def get_options():
                                "mode is not active or if no main reference was given")
     optional.add_argument('--cores', help='number of cores', action='store', default='')
     optional.add_argument("--domain", dest="domain", action="store_true", help="activate domain tabular output")
-    optional.add_argument("--pairwise", dest="pairwise", default=None, type=str,
-                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                             " compared (one pair per line tab seperated)")
     args = parser.parse_args()
     return args
 
@@ -125,7 +122,7 @@ def fas(args):
                    "inst_efilter": args.inst_efilter, "e_output": args.no_arch, "feature_info": args.feature_info,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
                    "timelimit": 7200, "ref_2": args.ref_2, "phyloprofile": None, "score_weights": [], "output": 0,
-                   "max_overlap_percentage": 0.0, "domain": args.domain
+                   "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None
                    }
 
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
@@ -179,11 +176,6 @@ def fas(args):
     option_dict['outpath'] = args.projectdir.rstrip('/') + '/out/' + seedname + '_' + queryname
     option_dict["input_linearized"] = ["pfam", "smart"]
     option_dict["input_normal"] = ["flps", "coils", "seg", "signalp", "tmhmm"]
-
-    if args.pairwise:
-        option_dict["pairwise"] = greedyFAS.read_pairwise(args.pairwise)
-    else:
-        option_dict["pairwise"] = None
 
     logging.basicConfig(level=loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(
