@@ -206,12 +206,12 @@ def easyfas_entry(options):
         cmd = cmd + ' --redo ' + options['redo']
     subprocess.call([cmd], shell=True)
 
-
 def main():
+    version = "1.0.1"
     current_dir = os.getcwd()
 
     # get arguments
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('--fasta', help='Input sequence in fasta format', action='store', default='',
