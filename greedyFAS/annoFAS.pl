@@ -371,7 +371,7 @@ sub smart{
     chdir($annotationPath);
 
     open(OUT, ">".$dirOut."smart.xml") or print("ERROR: could not create output file smart.xml.\n");
-    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"SMART-DB\">\n";
+    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"SMART-DB\" version=\"4.1.0\">\n";
     for(my $i=0;$i<@content;$i++){  # loop the content of smart_scan.out file and filter whats needed
         if($content[$i]=~/^>/){
             my %domainName;		# a hash that counts the instances of a clan in a sequence
@@ -474,7 +474,7 @@ sub pfam {
 
     open(OUT, ">".$dirOut."pfam.xml") or print("ERROR: could not create output file pfam.xml.\n");
 
-    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"PfamDB\">\n";
+    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"PfamDB\" version=\"32.0\">\n";
 
     for(my $i=0;$i<@content;$i++){  # loop the content of pfam_scan.out file and filter whats needed
         if($content[$i]=~/^>/){
@@ -590,13 +590,12 @@ sub seg {
 
     open(OUT, ">".$dirOut."seg.xml")  # create output file, overwrite existing one
         or print("ERROR: could not write output file for seg.\n");
-
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"seg\">\n";
 
     for(my $i=0;$i<@result;$i++){
         if($result[$i]=~/^>/){   # find ID
             my @output;
-            if($i>0){print OUT "\n"}
+            # if($i>0){print OUT "\n"}
             $result[$i]=~s/\>//;
             $result[$i] =~ s/\s+//g;        # substitute whitespaces
             $result[$i] =~ s/\n//g;         # substitute newlines
@@ -624,10 +623,10 @@ sub seg {
             print OUT "\t\t<feature type=\"low complexity regions\" instance=\"$lcrCounter\">";
             foreach(@output){print OUT $_;}  # print into output file
             print OUT "\n\t\t</feature>";
-            print OUT "\n\t</protein>";
+            print OUT "\n\t</protein>\n";
         }
-    }print OUT "\n</tool>";
-
+    }
+    print OUT "</tool>";
     close OUT;
 }
 
@@ -655,7 +654,7 @@ sub signalp {
     open(OUT, ">".$dirOut."signalp.xml")  # create output file, overwrite existing one
         or print("ERROR: could not write output file for signalp. $!\n");
 
-    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"signalp\">\n";
+    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"signalp\" version=\"4.1\">\n";
 
     for(my $i=0;$i<scalar(@result);$i++){
         if(!($result[$i]=~/^#/)){
