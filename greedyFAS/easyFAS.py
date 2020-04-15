@@ -20,12 +20,18 @@
 #
 #######################################################################
 
-from greedyFAS import annoFAS
-from greedyFAS import greedyFAS
+
 import os
 import argparse
 import logging
 import inspect
+from sys import version_info
+if version_info.major == 3:
+    from greedyFAS import annoFAS
+    from greedyFAS import greedyFAS
+elif version_info.major == 2:
+    import annoFAS
+    import greedyFAS
 
 
 def get_options():

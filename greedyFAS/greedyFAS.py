@@ -30,24 +30,45 @@ import argparse
 import time
 from functools import partial
 from copy import deepcopy
-from greedyFAS.fasInput import xmlreader
-from greedyFAS.fasInput import read_pairwise
-from greedyFAS.fasInput import constraints_in
-from greedyFAS.fasInput import featuretypes
-from greedyFAS.fasOutput import bidirectionout
-from greedyFAS.fasOutput import domain_out
-from greedyFAS.fasOutput import phyloprofile_out
-from greedyFAS.fasScoring import sf_calc_score
-from greedyFAS.fasScoring import sf_entire_calc_score
-from greedyFAS.fasWeighting import w_count
-from greedyFAS.fasWeighting import w_count_ref
-from greedyFAS.fasWeighting import w_weight_const_rescale
-from greedyFAS.fasWeighting import w_weight_correction
-from greedyFAS.fasWeighting import w_weighting
-from greedyFAS.fasWeighting import w_weighting_constraints
-from greedyFAS.fasWeighting import w_count_add_domains
-from greedyFAS.fasPathing import pb_region_mapper
-from greedyFAS.fasPathing import pb_region_paths
+from sys import version_info
+if version_info.major == 3:
+    from greedyFAS.fasInput import xmlreader
+    from greedyFAS.fasInput import read_pairwise
+    from greedyFAS.fasInput import constraints_in
+    from greedyFAS.fasInput import featuretypes
+    from greedyFAS.fasOutput import bidirectionout
+    from greedyFAS.fasOutput import domain_out
+    from greedyFAS.fasOutput import phyloprofile_out
+    from greedyFAS.fasScoring import sf_calc_score
+    from greedyFAS.fasScoring import sf_entire_calc_score
+    from greedyFAS.fasWeighting import w_count
+    from greedyFAS.fasWeighting import w_count_ref
+    from greedyFAS.fasWeighting import w_weight_const_rescale
+    from greedyFAS.fasWeighting import w_weight_correction
+    from greedyFAS.fasWeighting import w_weighting
+    from greedyFAS.fasWeighting import w_weighting_constraints
+    from greedyFAS.fasWeighting import w_count_add_domains
+    from greedyFAS.fasPathing import pb_region_mapper
+    from greedyFAS.fasPathing import pb_region_paths
+elif version_info.major == 2:
+    from fasInput import xmlreader
+    from fasInput import read_pairwise
+    from fasInput import constraints_in
+    from fasInput import featuretypes
+    from fasOutput import bidirectionout
+    from fasOutput import domain_out
+    from fasOutput import phyloprofile_out
+    from fasScoring import sf_calc_score
+    from fasScoring import sf_entire_calc_score
+    from fasWeighting import w_count
+    from fasWeighting import w_count_ref
+    from fasWeighting import w_weight_const_rescale
+    from fasWeighting import w_weight_correction
+    from fasWeighting import w_weighting
+    from fasWeighting import w_weighting_constraints
+    from fasWeighting import w_count_add_domains
+    from fasPathing import pb_region_mapper
+    from fasPathing import pb_region_paths
 
 
 # important vars #             ###  var looks ###
