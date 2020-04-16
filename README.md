@@ -56,7 +56,7 @@ To compare the feature architecture of two proteins, first we need to have the f
 
 __*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM and SignalP, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
 
-First, you need to download the annotation tools using annoFAS
+To start using FAS, you need to download the annotation tools with annoFAS
 ```
 annoFAS --fasta seed.fa --path PATH --name anno --prepare
 ```
