@@ -35,13 +35,20 @@ from os.path import expanduser
 home = expanduser("~")
 
 def get_path():
-    return os.path.dirname(inspect.getfile(greedyFAS)).strip()
+    return(os.path.dirname(inspect.getfile(greedyFAS)).strip())
 
 def search_string_in_file(file_name, string_to_search):
     with open(file_name, 'r') as read_obj:
         for line in read_obj:
             if string_to_search in line:
                 return(line.rstrip())
+
+def complete(text, state):
+    return(glob.glob(os.path.expanduser(text)+'*')+[None])[state]
+
+def subprocess_cmd(commands):
+    for cmd in commands:
+        subprocess.call(cmd, shell = True)
 
 def download_data(file, checksum):
     url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo' + '/' + file
@@ -87,14 +94,24 @@ def install_path():
         readline.parse_and_bind("tab: complete")
         readline.set_completer(complete)
         anno_path = input('Enter annotation dir: ')
-    return anno_path
+    return(anno_path)
 
-def complete(text, state):
-    return (glob.glob(os.path.expanduser(text)+'*')+[None])[state]
-
-def subprocess_cmd(commands):
-	for cmd in commands:
-		subprocess.call(cmd, shell = True)
+def get_dtu_path():
+    print("Do you want to use TMHMM and SignalP? (y/n)")
+    if query_yes_no("Source path?"):
+        readline.set_completer_delims(' \t\n;')
+        readline.parse_and_bind("tab: complete")
+        readline.set_completer(complete)
+        dtu_path = input('Enter path to TMHMM and SignalP tar files: ')
+        cmd = 'ls %s' % dtu_path
+        dtu_tool = subprocess.check_output([cmd], shell=True).decode(sys.stdout.encoding).strip()
+        if not "tmhmm" in dtu_tool:
+            sys.exit('TMHMM not found in %s' % dtu_path)
+        if not "signalp" in dtu_tool:
+            sys.exit('SignalP not found in %s' % dtu_path)
+        return(dtu_path, dtu_tool)
+    else:
+        return(0)
 
 def check_status(perl_script):
     status = search_string_in_file(perl_script, "my $config")
@@ -116,7 +133,10 @@ def prepare_annoTool(annoPathIn):
     perl_script = get_path() + '/annoFAS.pl'
     if check_status(perl_script) == 1:
         print('Annotation tools need to be downloaded!')
-        # annotation directory
+        # get DTU tools path
+        (dtu_path, dtu_tool) = get_dtu_path()
+
+        # get annotation directory
         if not annoPathIn == '':
             if os.path.isdir(os.path.abspath(annoPathIn)):
                 anno_path = os.path.abspath(annoPathIn)
@@ -127,17 +147,50 @@ def prepare_annoTool(annoPathIn):
         if not os.path.isdir(anno_path):
             os.mkdir(anno_path)
         anno_path = os.path.abspath(anno_path)
+        os.chdir(anno_path)
+        print('Annotation tools will be saved in ')
+        print(os.getcwd())
+        print('----------------------------------')
+        tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
+        with open('annoTools.txt', mode = 'wt', encoding = 'utf-8') as tool_file:
+            tool_file.write("#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n")
 
-        # create folders for annotation tools
-        folders = ['fLPS', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SignalP', 'SMART', 'TMHMM']
+        # install TMHMM and SignalP
+        if not dtu_path == 0:
+            print('Installing SignalP and TMHMM...')
+            for tool in dtu_tool.split('\n'):
+                print(dtu_path + "/" + tool)
+                tar_cmd = 'tar xf %s/%s --directory %s' % (dtu_path, tool, anno_path)
+                subprocess.call([tar_cmd], shell=True)
+
+            mv_cmd1 = 'mv signalp* SignalP'
+            subprocess.call([mv_cmd1], shell=True)
+            os.chdir("SignalP")
+            makelink_signalp = 'ln -s -f bin/signalp signalp'
+            subprocess.call([makelink_signalp], shell=True)
+            os.chdir(anno_path)
+
+            mv_cmd2 = 'mv tmhmm* TMHMM'
+            subprocess.call([mv_cmd2], shell=True)
+            machine = os.uname()[4]
+            os.chdir("TMHMM")
+            makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
+            subprocess.call([makelink_tmhmm], shell=True)
+            os.chdir(anno_path)
+
+            dtu_tool_list = ["TMHMM", "SignalP"]
+            with open('annoTools.txt', mode = 'a', encoding = 'utf-8') as tool_file:
+                tool_file.write("TMHMM\nSignalP\n")
+        tool_file.close()
+
+        print('Installing other tools...')
+        # create folders for other annotation tools
+        folders = ['fLPS', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SMART'] #, 'SignalP', 'TMHMM']
         for folder in folders:
             if not os.path.isdir(anno_path + '/' + folder):
                 os.mkdir(anno_path + '/' + folder)
 
         # download annotation tools
-        os.chdir(anno_path)
-        print('Annotation tools will be saved in ')
-        print(os.getcwd())
         if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
             file = 'annotation_FAS2020b.tar.gz'
             checksum = '4256933429 1119115794 ' + file
@@ -153,7 +206,6 @@ def prepare_annoTool(annoPathIn):
                 download_data(file, checksum)
 
             # copy tools to their folders
-            tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG', 'SignalP', 'TMHMM']
             for tool in tools:
                 if tool == "fLPS":
                     print('Downloading fLPS ...')
