@@ -103,7 +103,7 @@ def get_dtu_path():
         readline.parse_and_bind("tab: complete")
         readline.set_completer(complete)
         dtu_path = input('Enter path to TMHMM and SignalP tar files: ')
-        cmd = 'ls %s' % dtu_path
+        cmd = 'ls %s | grep \"signalp\|tmhmm\"' % dtu_path
         dtu_tool = subprocess.check_output([cmd], shell=True).decode(sys.stdout.encoding).strip()
         if not "tmhmm" in dtu_tool:
             sys.exit('TMHMM not found in %s' % dtu_path)
