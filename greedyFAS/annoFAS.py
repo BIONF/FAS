@@ -111,7 +111,7 @@ def get_dtu_path():
             sys.exit('SignalP not found in %s' % dtu_path)
         return(dtu_path, dtu_tool)
     else:
-        return(0)
+        return(0, 0)
 
 def check_status(perl_script):
     status = search_string_in_file(perl_script, "my $config")
