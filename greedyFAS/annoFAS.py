@@ -249,28 +249,28 @@ def call_annoFAS_perl(options):
     # print(cmd)
     subprocess.call([cmd], shell=True)
 
-def get_options():
-    # get arguments
-    version = "1.0.3"
-    parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
-    required = parser.add_argument_group('required arguments')
-    optional = parser.add_argument_group('optional arguments')
-    required.add_argument('--fasta', help='Input sequence in fasta format', action='store', default='',
-                          required=True)
-    required.add_argument('--path', help='Output directory', action='store', default='', required=True)
-    required.add_argument('--name', help='Name of output annotation folder', action='store', default='',
-                          required=True)
-    optional.add_argument('--extract', help='Path to save the extracted annotation for input sequence',
-                          action='store', default='')
-    optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils|seg|pfam|signalp|smart|tmhmm. '
-                                         'Only one selection allowed!', action='store', default=0)
-    optional.add_argument('--force', help='Force override annotations', action='store_true')
-    optional.add_argument('--prepare', help='Download annotation tools and do configuration', action='store_true')
-    optional.add_argument('--annoPath', help='Path to annotation dir', action='store', default='')
-    optional.add_argument('--cores', help='number of cores', action='store', default='')
-
-    args = parser.parse_args()
-    return args
+# def get_options():
+#     # get arguments
+#     version = "1.0.3"
+#     parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
+#     required = parser.add_argument_group('required arguments')
+#     optional = parser.add_argument_group('optional arguments')
+#     required.add_argument('--fasta', help='Input sequence in fasta format', action='store', default='',
+#                           required=True)
+#     required.add_argument('--path', help='Output directory', action='store', default='', required=True)
+#     required.add_argument('--name', help='Name of output annotation folder', action='store', default='',
+#                           required=True)
+#     optional.add_argument('--extract', help='Path to save the extracted annotation for input sequence',
+#                           action='store', default='')
+#     optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils|seg|pfam|signalp|smart|tmhmm. '
+#                                          'Only one selection allowed!', action='store', default=0)
+#     optional.add_argument('--force', help='Force override annotations', action='store_true')
+#     optional.add_argument('--prepare', help='Download annotation tools and do configuration', action='store_true')
+#     optional.add_argument('--annoPath', help='Path to annotation dir', action='store', default='')
+#     optional.add_argument('--cores', help='number of cores', action='store', default='')
+#
+#     args = parser.parse_args()
+#     return args
 
 def easyfas_entry(options):
     current_dir = os.getcwd()
@@ -382,8 +382,28 @@ def easyfas_entry(options):
     subprocess.call([cmd], shell=True)
 
 def main():
+    version = "1.0.3"
+    parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
+    required = parser.add_argument_group('required arguments')
+    optional = parser.add_argument_group('optional arguments')
+    required.add_argument('--fasta', help='Input sequence in fasta format', action='store', default='',
+                          required=True)
+    required.add_argument('--path', help='Output directory', action='store', default='', required=True)
+    required.add_argument('--name', help='Name of output annotation folder', action='store', default='',
+                          required=True)
+    optional.add_argument('--extract', help='Path to save the extracted annotation for input sequence',
+                          action='store', default='')
+    optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils|seg|pfam|signalp|smart|tmhmm. '
+                                         'Only one selection allowed!', action='store', default=0)
+    optional.add_argument('--force', help='Force override annotations', action='store_true')
+    optional.add_argument('--prepare', help='Download annotation tools and do configuration', action='store_true')
+    optional.add_argument('--annoPath', help='Path to annotation dir', action='store', default='')
+    optional.add_argument('--cores', help='number of cores', action='store', default='')
+
+    args = parser.parse_args()
+
     current_dir = os.getcwd()
-    args = get_options()
+    # args = get_options()
     options = {
         'fasta': args.fasta,
         'path': args.path,
@@ -398,7 +418,6 @@ def main():
         prepare_annoTool(args.annoPath)
     else:
         call_annoFAS_perl(options)
-
 
 if __name__ == '__main__':
     main()
