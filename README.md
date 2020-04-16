@@ -52,13 +52,15 @@ conda config --add channels bioconda
 FAS comes with three main functions: **annoFAS** and **parseInterPro**, which generate the standard input for FAS, and the main FAS function **greedyFAS**.
 
 ## Annotate protein features
-To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [PFAM](https://pfam.xfam.org/) and [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP](http://www.cbs.dtu.dk/services/SignalP/). *NOTE: we provide compiled code for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM and SignalP, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*
+To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP](http://www.cbs.dtu.dk/services/SignalP/). 
 
-First, you need to download the annotation tools to use FAS.
+__*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM and SignalP, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
+
+First, you need to download the annotation tools using annoFAS
 ```
 annoFAS --fasta seed.fa --path PATH --name anno --prepare
 ```
-The annotation tools will be download and saved in your selected directory. Inside this directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just edit that file.
+The annotation tools will be download and saved in your selected directory. Inside this directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
 
 Your two input proteins (seed and ortholog) must be in FASTA format. Using the following commands to do the annotations for the two sequences:
 
