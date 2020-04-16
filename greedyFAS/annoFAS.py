@@ -96,14 +96,10 @@ def subprocess_cmd(commands):
 	for cmd in commands:
 		subprocess.call(cmd, shell = True)
 
-def prepare_annoTool(annoPathIn):
-    # get config status and anno_path (if availible)
-    perl_script = get_path() + '/annoFAS.pl'
-    print('annoFAS.pl found in %s' % perl_script)
+def check_status(perl_script):
     status = search_string_in_file(perl_script, "my $config")
     flag = 0
     if status == 'my $config = 0;':
-        print('Annotation tools need to be downloaded!')
         flag = 1
     else:
         anno_path_tmp = search_string_in_file(perl_script, "my $annotationPath")
@@ -111,10 +107,15 @@ def prepare_annoTool(annoPathIn):
         anno_path_tmp = re.sub(r'[;"\s]', '', anno_path_tmp)
         if not os.path.isfile(anno_path_tmp + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
             flag = 1
-        else:
-            print('Annotation tools found in %s!' % anno_path_tmp)
+        # else:
+        #     print('Annotation tools found in %s!' % anno_path_tmp)
+    return(flag)
 
-    if flag == 1:
+def prepare_annoTool(annoPathIn):
+    current_dir = os.getcwd()
+    perl_script = get_path() + '/annoFAS.pl'
+    if check_status(perl_script) == 1:
+        print('Annotation tools need to be downloaded!')
         # annotation directory
         if not annoPathIn == '':
             if os.path.isdir(os.path.abspath(annoPathIn)):
@@ -207,15 +208,22 @@ def prepare_annoTool(annoPathIn):
             print('Annotation tools downloaded!')
         else:
             print('Annotation tools found!')
-            # add path to annotation dir to annFASpl script
+            # add path to annotation dir to annFAS.pl script
             mod_anno_path = anno_path.replace('/', '\/')
             sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
                                                                                                      perl_script)
             sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
             subprocess.call([sed_cmd1], shell=True)
             subprocess.call([sed_cmd2], shell=True)
+    os.chdir(current_dir)
 
 def call_annoFAS_perl(options):
+    # check status
+    perl_script = get_path() + '/annoFAS.pl'
+    if check_status(perl_script) == 1:
+        prepare_annoTool(options['annoPath'])
+
+    # run annoFAS.pl
     current_dir = os.getcwd()
     os.chdir(current_dir)
     inputFullPath = os.path.abspath(options['fasta'])
