@@ -34,8 +34,10 @@ from os.path import expanduser
 
 home = expanduser("~")
 
+
 def get_path():
     return(os.path.dirname(inspect.getfile(greedyFAS)).strip())
+
 
 def search_string_in_file(file_name, string_to_search):
     with open(file_name, 'r') as read_obj:
@@ -43,12 +45,15 @@ def search_string_in_file(file_name, string_to_search):
             if string_to_search in line:
                 return(line.rstrip())
 
+
 def complete(text, state):
     return(glob.glob(os.path.expanduser(text)+'*')+[None])[state]
+
 
 def subprocess_cmd(commands):
     for cmd in commands:
         subprocess.call(cmd, shell = True)
+
 
 def download_data(file, checksum):
     url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo' + '/' + file
@@ -63,6 +68,7 @@ def download_data(file, checksum):
             sys.exit('Downloaded file corrupted!')
     else:
         sys.exit('Cannot download annotation tools!')
+
 
 def query_yes_no(question, default="yes"):
     valid = {"yes": True, "y": True, "ye": True,
@@ -86,6 +92,7 @@ def query_yes_no(question, default="yes"):
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
 
+
 def install_path():
     anno_path = expanduser("~") + "/annotation_fas"
     print("Annotation dir: %s (y/n)" % anno_path)
@@ -95,6 +102,7 @@ def install_path():
         readline.set_completer(complete)
         anno_path = input('Enter annotation dir: ')
     return(anno_path)
+
 
 def get_dtu_path():
     print("Do you want to use TMHMM and SignalP? (y/n)")
@@ -109,9 +117,10 @@ def get_dtu_path():
             sys.exit('TMHMM not found in %s' % dtu_path)
         if not "signalp" in dtu_tool:
             sys.exit('SignalP not found in %s' % dtu_path)
-        return(dtu_path, dtu_tool)
+        return dtu_path, dtu_tool
     else:
-        return(0, 0)
+        return 0, 0
+
 
 def check_status(perl_script):
     status = search_string_in_file(perl_script, "my $config")
@@ -126,7 +135,8 @@ def check_status(perl_script):
             flag = 1
         # else:
         #     print('Annotation tools found in %s!' % anno_path_tmp)
-    return(flag)
+    return flag
+
 
 def prepare_annoTool(annoPathIn):
     current_dir = os.getcwd()
@@ -269,6 +279,7 @@ def prepare_annoTool(annoPathIn):
             subprocess.call([sed_cmd2], shell=True)
     os.chdir(current_dir)
 
+
 def call_annoFAS_perl(options):
     # check status
     perl_script = get_path() + '/annoFAS.pl'
@@ -300,6 +311,7 @@ def call_annoFAS_perl(options):
         cmd = cmd + ' --redo ' + options['redo']
     # print(cmd)
     subprocess.call([cmd], shell=True)
+
 
 def easyfas_entry(options):
     current_dir = os.getcwd()
@@ -410,6 +422,7 @@ def easyfas_entry(options):
         cmd = cmd + ' --redo ' + options['redo']
     subprocess.call([cmd], shell=True)
 
+
 def main():
     version = "1.0.3"
     parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
@@ -445,6 +458,7 @@ def main():
         prepare_annoTool(args.annoPath)
     else:
         call_annoFAS_perl(options)
+
 
 if __name__ == '__main__':
     main()
