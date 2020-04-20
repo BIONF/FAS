@@ -123,16 +123,17 @@ GetOptions( "h"         => \$help,
 );
 
 # help
-if (defined $help){
+if (defined $help) {
     print $helpmessage;
     print $usage;
     die ( "\n ...Exiting ".$base.$suffix."\n");
 }
+
 ## check for annotation files for extraction
-## if $extract is given not annotations will be made
-if ($extract ne ''){
+## if $extract is given no annotations will be made
+if ($extract ne '') {
     my @fileList = glob($annot."/*.xml");
-    if(scalar(@fileList) == $tool_count){
+    if (scalar(@fileList) == $tool_count) {
         ## using annotations and extract given gene_id
         print "Found annotation files:\n\t $annot\n";
         print "--> Extracting annotations for given gene id:\n\t $qORp.\n";
@@ -140,58 +141,58 @@ if ($extract ne ''){
         print "\n--> Annotations extracted an stored at:\n\t $extract/\n";
         print "--> Exiting script ".$base.$suffix."\n";
         exit;
-    }else{
+    } else {
         print "ERROR: Given annotations do not exist or may be incomplete.\n";
         exit;
     }
 }
 
-if (!(defined $cores)){
+if (!(defined $cores)) {
     my $cores = 1;
 }
 
 # create given output directory
 my $dirOut = $annot."/";
-if(!(-d($dirOut))){
+if (!(-d($dirOut))) {
 	mkdir($dirOut);
 }
 
-if($qORp eq "q"){$dirOut.="query/"}
-elsif($qORp eq "p"){$dirOut.="proteom/"}
-elsif(length($qORp)>0){$dirOut.="$qORp/"}
-else{print("ERROR: choose (q)uery or (p)roteom or set a foldername to save the xml files.\n")}
+if ($qORp eq "q") {$dirOut.="query/"}
+elsif ($qORp eq "p") {$dirOut.="proteom/"}
+elsif (length($qORp)>0) {$dirOut.="$qORp/"}
+else {print("ERROR: choose (q)uery or (p)roteom or set a foldername to save the xml files.\n")}
 
 ## check for given output if it already exists (specified by -path option)
 ## if it exists, check if XMl files exist and skip annoation if they do and option force is not set
-if(!(-d($dirOut))){
+if (!(-d($dirOut))) {
     mkdir($dirOut);
     $regular = 1;
 
 } else {
     my @fileList = glob($dirOut."/*.xml");
-    if(scalar(@fileList) == $tool_count && !$force && !$redo){
+    if (scalar(@fileList) == $tool_count && !$force && !$redo) {
 	print "Found annotation files:\n\t $dirOut. Using these.\n";
         ## exit statement:
 	die("Skipping annotations. Using existing files.\n");
-    }elsif (!$force && !$redo){
+    } elsif (!$force && !$redo) {
 	print "Directory:\n\t $dirOut already exists, but seems to be empty or incomplete. Starting annotation.\n";
         ## set $empty for later evaluation
         $empty = 1;
-    }elsif ($force && !$redo){
+    } elsif ($force && !$redo) {
 	print "Directory:\n\t $dirOut already exists but may be empty or incomplete, annotations will be redone due to option -force.\n";
 	## delete existing files in output dir and redo the annotations!
 	my $delCommand = "rm -f $dirOut/*";
 	system($delCommand);
-    }elsif ($redo){
-        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps"){
+    } elsif ($redo) {
+        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps") {
             print "Directory:\n\t$dirOut already exists,\n\t$redo annotations will be redone due to option -redo=$redo.\n";
             my $delCommand = "rm -f $dirOut/$redo.xml";
             system($delCommand);
-        }else {
+        } else {
             die("\nPlease check options. -redo=$redo is not a valid option. Something went wrong. Exiting...\n\n");
         }
 
-    }else{
+    } else {
         die("\nPlease check options and output directory. Something went wrong. Exiting...\n\n");
     }
 }
@@ -206,48 +207,54 @@ $milsec1    -= int($milsec1);
 $milsec1    *= 100;
 $milsec1    = int($milsec1);
 
-if($time[1]<10){$time[1] = "0".$time[1]}
+if ($time[1]<10) {$time[1] = "0".$time[1]}
 $time[4] += 1;
-if($time[4]<10){$time[4] = "0".$time[4]}
+if ($time[4]<10) {$time[4] = "0".$time[4]}
 my $START = $time[3]."/".$time[4]."/".($time[5]+1900)." ".$time[2].":".$time[1].":".$time[0].":".$milsec1;
 
 ########## START MAIN ##########
+# get list of available annotation tools
+open(TOOL, "$annotationPath/annoTools.txt") or die "Cannot find $annotationPath/annoTools.txt!";
+my @availableTools = <TOOL>;
+my $availableTools = join("", @availableTools);
+close(TOOL);
+
 #acquire sequence length and check identifier
 print "--> acquiring sequence lengths\n";
 seq_id_len($fasta);
 print "...done: sequence lengths are calculated for input file.\n";
 
-if (($redo eq 'flps') or $force or $empty or $regular){
+if ($availableTools =~ /fLPS/ and (($redo eq 'flps') or $force or $empty or $regular)) {
     print "--> starting: $flps_tool\n";
     FLPSing();
 }
 
-if (($redo eq 'tmhmm') or $force or $empty or $regular){
+if ($availableTools =~ /TMHMM/ and (($redo eq 'tmhmm') or $force or $empty or $regular)) {
     print "--> starting: $TMHMM_tool\n";
     TMHMM20();
 }
 
-if(($redo eq 'coils') or $force or $empty or $regular){
+if ($availableTools =~ /COILS2/ and (($redo eq 'coils') or $force or $empty or $regular)) {
     print "--> starting: $COILS_tool\n";
     coils();
 }
 
-if (($redo eq 'signalp') or $force or $empty or $regular){
+if ($availableTools =~ /SignalP/ and (($redo eq 'signalp') or $force or $empty or $regular)) {
     print "--> starting: $SIGNALP_tool\n";
     signalp();
 }
 
-if (($redo eq 'seg') or $force or $empty or $regular){
+if ($availableTools =~ /SEG/ and (($redo eq 'seg') or $force or $empty or $regular)) {
     print "--> starting: $SEG_tool\n";
     seg();
 }
 
-if (($redo eq 'pfam') or $force or $empty or $regular){
+if ($availableTools =~ /Pfam/ and (($redo eq 'pfam') or $force or $empty or $regular)) {
     print "--> starting: $PFAM_tool\n";
     pfam($cores);
 }
 
-if (($redo eq 'smart') or $force or $empty or $regular){
+if ($availableTools =~ /SMART/ and (($redo eq 'smart') or $force or $empty or $regular)) {
     print "--> starting: $SMART_tool\n";
     smart($cores);
 }
@@ -260,9 +267,9 @@ my $milsec2= time;
 $milsec2 -= int($milsec2);
 $milsec2 *= 100;
 $milsec2 = int($milsec2);
-if($time[1]<10){$time[1]="0".$time[1]}
+if ($time[1]<10) {$time[1]="0".$time[1]}
 $time[4]+=1;
-if($time[4]<10){$time[4]="0".$time[4]}
+if ($time[4]<10) {$time[4]="0".$time[4]}
 my $END = $time[3]."/".$time[4]."/".($time[5]+1900)." ".$time[2].":".$time[1].":".$time[0].":".$milsec2;
 print "tool start: $START\ntool end  : $END\n";
 print "#####################\n\n";
@@ -273,7 +280,7 @@ sub extractAnnotation{
     # for all files
     my @annotationFiles = glob($annot."/*.xml");
 	my $pathbase = basename($annot);
-    foreach(@annotationFiles){
+    foreach(@annotationFiles) {
         open (EXTRACT, "<".$_) or die ("ERROR: could not find file: $_. $!\n");
         my @content = <EXTRACT>;
         close EXTRACT;
@@ -281,24 +288,24 @@ sub extractAnnotation{
         mkpath($extract."/");
         open (WRITE_EX, ">".$extract."/".$base.$suffix) or die ("ERROR: could not create file: $extract/$qORp/$base$suffix. $!\n");
 
-        for(my $ii=0;$ii<scalar(@content);$ii++){
-            if ($content[$ii] =~ m/^<\?xml/){
+        for(my $ii=0;$ii<scalar(@content);$ii++) {
+            if ($content[$ii] =~ m/^<\?xml/) {
                 print WRITE_EX $content[$ii];
             }
-            if ($content[$ii] =~ m/^<tool name=/){
+            if ($content[$ii] =~ m/^<tool name=/) {
                 print WRITE_EX $content[$ii];
             }
-            if($content[$ii] =~ m/<protein id=/){
+            if ($content[$ii] =~ m/<protein id=/) {
                 my @protein = split(/\"/,$content[$ii]);
-                if($protein[1] eq $qORp){
+                if ($protein[1] eq $qORp) {
                     $content[$ii] =~ s/\"$qORp\"/\"$pathbase\|$qORp\"/;
                     print WRITE_EX $content[$ii];
                     my $jj = $ii+1;
-                    while($content[$jj] !~ m/<\/protein>/){
+                    while($content[$jj] !~ m/<\/protein>/) {
                         print WRITE_EX $content[$jj];
                         $jj++;
                     }
-                    if($content[$jj] =~ m/<\/protein>/){
+                    if ($content[$jj] =~ m/<\/protein>/) {
                         print WRITE_EX $content[$jj];
                         last;
                     }
@@ -325,8 +332,8 @@ sub seq_id_len {
 	or die("ERROR: could not find or open file: $file. $!\n");
 	my @content = <INPUT>;
 	chomp(@content);
-	for(my $i=0;$i<scalar(@content);$i++){  # loop through the content and find the IDs
-		if($content[$i]=~/^>/){
+	for(my $i=0;$i<scalar(@content);$i++) {  # loop through the content and find the IDs
+		if ($content[$i]=~/^>/) {
 			$content[$i] =~ s/\s+//g;               # substitute whitespaces
 			$content[$i] =~ s/\n//g;                # substitute newlines
 			my $CR = chr(13);			# define some weird character
@@ -335,7 +342,7 @@ sub seq_id_len {
 			$id=~s/\>//;				# get rid of the ">" character
 			$i++;					# go in the next line of your input file
 			my $SQlen=0;				# set current length to zero
-			while(defined($content[$i]) && !($content[$i]=~/^>/)){	# as long as the next sequence does not appear
+			while(defined($content[$i]) && !($content[$i]=~/^>/)) {	# as long as the next sequence does not appear
 				$content[$i] =~ s/ +//g;	# substitute whitespaces
 				$SQlen+=length($content[$i]);	# get length of current line (stored in $content[$i]
 				$i++;				# proceed with next line
@@ -356,11 +363,11 @@ sub smart{
     require($smartPATH."/".$SMART_tool);           # require: making subroutins from smart_scan.pl availible.
     my $outName = main_smart($fasta, $qORp, $cores);
 
-    if(-e $OutFilesPATH."/".$outName){
+    if (-e $OutFilesPATH."/".$outName) {
         open(SMART, $OutFilesPATH."/".$outName);
         @content = <SMART>;
         close SMART;
-    }else{
+    } else {
         print("ERROR: could not find or open $OutFilesPATH/smart.out. $!\n");
     }
 
@@ -372,8 +379,8 @@ sub smart{
 
     open(OUT, ">".$dirOut."smart.xml") or print("ERROR: could not create output file smart.xml.\n");
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"SMART-DB\" version=\"4.1.0\">\n";
-    for(my $i=0;$i<@content;$i++){  # loop the content of smart_scan.out file and filter whats needed
-        if($content[$i]=~/^>/){
+    for(my $i=0;$i<@content;$i++) {  # loop the content of smart_scan.out file and filter whats needed
+        if ($content[$i]=~/^>/) {
             my %domainName;		# a hash that counts the instances of a clan in a sequence
             $content[$i]=~s/\>//;	# get rid of the ">" character ... done for all tools!!!
             $content[$i] =~ s/\s+//g;   # substitute whitespaces
@@ -385,7 +392,7 @@ sub smart{
             print OUT "\t<protein id=\"" . $content[$i] . "\" length=\"" . $length . "\">\n";
 
             $i++;
-            if($content[$i]=~/No hits detected that satisfy reporting thresholds/){
+            if ($content[$i]=~/No hits detected that satisfy reporting thresholds/) {
                 #print $content[$i]."\n";
                 print OUT "\t</protein>\n";
                 next;
@@ -396,8 +403,8 @@ sub smart{
             my @temp;
             my @temp_familyname;
             my %evalInfo;
-            while(defined($content[$i]) && ($content[$i]=~/^\#/)){
-                if(($content[$i]=~/family:/)){
+            while(defined($content[$i]) && ($content[$i]=~/^\#/)) {
+                if (($content[$i]=~/family:/)) {
                     #get family name first:
                     @temp_familyname = split(/family:/, $content[$i]);
                     @temp_familyname = split(/ +/, $temp_familyname[1]);  # $temp[1] is the family name now
@@ -407,17 +414,17 @@ sub smart{
                     chomp($temp_fam_eval[1]);
                     $evalInfo{$temp_familyname[1]} = $temp_fam_eval[1];
 
-                    if(!defined($domainName{$temp_familyname[1]})){   # if clan (family?) name does not already exist in hash
+                    if (!defined($domainName{$temp_familyname[1]})) {   # if clan (family?) name does not already exist in hash
                         $domainName{$temp_familyname[1]} = 0;
                     }
                 }
-                else{
-                    while(defined($content[$i]) && ($content[$i]=~/^\#/) && !($content[$i]=~/family:/)){
+                else {
+                    while(defined($content[$i]) && ($content[$i]=~/^\#/) && !($content[$i]=~/family:/)) {
                         my @position = split(/\|/, $content[$i]);   # $position[3] and $position[4] define start and end of domain, $position[11] defines the instance evalue
-                        if(!defined($starts{$temp_familyname[1]})){$starts{$temp_familyname[1]} = $position[10]."@@".$position[3]}
-                        else{$starts{$temp_familyname[1]} .= ", ".$position[10]."@@".$position[3]}
-                        if(!defined($ends{$temp_familyname[1]})){$ends{$temp_familyname[1]} = "$position[4]"}
-                        else{$ends{$temp_familyname[1]} .= ", $position[4]"}
+                        if (!defined($starts{$temp_familyname[1]})) {$starts{$temp_familyname[1]} = $position[10]."@@".$position[3]}
+                        else {$starts{$temp_familyname[1]} .= ", ".$position[10]."@@".$position[3]}
+                        if (!defined($ends{$temp_familyname[1]})) {$ends{$temp_familyname[1]} = "$position[4]"}
+                        else {$ends{$temp_familyname[1]} .= ", $position[4]"}
 
                         my $InstCount = $domainName{$temp_familyname[1]};
                         $domainName{$temp_familyname[1]} = $InstCount+1;
@@ -428,18 +435,18 @@ sub smart{
             }
 # take sorting into account
             my @keys = keys(%domainName);
-            foreach(@keys){
+            foreach(@keys) {
                 print OUT "\t\t<feature type=\"" . $_ . "\" instance=\"" . $domainName{$_} . "\" clan=\"" . "---" . "\" evalue=\"" . $evalInfo{$_}. "\">\n";
                     my @temp_s = split(/, /, $starts{$_});
                     my @s;
                     my %e;
-                    foreach(@temp_s){
+                    foreach(@temp_s) {
                         my @e_s = split(/@@/,$_);
                         $e{$e_s[1]}=$e_s[0];
                         push(@s,$e_s[1]);
                     }
                     my @e = split(/, /, $ends{$_});
-                    foreach(@s){
+                    foreach(@s) {
                         print OUT "\t\t\t<start inst_eval=\"$e{$_}\" start=\"$_\" end=\"".shift(@e)."\"/>\n";
                     }
                 print OUT "\t\t</feature>\n";
@@ -476,8 +483,8 @@ sub pfam {
 
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"PfamDB\" version=\"32.0\">\n";
 
-    for(my $i=0;$i<@content;$i++){  # loop the content of pfam_scan.out file and filter whats needed
-        if($content[$i]=~/^>/){
+    for(my $i=0;$i<@content;$i++) {  # loop the content of pfam_scan.out file and filter whats needed
+        if ($content[$i]=~/^>/) {
             my %pfamDomainName;		# a hash that counts the instances of a clan in a sequence
             $content[$i]=~s/\>//;	# get rid of the ">" character ... done for all tools!!!
             $content[$i] =~ s/\s+//g;   # substitute whitespaces
@@ -489,7 +496,7 @@ sub pfam {
             print OUT "\t<protein id=\"" . $content[$i] . "\" length=\"" . $length . "\">\n";
 
             $i++;
-            if($content[$i]=~/No hits detected that satisfy reporting thresholds/){
+            if ($content[$i]=~/No hits detected that satisfy reporting thresholds/) {
                 #print $content[$i]."\n";
                 print OUT "\t</protein>\n";
                 next;
@@ -501,8 +508,8 @@ sub pfam {
             my @temp_familyname;
             my %clanInfo;
             my %evalInfo;
-            while(defined($content[$i]) && ($content[$i]=~/^\#/)){
-                if(($content[$i]=~/family:/)){
+            while(defined($content[$i]) && ($content[$i]=~/^\#/)) {
+                if (($content[$i]=~/family:/)) {
                     #get family name first:
                     @temp_familyname = split(/family:/, $content[$i]);
                     @temp_familyname = split(/ +/, $temp_familyname[1]);  # $temp[1] is the family name now
@@ -511,33 +518,33 @@ sub pfam {
                     @temp_fam_eval = split(/ +/, $temp_fam_eval[1]);
                     $evalInfo{$temp_familyname[1]} = $temp_fam_eval[1];
                     #handling clan info
-                    if(!($content[$i]=~/clan: ---/)){		#clan info is av.
+                    if (!($content[$i]=~/clan: ---/)) {		#clan info is av.
                         @temp = split(/clan:/, $content[$i]);
                         @temp = split(/ +/, $temp[1]);  # $temp[1] is the clan name now
 
-                        if(!defined($clanInfo{$temp_familyname[1]})){ #clan detected the first time
+                        if (!defined($clanInfo{$temp_familyname[1]})) { #clan detected the first time
                             $clanInfo{$temp_familyname[1]} = $temp[1];
                         }
 
-                    }elsif($content[$i]=~/clan: ---/){ #no clan info av. (family name will be used as "clan" to
+                    } elsif ($content[$i]=~/clan: ---/) { #no clan info av. (family name will be used as "clan" to
                         #set family name as clan information
-                        if(!defined($clanInfo{$temp_familyname[1]})){ #clan detected the first time
+                        if (!defined($clanInfo{$temp_familyname[1]})) { #clan detected the first time
                             $clanInfo{$temp_familyname[1]} = $temp_familyname[1];
                         }
 			        }
 
-                    if(!defined($pfamDomainName{$temp_familyname[1]})){   # if clan (family?) name does not already exist in hash
+                    if (!defined($pfamDomainName{$temp_familyname[1]})) {   # if clan (family?) name does not already exist in hash
                         $pfamDomainName{$temp_familyname[1]} = 0;
                     }
                 }
-                else{
-                    while(defined($content[$i]) && ($content[$i]=~/^\#/) && !($content[$i]=~/family:/)){
+                else {
+                    while(defined($content[$i]) && ($content[$i]=~/^\#/) && !($content[$i]=~/family:/)) {
                         #print "$i: ".$content[$i]."\n";
                         my @position = split(/\|/, $content[$i]);   # $position[3] and $position[4] define start and end of domain, $position[11] defines the instance evalue
-                        if(!defined($starts{$temp_familyname[1]})){$starts{$temp_familyname[1]} = $position[10]."@@".$position[3]}
-                        else{$starts{$temp_familyname[1]} .= ", ".$position[10]."@@".$position[3]}
-                        if(!defined($ends{$temp_familyname[1]})){$ends{$temp_familyname[1]} = "$position[4]"}
-                        else{$ends{$temp_familyname[1]} .= ", $position[4]"}
+                        if (!defined($starts{$temp_familyname[1]})) {$starts{$temp_familyname[1]} = $position[10]."@@".$position[3]}
+                        else {$starts{$temp_familyname[1]} .= ", ".$position[10]."@@".$position[3]}
+                        if (!defined($ends{$temp_familyname[1]})) {$ends{$temp_familyname[1]} = "$position[4]"}
+                        else {$ends{$temp_familyname[1]} .= ", $position[4]"}
 
                         my $InstCount = $pfamDomainName{$temp_familyname[1]};
                         $pfamDomainName{$temp_familyname[1]} = $InstCount+1;
@@ -548,19 +555,19 @@ sub pfam {
             }
 # take sorting into account
             my @keys = keys(%pfamDomainName);
-            foreach(@keys){
+            foreach(@keys) {
                 #print OUT "\t\t<feature type=\"$_\" instance=\"$pfamDomainName{$_}\">\n";
                 print OUT "\t\t<feature type=\"" . $_ . "\" instance=\"" . $pfamDomainName{$_} . "\" clan=\"" . $clanInfo{$_} . "\" evalue=\"" . $evalInfo{$_}. "\">\n";
                     my @temp_s = split(/, /, $starts{$_});
                     my @s;
                     my %e;
-                    foreach(@temp_s){
+                    foreach(@temp_s) {
                         my @e_s = split(/@@/,$_);
                         $e{$e_s[1]}=$e_s[0];
                         push(@s,$e_s[1]);
                     }
                     my @e = split(/, /, $ends{$_});
-                    foreach(@s){
+                    foreach(@s) {
                         print OUT "\t\t\t<start inst_eval=\"$e{$_}\" start=\"$_\" end=\"".shift(@e)."\"/>\n";
                         #print OUT "\t\t\t<end end=\"".shift(@e)."\"/>\n";
                     }
@@ -592,10 +599,10 @@ sub seg {
         or print("ERROR: could not write output file for seg.\n");
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"seg\">\n";
 
-    for(my $i=0;$i<@result;$i++){
-        if($result[$i]=~/^>/){   # find ID
+    for(my $i=0;$i<@result;$i++) {
+        if ($result[$i]=~/^>/) {   # find ID
             my @output;
-            # if($i>0){print OUT "\n"}
+            # if ($i>0) {print OUT "\n"}
             $result[$i]=~s/\>//;
             $result[$i] =~ s/\s+//g;        # substitute whitespaces
             $result[$i] =~ s/\n//g;         # substitute newlines
@@ -608,11 +615,11 @@ sub seg {
             $i++;
 
             my $lcrCounter = 0;
-            while(defined($result[$i]) && !($result[$i]=~/^>/)){  # loop through the results to this ID
-                if(!($result[$i] eq "")){ # if line is not empty
+            while(defined($result[$i]) && !($result[$i]=~/^>/)) {  # loop through the results to this ID
+                if (!($result[$i] eq "")) { # if line is not empty
                     $result[$i]=~s/^ +//;   # delete whitespaces at line beginning
                     my @temp = split(/ +/, $result[$i]);
-                    if(defined($temp[0]) && $temp[0]=~/[a-z]/ && defined($temp[1]) && $temp[1]=~/[0-9]/){
+                    if (defined($temp[0]) && $temp[0]=~/[a-z]/ && defined($temp[1]) && $temp[1]=~/[0-9]/) {
                         $lcrCounter++;
                         my @tempPos = split(/-/, $temp[1]);
                         push(@output, "\n\t\t\t<start start=\"$tempPos[0]\"/>\n\t\t\t<end end=\"$tempPos[1]\"/>");
@@ -621,7 +628,7 @@ sub seg {
                 $i++;
             }$i--;
             print OUT "\t\t<feature type=\"low complexity regions\" instance=\"$lcrCounter\">";
-            foreach(@output){print OUT $_;}  # print into output file
+            foreach(@output) {print OUT $_;}  # print into output file
             print OUT "\n\t\t</feature>";
             print OUT "\n\t</protein>\n";
         }
@@ -639,8 +646,8 @@ sub signalp {
     open(INPUT, "$fasta")
         or print("ERROR: function: signalp() / opening input file. $!\n");
     my @temp = <INPUT>;
-    foreach(@temp){
-        if($_=~/\>/){$_=~s/\>//;push(@idlist, $_)}
+    foreach(@temp) {
+        if ($_=~/\>/) {$_=~s/\>//;push(@idlist, $_)}
     }
     chomp(@idlist);
     close INPUT;
@@ -656,12 +663,12 @@ sub signalp {
 
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"signalp\" version=\"4.1\">\n";
 
-    for(my $i=0;$i<scalar(@result);$i++){
-        if(!($result[$i]=~/^#/)){
+    for(my $i=0;$i<scalar(@result);$i++) {
+        if (!($result[$i]=~/^#/)) {
             my @line = split(/\s+/, $result[$i]);
-            foreach(@idlist){
+            foreach(@idlist) {
                 my $tempID = $_;
-                if ($tempID eq $line[0]){
+                if ($tempID eq $line[0]) {
                     $tempID=~s/\>//;
                     $tempID =~ s/\s+//g;         # substitute whitespaces
                     $tempID =~ s/\n//g;         # substitute newlines
@@ -669,7 +676,7 @@ sub signalp {
                     $tempID =~ s/\Q$CR//g;      # substitute some weird character
 
                     my $length = check_id_length($tempID);
-                    if ($line[9] eq "Y"){
+                    if ($line[9] eq "Y") {
                         #end of feature = Ymaxpos -1 (as is signalp.pl version 4.1)
                         my $end = $line[4]-1;
                         #yes case of SigP
@@ -679,14 +686,14 @@ sub signalp {
                         print OUT "\t\t</feature>\n";
                         print OUT "\t</protein>\n";
 
-                    }elsif($line[9] eq "N"){
+                    } elsif ($line[9] eq "N") {
                         #no case of SigP
                         print OUT "\t<protein id=\"" . $tempID . "\" length=\"" . $length . "\">\n";
                         print OUT "\t\t<feature type=\"SIGNAL\" instance=\"0\">\n";
                         print OUT "\t\t</feature>\n";
                         print OUT "\t</protein>\n";
 
-                    }else{
+                    } else {
                             #signalP output might be strange
                     }
                 }
@@ -720,9 +727,9 @@ sub coils {
 
     print OUT "<?xml version=\"1.0\"?>\n<tool name=\"COILS2\">\n";
 
-    for(my $i=0;$i<@result;$i++){   # now writing in final output file: "coils.out"
-        if($i>0){$i--}
-        if($result[$i]=~/\>/){  # find ID
+    for(my $i=0;$i<@result;$i++) {   # now writing in final output file: "coils.out"
+        if ($i>0) {$i--}
+        if ($result[$i]=~/\>/) {  # find ID
             $result[$i]=~s/\>//;
             $result[$i]=~s/\s+//g;
             $result[$i] =~ s/\n//g;     # substitute newlines
@@ -735,7 +742,7 @@ sub coils {
             $i++;   # go to next line where the sequence should start
 
             my $sequence;
-            while(defined($result[$i]) && !($result[$i]=~/\>/)){ # making a one-line-sequence
+            while(defined($result[$i]) && !($result[$i]=~/\>/)) { # making a one-line-sequence
                 $sequence.=$result[$i];
                 $i++;
             }
@@ -743,19 +750,19 @@ sub coils {
             my @temp = split(/x/, $sequence);   # split output at cc positions
             my $coilCounter=0;  # counts the number of coils
             my @pos;    # save all starts and ends to print
-            if(defined($temp[1])){  # do the rest only if at least one coiled coil position is found
+            if (defined($temp[1])) {  # do the rest only if at least one coiled coil position is found
                 my $position=0; # temp save for start and end positions of coils
-                for(my $i=0;$i<@temp;$i++){
-                    if($i>0){$i-=1}
-                    if(!($temp[$i] eq "") or (($i==0) && ($temp[$i] eq ""))){ # if line is not empty or is empty but its the first line
+                for(my $i=0;$i<@temp;$i++) {
+                    if ($i>0) {$i-=1}
+                    if (!($temp[$i] eq "") or (($i==0) && ($temp[$i] eq ""))) { # if line is not empty or is empty but its the first line
                         $coilCounter++;
                         $position+=length($temp[$i])+1;   # start position of coil is length of this line (plus end position from before)
                         push(@pos, $position);
                         $i++;   # go to next line
 
-                        if(defined($temp[$i]) && $temp[$i] eq ""){    # now this line should be empty
+                        if (defined($temp[$i]) && $temp[$i] eq "") {    # now this line should be empty
                             my $coilLEN=1;      # length of coil counter
-                            while($temp[$i] eq ""){ # as long as there are empty lines
+                            while($temp[$i] eq "") { # as long as there are empty lines
                                 $coilLEN++; # increase the coil length counter
                                 $i++;   # and go to next line
                             }
@@ -768,9 +775,9 @@ sub coils {
 ### OUTPUT :
             print OUT "\t\t<feature type=\"coiled_coil\" instance=\"$coilCounter\">\n";
             my $x=0;
-            foreach(@pos){
-                if($x==0){print OUT "\t\t\t<start start=\"$_\"/>\n";$x++;}
-                elsif($x==1){print OUT "\t\t\t<end end=\"$_\"/>\n";$x--;}
+            foreach(@pos) {
+                if ($x==0) {print OUT "\t\t\t<start start=\"$_\"/>\n";$x++;}
+                elsif ($x==1) {print OUT "\t\t\t<end end=\"$_\"/>\n";$x--;}
             }
             print OUT "\t\t</feature>\n";
         }print OUT "\t</protein>\n";
@@ -799,7 +806,7 @@ sub TMHMM20 {
 
     for(my $i=0;$i<@result;$i++) {  # go through the results, filter out whats needed and create output file
         my $TMcount=0;  # counts the number of TR regions
-        if($result[$i]=~/\>/){  # find ID
+        if ($result[$i]=~/\>/) {  # find ID
             $result[$i] =~ s/\>//;
             $result[$i] =~ s/\s+//g;        # substitute whitespaces
             $result[$i] =~ s/\n//g;         # substitute newlines
@@ -810,21 +817,21 @@ sub TMHMM20 {
             print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";
 
             $i++;
-            if($result[$i]=~/\%/){  # find line with information of interest
+            if ($result[$i]=~/\%/) {  # find line with information of interest
                 my @temp = split(/\:/, $result[$i]);
                 @temp = split(/\, /, $temp[1]);
                 $temp[0]=~s/ //;
                 chomp(@temp);
-                foreach(@temp){
-                    if($_=~/M/){$TMcount++}
+                foreach(@temp) {
+                    if ($_=~/M/) {$TMcount++}
                     $_=~s/^O/o/;
                     #$_.="\n";
                 }
 ### OUTPUT :
                 print OUT "\t\t<feature type=\"transmembrane\" instance=\"$TMcount\">\n";
-                foreach(@temp){
+                foreach(@temp) {
                     my @pos;
-                    if($_=~/M/){
+                    if ($_=~/M/) {
                         @pos = split(/ +/, $_);
                         print OUT "\t\t\t<start start=\"$pos[1]\"/>\n";
                         print OUT "\t\t\t<end end=\"$pos[2]\"/>\n";
@@ -840,7 +847,7 @@ sub TMHMM20 {
 
 sub FLPSing {
     my $flpspath=$annotationPath."/fLPS"; # path to compiled flps file
-	unless(-d "$flpspath/tmp"){
+	unless(-d "$flpspath/tmp") {
 		system("mkdir $flpspath/tmp");
 	}
 	my $result;
@@ -862,8 +869,8 @@ sub FLPSing {
 	# run flps for each sequence and save output into @result
   my $pid = $$;
   my $tempfasta = $flpspath."/tmp/".$specName."_".$pid."tmp.fa";
-	foreach my $seq (@allSeq){
-		if(length($seq)>2){
+	foreach my $seq (@allSeq) {
+		if (length($seq)>2) {
 			chomp($seq);
 			open(TMP,">$tempfasta");
 			print TMP ">",$seq;
@@ -912,9 +919,9 @@ sub FLPSing {
 sub check_id_length{
 	my $current_id = $_[0];
 
-	if (defined($any_ids{$current_id})){
+	if (defined($any_ids{$current_id})) {
             return $any_ids{$current_id};
-	}else{
+	} else {
             die ( "\nError: " . $current_id . " is a strange identifier ... exiting. Annotation went wrong. Please check your sequence IDs/header.\n\n");
 	}
 }
@@ -930,12 +937,12 @@ sub tempfile {
     chomp(@content);
     close FILE;
 
-    for(my $i=0;$i<@content;$i++){  # loop through input file
-        if(defined($content[$i]) && $content[$i]=~/^\>/){   # if an id was found
+    for(my $i=0;$i<@content;$i++) {  # loop through input file
+        if (defined($content[$i]) && $content[$i]=~/^\>/) {   # if an id was found
             push(@return, $content[$i]);    # save the id
             $i++;                           # go to next line
             my $tempSeq="";                    # temp save for the sequence
-            while(defined($content[$i]) && !($content[$i]=~/^\>/)){ # while this line is not a new ID
+            while(defined($content[$i]) && !($content[$i]=~/^\>/)) { # while this line is not a new ID
                 $tempSeq.=$content[$i];    # add seq to temp save
                 $i++;
             }$i--;

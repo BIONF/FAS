@@ -117,7 +117,7 @@ def anno(annojobs, projectdir, force, cores):
         if annotate:
             anno_options['fasta'] = annojob
             anno_options['name'] = name
-            annoFAS.easyfas_entry(anno_options)
+            annoFAS.call_annoFAS_perl(anno_options)
 
 
 def fas(args):

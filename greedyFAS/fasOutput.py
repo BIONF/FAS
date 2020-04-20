@@ -40,16 +40,16 @@ def bidirectionout(outpath):
         query_id = query.attrib["id"]
         for seed in query:
             seed_id, forward_score, seed_mode = seed.attrib["id"], seed.attrib["score"], seed.attrib["mode"]
+            forward_s_path = {}
+            forward_q_path = {}
             for path in seed:
                 if path.tag == "template_path":
-                    forward_s_path = {}
                     for feature in path:
                         forward_s_path[feature.attrib["type"]] = []
                         for instance in feature:
                             forward_s_path[feature.attrib["type"]].append((instance.attrib["start"],
                                                                            instance.attrib["end"]))
                 if path.tag == "query_path":
-                    forward_q_path = {}
                     for feature in path:
                         forward_q_path[feature.attrib["type"]] = []
                         for instance in feature:
@@ -60,16 +60,16 @@ def bidirectionout(outpath):
                     for child in node:
                         if child.attrib["id"] == query_id:
                             reverse_score, query_mode = child.attrib["score"], child.attrib["mode"]
+                            reverse_s_path = {}
+                            reverse_q_path = {}
                             for path in child:
                                 if path.tag == "query_path":
-                                    reverse_s_path = {}
                                     for feature in path:
                                         reverse_s_path[feature.attrib["type"]] = []
                                         for instance in feature:
                                             reverse_s_path[feature.attrib["type"]].append((instance.attrib["start"],
                                                                                            instance.attrib["end"]))
                                 if path.tag == "template_path":
-                                    reverse_q_path = {}
                                     for feature in path:
                                         reverse_q_path[feature.attrib["type"]] = []
                                         for instance in feature:
@@ -100,7 +100,7 @@ def bidirectionout(outpath):
     out.close()
 
 
-def domain_out(outpath, bidirectional, extendedout, noref):
+def domain_out(outpath, bidirectional, extendedout):
     arc = {}
     if extendedout:
         arctree = ElTre.parse(outpath + "_architecture.xml")
@@ -118,20 +118,18 @@ def domain_out(outpath, bidirectional, extendedout, noref):
     d0_out = open(outpath + "_forward.domains", "w")
     forwardtree = ElTre.parse(outpath + ".xml")
     forwardroot = forwardtree.getroot()
-    if bidirectional:
-        reversetree = ElTre.parse(outpath + "_reverse.xml")
-        reverseroot = reversetree.getroot()
-        d1_out = open(outpath + "_reverse.domains", "w")
+
     for query in forwardroot:
         query_id, query_length = query.attrib["id"], query.attrib["length"]
         for seed in query:
             seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
-            outdict[(seed_id, query_id)] = (forward_score, "0.0")
+            # outdict[(seed_id, query_id)] = (forward_score, "0.0")
             if extendedout:
                 # weights = {}
+                forward_s_path = {}
+                forward_q_path = {}
                 for path in seed:
                     if path.tag == "template_path":
-                        forward_s_path = {}
                         for feature in path:
                             # if noref:
                             #     weights[feature.attrib["type"]] = str(1.0 / len(path))
@@ -158,7 +156,6 @@ def domain_out(outpath, bidirectional, extendedout, noref):
                                                  "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                     if path.tag == "query_path":
-                        forward_q_path = {}
                         for feature in path:
                             forward_q_path[feature.attrib["type"]] = []
                             for instance in feature:
@@ -190,17 +187,21 @@ def domain_out(outpath, bidirectional, extendedout, noref):
     if extendedout:
         d0_out.close()
     if bidirectional:
+        reversetree = ElTre.parse(outpath + "_reverse.xml")
+        reverseroot = reversetree.getroot()
+        d1_out = open(outpath + "_reverse.domains", "w")
         for seed in reverseroot:
             seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
             for query in seed:
                 query_id, reverse_score, query_length = query.attrib["id"], query.attrib["score"], \
                                                         query.attrib["length"]
-                outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
+                # outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
                 if extendedout:
                     # weights = {}
+                    reverse_q_path = {}
+                    reverse_s_path = {}
                     for path in query:
                         if path.tag == "template_path":
-                            reverse_q_path = {}
                             for feature in path:
                                 # weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
                                 reverse_q_path[feature.attrib["type"]] = []
@@ -224,7 +225,6 @@ def domain_out(outpath, bidirectional, extendedout, noref):
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                         if path.tag == "query_path":
-                            reverse_s_path = {}
                             for feature in path:
                                 reverse_s_path[feature.attrib["type"]] = []
                                 for instance in feature:
@@ -259,7 +259,7 @@ def domain_out(outpath, bidirectional, extendedout, noref):
             d1_out.close()
 
 
-def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
+def phyloprofile_out(outpath, bidirectional, mapping_file):
     with open(mapping_file) as infile:
         map = {}
         for line in infile.readlines():
@@ -267,13 +267,16 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, extendedout, noref):
             map[cells[0]] = cells[1]
     outdict = {}
     groupname = outpath.split("/")[-1]
-
+    forwardtree = ElTre.parse(outpath + ".xml")
+    forwardroot = forwardtree.getroot()
     for query in forwardroot:
         query_id, query_length = query.attrib["id"], query.attrib["length"]
         for seed in query:
             seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
             outdict[(seed_id, query_id)] = (forward_score, "0.0")
     if bidirectional:
+        reversetree = ElTre.parse(outpath + "_reverse.xml")
+        reverseroot = reversetree.getroot()
         for seed in reverseroot:
             seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
             for query in seed:

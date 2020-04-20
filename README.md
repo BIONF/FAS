@@ -11,8 +11,6 @@ FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcent
 * [Contributors](#contributors)
 * [Contact](#contact)
 
-
-
 # Installation
 
 FAS is provided as a python package and compatible with both Python2 and Python3.
@@ -54,13 +52,25 @@ conda config --add channels bioconda
 FAS comes with three main functions: **annoFAS** and **parseInterPro**, which generate the standard input for FAS, and the main FAS function **greedyFAS**.
 
 ## Annotate protein features
-To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [cast](https://academic.oup.com/bioinformatics/article/16/10/915/223582), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [SignalP](http://www.cbs.dtu.dk/services/SignalP/), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [PFAM](https://pfam.xfam.org/) and [SMART](http://smart.embl-heidelberg.de/).
+To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP](http://www.cbs.dtu.dk/services/SignalP/). 
+
+__*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM and SignalP, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
+
+### Download and install annotation tools
+
+To start using FAS, you need to download the annotation tools with annoFAS
+```
+annoFAS --fasta seed.fa --path PATH --name anno --prepare
+```
+The annotation tools will be download and saved in your selected directory. Inside this directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
+
+### Perform feature annotation
 
 Your two input proteins (seed and ortholog) must be in FASTA format. Using the following commands to do the annotations for the two sequences:
 
 ```
-annoFAS --fasta seed.fasta --path PATH --name seed
-annoFAS --fasta orthologs.fasta --path PATH --name ortholog
+annoFAS --fasta seed.fa --path PATH --name seed
+annoFAS --fasta ortholog.fa --path PATH --name ortholog
 ```
 
 This will output two folders `seed` and `ortholog` (as being defined using the `--name` parameter), each contains 7 XML files corresponding for 7 reference databases/annotation tools. These folders will be the input for FAS.

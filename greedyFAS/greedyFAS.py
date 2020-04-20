@@ -169,18 +169,18 @@ def fc_start(option):
         option['ref_proteome'] = option['ref_2']
         fc_main(relevant_features, prot_count, domain_count_2, query_proteome, seed_proteome, tmp, clan_dict, option)
         if option["domain"]:
-            domain_out(org_outpath, True, extmp, option["MS_uni"])
+            domain_out(org_outpath, True, extmp)
         if option["phyloprofile"]:
-            phyloprofile_out(org_outpath, True, option["phyloprofile"], extmp, option["MS_uni"])
+            phyloprofile_out(org_outpath, True, option["phyloprofile"])
         else:
             bidirectionout(org_outpath)
     else:
         fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_proteome, protein_lengths, clan_dict,
                 option)
         if option["domain"]:
-            domain_out(option["outpath"], False, option["e_output"], option["MS_uni"])
+            domain_out(option["outpath"], False, option["e_output"])
         if option["phyloprofile"]:
-            phyloprofile_out(option["outpath"], False, option["phyloprofile"], option["e_output"], option["MS_uni"])
+            phyloprofile_out(option["outpath"], False, option["phyloprofile"])
 
 
 def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_proteome, protein_lengths, clan_dict,
@@ -203,9 +203,6 @@ def fc_main(relevant_features, prot_count, domain_count, seed_proteome, query_pr
     logging.info("fc_main")
 
     mode = {}
-    weights = {}
-    adjusted_weights = {}
-    weight_tmp = {}
     out = None
     a_out = None
     if option["output"] == 0 or option["output"] == 2:
