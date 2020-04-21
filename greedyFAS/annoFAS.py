@@ -162,7 +162,7 @@ def prepare_annoTool(annoPathIn):
         print(os.getcwd())
         print('----------------------------------')
         tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
-        with open('annoTools.txt', mode = 'wt', encoding = 'utf-8') as tool_file:
+        with open('annoTools.txt', mode = 'wt') as tool_file:
             tool_file.write("#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n")
 
         # install TMHMM and SignalP
@@ -189,7 +189,7 @@ def prepare_annoTool(annoPathIn):
             os.chdir(anno_path)
 
             dtu_tool_list = ["TMHMM", "SignalP"]
-            with open('annoTools.txt', mode = 'a', encoding = 'utf-8') as tool_file:
+            with open('annoTools.txt', mode = 'a') as tool_file:
                 tool_file.write("TMHMM\nSignalP\n")
         tool_file.close()
 
@@ -311,7 +311,7 @@ def call_annoFAS_perl(options):
         cmd = cmd + ' --redo ' + options['redo']
     # print(cmd)
     subprocess.call([cmd], shell=True)
-    
+
 
 def main():
     version = "1.0.3"
