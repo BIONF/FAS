@@ -52,9 +52,10 @@ conda config --add channels bioconda
 FAS comes with three main functions: **annoFAS** and **parseInterPro**, which generate the standard input for FAS, and the main FAS function **greedyFAS**.
 
 ## Annotate protein features
-To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP](http://www.cbs.dtu.dk/services/SignalP/). 
+To compare the feature architecture of two proteins, first we need to have the feature annotation of those sequences. We provide the `annoFAS` function to do this task by assigning the features to your proteins based on 7 databases/annotation tools: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/).
 
-__*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM and SignalP, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
+__*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM version 2.0c and SignalP version 4.1g, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
+__*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
 ### Download and install annotation tools
 
