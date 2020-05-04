@@ -41,7 +41,7 @@ setup(
                             "parseInterPro = greedyFAS.parserInterPro:main",
                             "annoFAS = greedyFAS.annoFAS:main",
                             "easyFAS = greedyFAS.easyFAS:main",
-                            "fasHamstr = greedyFAS.fasHamstr"],
+                            "fasHamstr = greedyFAS.fasHamstr:main"],
     },
     license="GPL-3.0",
     classifiers=[
