@@ -23,18 +23,29 @@
 
 from sys import version_info
 import json
+import argparse
+
+if version_info.major == 3:
+    from greedyFAS.fasInput import xmlreader
+    from greedyFAS.fasWeighting import w_count_ref
+    from greedyFAS.fasWeighting import w_weight_correction
+elif version_info.major == 2:
+    from fasInput import xmlreader
+    from fasWeighting import w_count_ref
+    from fasWeighting import w_weight_correction
+
+
+def main():
+    parser = argparse.ArgumentParser(description="InterPro table output parser to FAS XML input")
+    parser.add_argument("-i", "--input", type=str, default=None, required=True)
+    parser.add_argument("-o", "--output", type=str, default=None, required=True)
+    args = parser.parse_args()
+    databases = [["pfam", "smart"], ["flps", "coils", "seg", "signalp", "tmhmm"]]
+    outdict = manage_xml(databases, args.input, "loge")
+    dump_data(outdict, args.output)
 
 
 def manage_xml(databases, path, weight_correction):
-    if version_info.major == 3:
-        from greedyFAS.fasInput import xmlreader
-        from greedyFAS.fasWeighting import w_count_ref
-        from greedyFAS.fasWeighting import w_weight_correction
-    elif version_info.major == 2:
-        from fasInput import xmlreader
-        from fasWeighting import w_count_ref
-        from fasWeighting import w_weight_correction
-
     option = {'seed_id': None, 'query_id': None, 'efilter': 0.001, 'inst_efilter': 0.01}
     for ftype in databases[0]:
         proteome, protein_lengths, clan_dict = xmlreader(path + "/" + ftype + ".xml", 2, ftype, True,
@@ -60,3 +71,5 @@ def get_data(path):
     return in_dict
 
 
+if __name__ == '__main__':
+    main()
