@@ -37,7 +37,7 @@ elif version_info.major == 2:
 
 def main():
     args = get_options()
-    joblist = read_extended_fa(args.extendended_fa)
+    joblist = read_extended_fa(args.extended_fa)
     jobdict = create_pairs(joblist)
     features = [["pfam", "smart"], ["flps", "coils", "seg", "signalp", "tmhmm"]]
     manage_jobpool(jobdict, args.seed_path, args.weight_dir, args.seed_spec, args.tmp_dir, args.cores, features,
