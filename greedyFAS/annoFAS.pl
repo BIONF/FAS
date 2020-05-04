@@ -184,7 +184,7 @@ if (!(-d($dirOut))) {
 	my $delCommand = "rm -f $dirOut/*";
 	system($delCommand);
     } elsif ($redo) {
-        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps") {
+        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalp" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps") {
             print "Directory:\n\t$dirOut already exists,\n\t$redo annotations will be redone due to option -redo=$redo.\n";
             my $delCommand = "rm -f $dirOut/$redo.xml";
             system($delCommand);
@@ -695,7 +695,7 @@ sub signalp {
                         print OUT "\t</protein>\n";
 
                     } else {
-                            #signalP output might be strange
+                            #signalp output might be strange
                     }
                 }
             }
