@@ -291,26 +291,24 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
 
 def get_options():
     parser = argparse.ArgumentParser()
-    required = parser.add_argument_group('required arguments')
-    optional = parser.add_argument_group('optional arguments')
-    required.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
-                          help="path to extended.fa file")
-    required.add_argument("-n", "--groupname", default=None, type=str, required=True,
-                          help="groupname")
-    required.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
-                          help="path to weight_dir of Hamstr")
-    required.add_argument("-t", "--tmp_dir", default=None, type=str,
-                          help="Path to working directory")
-    required.add_argument("-o", "--out_dir", default=None, type=str,
-                          help="path to out_dir")
-    required.add_argument("-s", "--seed_path", default=None, type=str,
-                          help="path to seed annotation")
-    required.add_argument("-a", "--seed_spec", default=None, type=str,
-                          help="name of the seed species (in weight dir)")
-    optional.add_argument("--bidirectional", action="store_true",
-                          help="calculate both scoring directions")
-    optional.add_argument('--cores', action='store', type=int, default=1,
-                          help='number of cores')
+    parser.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
+                        help="path to extended.fa file")
+    parser.add_argument("-n", "--groupname", default=None, type=str, required=True,
+                        help="groupname")
+    parser.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
+                        help="path to weight_dir of Hamstr")
+    parser.add_argument("-t", "--tmp_dir", default=None, type=str,
+                        help="Path to working directory")
+    parser.add_argument("-o", "--out_dir", default=None, type=str,
+                        help="path to out_dir")
+    parser.add_argument("-s", "--seed_path", default=None, type=str,
+                        help="path to seed annotation")
+    parser.add_argument("-a", "--seed_spec", default=None, type=str,
+                        help="name of the seed species (in weight dir)")
+    parser.add_argument("--bidirectional", action="store_true",
+                        help="calculate both scoring directions")
+    parser.add_argument('--cores', action='store', type=int, default=1,
+                        help='number of cores')
     arguments = parser.parse_args()
     return arguments
 
