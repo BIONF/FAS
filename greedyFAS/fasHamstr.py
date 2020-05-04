@@ -35,12 +35,14 @@ elif version_info.major == 2:
     from fasInput import xmlreader
 
 
-def main(extendended_fa, groupname, weight_dir, tmp_dir, out_dir, seed_path, seed_spec, cores, bidirectional):
-    joblist = read_extended_fa(extendended_fa)
+def main():
+    args = get_options()
+    joblist = read_extended_fa(args.extendended_fa)
     jobdict = create_pairs(joblist)
     features = [["pfam", "smart"], ["flps", "coils", "seg", "signalp", "tmhmm"]]
-    manage_jobpool(jobdict, seed_path, weight_dir, seed_spec, tmp_dir, cores, features, bidirectional)
-    write_phyloprofile(jobdict, tmp_dir, out_dir, bidirectional, groupname, seed_spec)
+    manage_jobpool(jobdict, args.seed_path, args.weight_dir, args.seed_spec, args.tmp_dir, args.cores, features,
+                   args.bidirectional)
+    write_phyloprofile(jobdict, args.tmp_dir, args.out_dir, args.bidirectional, args.groupname, args.seed_spec)
 
 
 def read_extended_fa(path):
@@ -314,6 +316,4 @@ def get_options():
 
 
 if __name__ == '__main__':
-    args = get_options()
-    main(args.extended_fa, args.groupname, args.weight_dir, args.tmp_dir, args.out_dir, args.seed_path, args.seed_spec,
-         args.cores, args.bidirectional)
+    main()

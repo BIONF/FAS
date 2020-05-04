@@ -40,7 +40,8 @@ setup(
         'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
                             "parseInterPro = greedyFAS.parserInterPro:main",
                             "annoFAS = greedyFAS.annoFAS:main",
-                            "easyFAS = greedyFAS.easyFAS:main"],
+                            "easyFAS = greedyFAS.easyFAS:main",
+                            "fasHamstr = greedyFAS.fasHamstr"],
     },
     license="GPL-3.0",
     classifiers=[
