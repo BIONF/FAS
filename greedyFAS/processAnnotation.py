@@ -70,7 +70,8 @@ def dump_data(out_dict, path):
 
 
 def get_data(path):
-    in_dict = json.loads(path)
+    with open(path, 'w') as infile:
+    in_dict = json.loads(infile)
     return in_dict
 
 
