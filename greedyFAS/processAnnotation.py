@@ -47,6 +47,9 @@ def main():
 
 def manage_xml(databases, path, weight_correction):
     option = {'seed_id': None, 'query_id': None, 'efilter': 0.001, 'inst_efilter': 0.01}
+    proteome = {}
+    protein_lengths = {}
+    clan_dict = {}
     for ftype in databases[0]:
         proteome, protein_lengths, clan_dict = xmlreader(path + "/" + ftype + ".xml", 2, ftype, True,
                                                          proteome, protein_lengths, clan_dict, option)
