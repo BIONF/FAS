@@ -71,7 +71,7 @@ def dump_data(out_dict, path):
 
 def get_data(path):
     with open(path, 'r') as infile:
-        in_dict = json.loads(infile)
+        in_dict = json.loads(infile.read())
     return in_dict
 
 
