@@ -79,15 +79,14 @@ def manage_jobpool(jobdict, seed_path, weight_dir, seed_spec, tmp_path, cores, f
                      "max_overlap": 0, "classicMS": False, "timelimit": 7200, "ref_2": None, "phyloprofile": None,
                      "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": False,
                      "pairwise": None, "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
-                     "input_linearized": features[0], "input_normal": features[1]}, seed_path, seed_weight, weight_dir])
+                     "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0, "ref_proteome": spec}, seed_path, seed_weight, weight_dir])
     jobpool = multiprocessing.Pool(processes=cores)
-    pool_results = jobpool.map_async(run_fas, data)
+    jobpool.map_async(run_fas, data)
     jobpool.close()
     jobpool.join()
-    pool_results.wait()
 
 
-def run_fas(data, bidirectional):
+def run_fas(data):
     tmp_data = get_data(data[5] + "/" + data[0] + "/" + data[0] + ".json")
     query_proteome = {}
     protein_lengths = {}
@@ -103,8 +102,8 @@ def run_fas(data, bidirectional):
         seed_proteome, protein_lengths, clan_dict = xmlreader(data[3] + "/" + ftype + ".xml", 0, ftype, False,
                                                               seed_proteome, protein_lengths, clan_dict, data[2])
     greedyFAS.fc_main([], 0, tmp_data["domain_count"], seed_proteome, query_proteome, protein_lengths, clan_dict,
-                      data[3])
-    if bidirectional:
+                      data[2])
+    if data[2]["bidirectional"]:
         tmp = {}
         for protein in protein_lengths:
             if protein[0:4] == "seed":
@@ -113,7 +112,7 @@ def run_fas(data, bidirectional):
                 tmp["seed_" + protein[6:]] = protein_lengths[protein]
         data[2]["e_output"] = False
         data[2]["outpath"] += "_reverse"
-        greedyFAS.fc_main([], 0, data[4], query_proteome, seed_proteome, tmp, clan_dict, data[3])
+        greedyFAS.fc_main([], 0, data[4], query_proteome, seed_proteome, tmp, clan_dict, data[2])
 
 
 def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, seed_spec):
@@ -160,7 +159,7 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                 for inst in arc[seed_id][feature]:
                                     out_f.write(
                                         groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                        spec.split("|")[2] + "\t" + groupname + "|" + seed_spec + "|" + seed_id + "\t" +
+                                        spec.split("@")[2] + "\t" + groupname + "|" + seed_spec + "|" + seed_id + "\t" +
                                         seed_length + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
                                         weights[feature])
                                     if inst in forward_s_path[feature]:
@@ -170,7 +169,7 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                             else:
                                 for inst in arc[seed_id][feature]:
                                     out_f.write(groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                                spec.split("|")[2] + "\t" + groupname + "|" + seed_spec + "|" +
+                                                spec.split("@")[2] + "\t" + groupname + "|" + seed_spec + "|" +
                                                 seed_id + "\t" + seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                 inst[1] + "\tNA\tN\n")
 
@@ -185,8 +184,8 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                 for inst in arc[query_id][feature]:
                                     out_f.write(
                                         groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                        spec.split("|")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
-                                        spec.split("|")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
+                                        spec.split("@")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
+                                        spec.split("@")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
                                         "\t" + inst[1] + "\t" + weights[feature])
                                     if inst in forward_q_path[feature]:
                                         out_f.write("\tY\n")
@@ -196,8 +195,8 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                 for inst in arc[query_id][feature]:
                                     out_f.write(
                                         groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                        spec.split("|")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
-                                        spec.split("|")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
+                                        spec.split("@")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
+                                        spec.split("@")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
                                         "\t" + inst[1])
                                     if inst in forward_q_path[feature]:
                                         out_f.write("\tNA\tY\n")
@@ -206,8 +205,8 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                             else:
                                 for inst in arc[query_id][feature]:
                                     out_f.write(groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                                spec.split("|")[2] + "\t" + groupname + "|" + spec + "|" + query_id +
-                                                "\t" + query_length + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] +
+                                                spec.split("@")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
+                                                spec.split("@")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] +
                                                 "\tNA\tN\n")
         if bidirectional:
             reversetree = ElTre.parse(tmp_path + "/" + spec + "_reverse.xml")
@@ -234,8 +233,8 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                     for inst in arc[query_id][feature]:
                                         out_b.write(
                                             groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                            spec.split("|")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
-                                            spec.split("|")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
+                                            spec.split("@")[2] + "\t" + groupname + "|" + spec + "|" + query_id + "|" +
+                                            spec.split("@")[2] + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
                                             "\t" + inst[1] + "\t" + weights[feature])
                                         if inst in reverse_q_path[feature]:
                                             out_b.write("\tY\n")
@@ -244,8 +243,8 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                 else:
                                     for inst in arc[query_id][feature]:
                                         out_b.write(groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                                    spec.split("|")[2] + "\t" + groupname + "|" + spec + "|" +
-                                                    query_id + "|" + spec.split("|")[2] + "\t" + query_length + "\t" +
+                                                    spec.split("@")[2] + "\t" + groupname + "|" + spec + "|" +
+                                                    query_id + "|" + spec.split("@")[2] + "\t" + query_length + "\t" +
                                                     feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                         if path.tag == "query_path":
@@ -260,32 +259,32 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                         if inst in reverse_s_path[feature]:
                                             out_b.write(
                                                 groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                                spec.split("|")[2] + "\t" + groupname + "|" + seed_spec + "|" +
+                                                spec.split("@")[2] + "\t" + groupname + "|" + seed_spec + "|" +
                                                 seed_id + "\t" + seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                 inst[1] + "\t" + weights[feature])
                                             if inst in reverse_s_path[feature]:
-                                                out_f.write("\tY\n")
+                                                out_b.write("\tY\n")
                                             else:
-                                                out_f.write("\tN\n")
+                                                out_b.write("\tN\n")
                                 elif feature in reverse_s_path:
                                     for inst in arc[seed_id][feature]:
                                         out_b.write(
                                             groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                            spec.split("|")[2] + "\t" + groupname + "|" + seed_spec + "|" + seed_id +
+                                            spec.split("@")[2] + "\t" + groupname + "|" + seed_spec + "|" + seed_id +
                                             "\t" + query_length + "\t" + feature + "\t" + inst[0] + "\t" + inst[1])
                                         if inst in reverse_s_path[feature]:
-                                            out_f.write("\tNA\tY\n")
+                                            out_b.write("\tNA\tY\n")
                                         else:
-                                            out_f.write("\tNA\tN\n")
+                                            out_b.write("\tNA\tN\n")
                                 else:
                                     for inst in arc[seed_id][feature]:
                                         out_b.write(groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                                    spec.split("|")[2] + "\t" + groupname + "|" + seed_spec + "|" +
+                                                    spec.split("@")[2] + "\t" + groupname + "|" + seed_spec + "|" +
                                                     seed_id + "\t" + query_length + "\t" + feature + "\t" + inst[0] +
                                                     "\t" + inst[1] + "\tNA\tN\n")
         for pair in outdict:
             out.write(groupname + "\tncbi" + ncbi + "\t" + groupname + "|" + spec + "|" + pair[1] + "|" +
-                      spec.split("|")[2] + "\t" + outdict[pair][0] + "\t" + outdict[pair][1] + "\n")
+                      spec.split("@")[2] + "\t" + outdict[pair][0] + "\t" + outdict[pair][1] + "\n")
     out.close()
 
 
