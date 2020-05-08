@@ -134,7 +134,7 @@ def get_dtu_path(dtuPathIn):
         return 0, 0
 
 
-def check_status(perl_script):
+def check_status(perl_script, force, tarfile):
     status = search_string_in_file(perl_script, "my $config")
     flag = 0
     if status == 'my $config = 0;':
@@ -143,18 +143,49 @@ def check_status(perl_script):
         anno_path_tmp = search_string_in_file(perl_script, "my $annotationPath")
         anno_path_tmp = anno_path_tmp.replace('my $annotationPath =', '')
         anno_path_tmp = re.sub(r'[;"\s]', '', anno_path_tmp)
-        if not os.path.isfile(anno_path_tmp + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
-            flag = 1
+        if force:
+            print("Annotation tools found in %s will be deleted and reinstalled! Enter to continue." % anno_path_tmp)
+            if query_yes_no(""):
+                backupCmd = 'mv %s/%s ../' % (anno_path_tmp, tarfile)
+                rm_annotools = 'rm -rf %s/*' % (anno_path_tmp)
+                mvCmd = 'mv ../%s %s/' % (tarfile, anno_path_tmp)
+                subprocess_cmd([backupCmd, rm_annotools, mvCmd])
+                flag = 1
+            else:
+                flag = anno_path_tmp
+        else:
+            flag = anno_path_tmp
     return flag
 
+def install_signalp():
+    mv_cmd1 = 'mv signalp-4.1* SignalP'
+    subprocess.call([mv_cmd1], shell=True)
+    os.chdir("SignalP")
+    signalp_path = os.getcwd().replace("/","\/")
+    addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+"/signalp")
+    subprocess.call([addPath_signalp], shell=True)
+    # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
+    # subprocess.call([makelink_signalp], shell=True)
+
+def install_tmhmm():
+    mv_cmd2 = 'mv tmhmm* TMHMM'
+    subprocess.call([mv_cmd2], shell=True)
+    machine = os.uname()[4]
+    os.chdir("TMHMM")
+    makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
+    subprocess.call([makelink_tmhmm], shell=True)
 
 def prepare_annoTool(options):
     annoPathIn = options['annoPath']
     dtuPathIn = options['dtuPath']
+    force = options['force']
+
+    file = 'annotation_FAS2020b.tar.gz'
+    checksum = '4256933429 1119115794 ' + file
 
     current_dir = os.getcwd()
     perl_script = get_path() + '/annoFAS.pl'
-    if check_status(perl_script) == 1:
+    if check_status(perl_script, force, file) == 1:
         print('Annotation tools need to be downloaded!')
         # get DTU tools path
         (dtu_path, dtu_tool) = get_dtu_path(dtuPathIn)
@@ -165,10 +196,16 @@ def prepare_annoTool(options):
             anno_path = os.path.abspath(annoPathIn)
         else:
             anno_path = install_path()
-        if not os.path.isdir(anno_path):
-            os.mkdir(anno_path)
+        Path(anno_path).mkdir(parents = True, exist_ok = True)
         anno_path = os.path.abspath(anno_path)
         os.chdir(anno_path)
+
+        if force:
+            backupCmd = 'mv %s/%s ../' % (anno_path, file)
+            rm_annotools = 'rm -rf %s/*' % (anno_path)
+            mvCmd = 'mv ../%s %s/' % (file, anno_path)
+            subprocess_cmd([backupCmd, rm_annotools, mvCmd])
+
         print('Annotation tools will be saved in ')
         print(os.getcwd())
         print('----------------------------------')
@@ -181,31 +218,21 @@ def prepare_annoTool(options):
             print('Installing SignalP and TMHMM...')
             for tool in dtu_tool.split('\n'):
                 print(dtu_path + "/" + tool)
-                tar_cmd = 'tar xf %s/%s --directory %s' % (dtu_path, tool, anno_path)
+                tar_cmd = 'tar xf %s/%s --directory %s 2> /dev/null' % (dtu_path, tool, anno_path)
                 subprocess.call([tar_cmd], shell=True)
 
             if not os.path.isdir(anno_path + '/SignalP'):
-                mv_cmd1 = 'mv signalp-4.1* SignalP'
-                subprocess.call([mv_cmd1], shell=True)
-                os.chdir("SignalP")
-                signalp_path = os.getcwd().replace("/","\/")
-                addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+"/signalp")
-                subprocess.call([addPath_signalp], shell=True)
-                # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
-                # subprocess.call([makelink_signalp], shell=True)
+                install_signalp()
             else:
-                subprocess.call(['rm', '-rf', 'signalp-4.1*'])
+                rm_signalp = 'rm -rf signalp*'
+                subprocess.call([rm_signalp], shell=True)
             os.chdir(anno_path)
 
             if not os.path.isdir(anno_path + '/TMHMM'):
-                mv_cmd2 = 'mv tmhmm* TMHMM'
-                subprocess.call([mv_cmd2], shell=True)
-                machine = os.uname()[4]
-                os.chdir("TMHMM")
-                makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
-                subprocess.call([makelink_tmhmm], shell=True)
+                install_tmhmm()
             else:
-                subprocess.call(['rm', '-rf', 'tmhmm*'])
+                rm_tmhmm = 'rm -rf tmhmm*'
+                subprocess.call([rm_tmhmm], shell=True)
             os.chdir(anno_path)
 
             dtu_tool_list = ["TMHMM", "SignalP"]
@@ -213,17 +240,19 @@ def prepare_annoTool(options):
                 tool_file.write("TMHMM\nSignalP\n")
         tool_file.close()
 
-        print('Installing other tools...')
         # create folders for other annotation tools
-        folders = ['fLPS', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'Pfam/output_files', 'SEG', 'SMART'] #, 'SignalP', 'TMHMM']
+        folders = ['fLPS', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'SEG', 'SMART'] #, 'SignalP', 'TMHMM']
+        emptyFlag = 0
         for folder in folders:
-            if not os.path.isdir(anno_path + '/' + folder):
-                os.mkdir(anno_path + '/' + folder)
+            Path(anno_path + '/' + folder).mkdir(parents = True, exist_ok = True)
+            if len(os.listdir(anno_path + '/' + folder)) == 0:
+                print(anno_path + '/' + folder)
+                emptyFlag = 1
+        Path(anno_path + '/Pfam/output_files').mkdir(parents = True, exist_ok = True)
 
         # download annotation tools
-        if not os.path.isfile('Pfam/Pfam-hmms/Pfam-A.hmm'):
-            file = 'annotation_FAS2020b.tar.gz'
-            checksum = '4256933429 1119115794 ' + file
+        if emptyFlag == 1:
+            print('Installing other tools...')
             if os.path.isfile(file):
                 checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
                 if checksum_file == checksum:
@@ -278,7 +307,8 @@ def prepare_annoTool(options):
 
             # remove temp files
             subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
-            subprocess.call(['rm', anno_path + '/' + file])
+            if not options['keep']:
+                subprocess.call(['rm', anno_path + '/' + file])
 
             # add path to annotation dir to annFASpl script
             mod_anno_path = anno_path.replace('/', '\/')
@@ -287,17 +317,75 @@ def prepare_annoTool(options):
             sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
             subprocess.call([sed_cmd1], shell=True)
             subprocess.call([sed_cmd2], shell=True)
-            print('Annotation tools downloaded!')
-        else:
-            print('Annotation tools found!')
-            # add path to annotation dir to annFAS.pl script
-            mod_anno_path = anno_path.replace('/', '\/')
-            sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
-                                                                                                     perl_script)
-            sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
-            subprocess.call([sed_cmd1], shell=True)
-            subprocess.call([sed_cmd2], shell=True)
-    os.chdir(current_dir)
+        os.chdir(current_dir)
+        return(anno_path)
+    else:
+        os.chdir(current_dir)
+        # print("ANNOTAION TOOLS FOUND AT %s!" % )
+        return(check_status(perl_script, force, file))
+
+
+def checkExcutable(anno_path):
+    with open(anno_path+"/annoTools.txt") as file:
+        availTool = [line.strip() for line in file]
+    print("Checking if annotation tools are excutable...")
+    # test pfam and smart
+    if not os.path.isfile(anno_path + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
+        sys.exit("Pfam hmm file not found. Please run prepareFAS with --force!")
+    if not os.path.isfile(anno_path + '/SMART/SMART-hmms/SMART.hmm'):
+        sys.exit("SMART hmm file not found. Please run prepareFAS with --force!")
+    # test seg
+    if "SEG" in availTool:
+        segCmd = '%s/SEG/seg' % anno_path
+        try:
+            p1 = subprocess.Popen([segCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output1, err1 = p1.communicate()
+            if not "Usage" in err1.decode('UTF-8').strip():
+                sys.exit("Error with SEG. You can reinstall it by running prepareFAS with --force!")
+        except:
+            sys.exit("Error with SEG. You can reinstall it by running prepareFAS with --force!")
+    # test fLPS
+    if "fLPS" in availTool:
+        flpsCmd = '%s/fLPS/fLPS' % anno_path
+        try:
+            p2 = subprocess.Popen([flpsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output2, err2 = p2.communicate()
+            if not err2.decode('UTF-8').strip() == "There is no sequence file. Please supply one.":
+                sys.exit("Error with fLPS. You can reinstall it by running prepareFAS with --force!")
+        except:
+            sys.exit("Error with fLPS. You can reinstall it by running prepareFAS with --force!")
+    # test COILS2
+    if "COILS2" in availTool:
+        coilsCmd = '%s/COILS2/COILS2' % anno_path
+        try:
+            p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output3, err3 = p3.communicate()
+            if not err3.decode('UTF-8').strip() == "Error reading "+os.getcwd()+"/new.mat":
+                sys.exit("Error with COILS2. You can reinstall it by running prepareFAS with --force!")
+        except:
+            sys.exit("Error with COILS2. You can reinstall it by running prepareFAS with --force!")
+    # test tmhmm
+    if "TMHMM" in availTool:
+        tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
+        try:
+            p4 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output4, err4 = p4.communicate()
+            if "Error: No modelfile given" in err4.decode('UTF-8').strip():
+                sys.exit("Error with TMHMM. You can reinstall it by running prepareFAS with --force!")
+        except:
+            sys.exit("Error with TMHMM. You can reinstall it by running prepareFAS with --force!")
+    # test signalp
+    if "SignalP" in availTool:
+        signalpCmd = '%s/SignalP/signalp' % anno_path
+        try:
+            p5 = subprocess.Popen([signalpCmd, "-V"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output5, err5 = p5.communicate()
+            if not err5.decode('UTF-8').strip() == "":
+                sys.exit("Error with SignalP. You can reinstall it by running prepareFAS with --force!")
+        except:
+            sys.exit("Error with SignalP. You can reinstall it by running prepareFAS with --force!")
+
+    return(True)
 
 
 def main():
@@ -306,14 +394,32 @@ def main():
     optional = parser.add_argument_group('optional arguments')
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store', default='')
     optional.add_argument('-a', '--annoPath', help='Set path to save annotation tools', action='store', default='')
+    optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
+    optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
 
     args = parser.parse_args()
 
     options = {
         'annoPath': args.annoPath,
-        'dtuPath': args.dtuPath
+        'dtuPath': args.dtuPath,
+        'force': args.force,
+        'keep': args.keep
     }
-    prepare_annoTool(options)
+    anno_path = prepare_annoTool(options)
+
+    allRun = checkExcutable(anno_path)
+    if allRun:
+        print("Done! Annotation tools are installed in %s" % anno_path)
+        # add path to annotation dir to annFAS.pl script
+        perl_script = get_path() + '/annoFAS.pl'
+        mod_anno_path = anno_path.replace('/', '\/')
+        sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
+                                                                                                 perl_script)
+        sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
+        subprocess.call([sed_cmd1], shell=True)
+        subprocess.call([sed_cmd2], shell=True)
+    else:
+        sys.exit("Some errors occur with annotation tools. Please check if they can be excuted at %s" % anno_path)
 
 
 if __name__ == '__main__':
