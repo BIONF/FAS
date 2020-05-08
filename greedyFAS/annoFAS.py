@@ -320,7 +320,7 @@ def call_annoFAS_perl(options):
         cmd = cmd + ' --redo ' + options['redo']
     # print(cmd)
     subprocess.call([cmd], shell=True)
-
+    
 def main():
     version = "1.0.3"
     parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
