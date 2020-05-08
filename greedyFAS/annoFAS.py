@@ -173,19 +173,28 @@ def prepare_annoTool(annoPathIn):
                 tar_cmd = 'tar xf %s/%s --directory %s' % (dtu_path, tool, anno_path)
                 subprocess.call([tar_cmd], shell=True)
 
-            mv_cmd1 = 'mv signalp* SignalP'
-            subprocess.call([mv_cmd1], shell=True)
-            os.chdir("SignalP")
-            makelink_signalp = 'ln -s -f bin/signalp signalp'
-            subprocess.call([makelink_signalp], shell=True)
+            if not os.path.isdir(anno_path + '/SignalP'):
+                mv_cmd1 = 'mv signalp-4.1* SignalP'
+                subprocess.call([mv_cmd1], shell=True)
+                os.chdir("SignalP")
+                signalp_path = os.getcwd().replace("/","\/")
+                addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+"/signalp")
+                subprocess.call([addPath_signalp], shell=True)
+                # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
+                # subprocess.call([makelink_signalp], shell=True)
+            else:
+                subprocess.call(['rm', '-rf', 'signalp-4.1*'])
             os.chdir(anno_path)
 
-            mv_cmd2 = 'mv tmhmm* TMHMM'
-            subprocess.call([mv_cmd2], shell=True)
-            machine = os.uname()[4]
-            os.chdir("TMHMM")
-            makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
-            subprocess.call([makelink_tmhmm], shell=True)
+            if not os.path.isdir(anno_path + '/TMHMM'):
+                mv_cmd2 = 'mv tmhmm* TMHMM'
+                subprocess.call([mv_cmd2], shell=True)
+                machine = os.uname()[4]
+                os.chdir("TMHMM")
+                makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
+                subprocess.call([makelink_tmhmm], shell=True)
+            else:
+                subprocess.call(['rm', '-rf', 'tmhmm*'])
             os.chdir(anno_path)
 
             dtu_tool_list = ["TMHMM", "SignalP"]

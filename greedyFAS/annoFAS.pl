@@ -74,7 +74,7 @@ use File::Basename;
 my $flps_tool       = "fLPS";
 my $TMHMM_tool      = "decodeanhmm";
 my $COILS_tool      = "COILS2";
-my $SIGNALP_tool    = "signalp.pl";
+my $SIGNALP_tool    = "signalp";
 my $SEG_tool        = "seg";
 my $PFAM_tool       = "pfam_scan.pl";
 my $SMART_tool      = "smart_scan_v4.pl";
@@ -184,7 +184,7 @@ if (!(-d($dirOut))) {
 	my $delCommand = "rm -f $dirOut/*";
 	system($delCommand);
     } elsif ($redo) {
-        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalP" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps") {
+        if ($redo eq "tmhmm" or $redo eq "coils" or $redo eq "signalp" or $redo eq "seg" or $redo eq "pfam" or $redo eq "smart" or $redo eq "flps") {
             print "Directory:\n\t$dirOut already exists,\n\t$redo annotations will be redone due to option -redo=$redo.\n";
             my $delCommand = "rm -f $dirOut/$redo.xml";
             system($delCommand);
@@ -653,15 +653,16 @@ sub signalp {
     close INPUT;
 
     chdir($SigPpath);
-    my @result	= `perl $SigPpath/$SIGNALP_tool -t euk \"$fasta\"`;
-	chomp(@result);
+    my @result	= `$SigPpath/$SIGNALP_tool -t euk \"$fasta\"`;
+    # my @result	= `$SigPpath/bin/signalp -org euk -fasta $fasta`; # version 5.0
+    chomp(@result);
 
     chdir($annotationPath);
 
     open(OUT, ">".$dirOut."signalp.xml")  # create output file, overwrite existing one
         or print("ERROR: could not write output file for signalp. $!\n");
 
-    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"signalp\" version=\"4.1\">\n";
+    print OUT "<?xml version=\"1.0\"?>\n<tool name=\"signalp\" version=\"5.0\">\n";
 
     for(my $i=0;$i<scalar(@result);$i++) {
         if (!($result[$i]=~/^#/)) {
@@ -694,7 +695,7 @@ sub signalp {
                         print OUT "\t</protein>\n";
 
                     } else {
-                            #signalP output might be strange
+                            #signalp output might be strange
                     }
                 }
             }
@@ -791,8 +792,8 @@ sub TMHMM20 {
 # about proteins without TR-regions
     my $TMHMMpath=$annotationPath."/TMHMM"; # path to compiled TMHMM file (decodeanhmm)
 
-    my $command = "cat \"$fasta\" | \"$TMHMMpath/$TMHMM_tool\" -f \"$TMHMMpath/TMHMM2.0.options\" -modelfile \"$TMHMMpath/TMHMM2.0.model\" |";
-
+    my $command = "cat \"$fasta\" | \"$TMHMMpath/$TMHMM_tool\" -f \"$TMHMMpath/lib/TMHMM2.0.options\" -modelfile \"$TMHMMpath/lib/TMHMM2.0.model\" |";
+# print($command);<>;
     open(RESULT, $command) # start decodeanhmm and get result in filehandler
         or print ("ERROR: could not start TMHMM2.0(decodeanhmm).\n");
     my @result = <RESULT>;
@@ -815,9 +816,11 @@ sub TMHMM20 {
 
             my $length = check_id_length($result[$i]);
             print OUT "\t<protein id=\"" . $result[$i] . "\" length=\"" . $length . "\">\n";
+            # $i++;
+            next;
+        }
 
-            $i++;
-            if ($result[$i]=~/\%/) {  # find line with information of interest
+        if ($result[$i]=~/\%pred/) {  # find line with information of interest
                 my @temp = split(/\:/, $result[$i]);
                 @temp = split(/\, /, $temp[1]);
                 $temp[0]=~s/ //;
@@ -825,9 +828,8 @@ sub TMHMM20 {
                 foreach(@temp) {
                     if ($_=~/M/) {$TMcount++}
                     $_=~s/^O/o/;
-                    #$_.="\n";
                 }
-### OUTPUT :
+
                 print OUT "\t\t<feature type=\"transmembrane\" instance=\"$TMcount\">\n";
                 foreach(@temp) {
                     my @pos;
@@ -838,8 +840,9 @@ sub TMHMM20 {
                     }
                 }
                 print OUT "\t\t</feature>\n";
-            }print OUT "\t</protein>\n";
-        }
+            # }
+        print OUT "\t</protein>\n";
+      }
     }
     print OUT "</tool>\n";
     close OUTPUT;

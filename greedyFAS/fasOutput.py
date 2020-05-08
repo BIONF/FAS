@@ -149,7 +149,7 @@ def domain_out(outpath, bidirectional, extendedout):
                                     else:
                                         d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     "NA\tY\n")  # weights[feature] + "\tN\n")
+                                                     "NA\tN\n")  # weights[feature] + "\tN\n")
                             else:
                                 for inst in arc[seed_id][feature]:
                                     d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
@@ -171,7 +171,7 @@ def domain_out(outpath, bidirectional, extendedout):
                                     else:
                                         d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
-                                                     + "NA\tY\n")  # weights[feature] + "\tN\n")
+                                                     + "NA\tN\n")  # weights[feature] + "\tN\n")
                             elif feature in forward_q_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
