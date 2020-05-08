@@ -23,6 +23,7 @@
 import os
 import sys
 from sys import platform
+from pathlib import Path
 import re
 import subprocess
 import argparse
@@ -137,6 +138,20 @@ def check_status(perl_script):
         #     print('Annotation tools found in %s!' % anno_path_tmp)
     return flag
 
+def get_annoPath(perl_script):
+    status = search_string_in_file(perl_script, "my $config")
+    flag = 0
+    if status == 'my $config = 0;':
+        sys.exit('annoFAS has not been run yet!')
+    else:
+        anno_path_tmp = search_string_in_file(perl_script, "my $annotationPath")
+        anno_path_tmp = anno_path_tmp.replace('my $annotationPath =', '')
+        anno_path_tmp = re.sub(r'[;"\s]', '', anno_path_tmp)
+        if not os.path.isfile(anno_path_tmp + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
+            sys.exit('Annotation tools found at %s, but it seems to be not complete (e.g. PfamDB is missing)!' % anno_path_tmp)
+        else:
+            sys.exit('Annotation tools found at %s!' % anno_path_tmp)
+
 
 def prepare_annoTool(annoPathIn):
     current_dir = os.getcwd()
@@ -148,10 +163,8 @@ def prepare_annoTool(annoPathIn):
 
         # get annotation directory
         if not annoPathIn == '':
-            if os.path.isdir(os.path.abspath(annoPathIn)):
-                anno_path = os.path.abspath(annoPathIn)
-            else:
-                anno_path = install_path()
+            Path(annoPathIn).mkdir(parents = True, exist_ok = True)
+            anno_path = os.path.abspath(annoPathIn)
         else:
             anno_path = install_path()
         if not os.path.isdir(anno_path):
@@ -337,8 +350,9 @@ def main():
                                          'Only one selection allowed!', action='store', default=0)
     optional.add_argument('-f', '--force', help='Force override annotations', action='store_true')
     optional.add_argument('--prepare', help='Download annotation tools and do configuration', action='store_true')
-    optional.add_argument('-p', '--annoPath', help='Path to annotation dir', action='store', default='')
+    optional.add_argument('-p', '--annoPath', help='Set path to annotation dir', action='store', default='')
     optional.add_argument('-c', '--cores', help='number of cores', action='store', default='')
+    optional.add_argument('--getAnnoPath', help='Get path to annotation tools', action='store_true')
 
     args = parser.parse_args()
 
@@ -350,12 +364,17 @@ def main():
         'redo': args.redo,
         'force': args.force,
         'annoPath': args.annoPath,
-        'cores': args.cores
+        'cores': args.cores,
+        'getAnnoPath': args.getAnnoPath
     }
     if args.prepare:
         prepare_annoTool(args.annoPath)
     else:
-        call_annoFAS_perl(options)
+        if args.getAnnoPath:
+            perl_script = get_path() + '/annoFAS.pl'
+            get_annoPath(perl_script)
+        else:
+            call_annoFAS_perl(options)
 
 
 if __name__ == '__main__':
