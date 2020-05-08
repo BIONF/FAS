@@ -118,7 +118,7 @@ def get_dtu_path(dtuPathIn):
             readline.set_completer_delims(' \t\n;')
             readline.parse_and_bind("tab: complete")
             readline.set_completer(complete)
-            dtu_path = input('Enter path to TMHMM and SignalP tar files:')
+            dtu_path = input('Please download TMHMM and SignalP at https://services.healthtech.dtu.dk/ and enter path to the downloaded tar files:')
         else:
             dtu_path = ""
 
