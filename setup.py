@@ -40,6 +40,7 @@ setup(
         'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
                             "parseInterPro = greedyFAS.parserInterPro:main",
                             "annoFAS = greedyFAS.annoFAS:main",
+                            "prepareFAS = greedyFAS.prepareFAS:main",
                             "easyFAS = greedyFAS.easyFAS:main",
                             "fasHamstr = greedyFAS.fasHamstr:main",
                             "processAnnotation = greedyFAS.processAnnotation:main"],
