@@ -101,7 +101,7 @@ def install_path():
         readline.set_completer_delims(' \t\n;')
         readline.parse_and_bind("tab: complete")
         readline.set_completer(complete)
-        anno_path = "\""+input('Enter annotation dir: ')+"\""
+        anno_path = input('Enter annotation dir: ')
     return(anno_path)
 
 
@@ -111,7 +111,7 @@ def get_dtu_path():
         readline.set_completer_delims(' \t\n;')
         readline.parse_and_bind("tab: complete")
         readline.set_completer(complete)
-        dtu_path = "\""+input('Enter path to TMHMM and SignalP tar files:')+"\""
+        dtu_path = input('Enter path to TMHMM and SignalP tar files:')
         cmd = 'ls %s | grep \"signalp\|tmhmm\"' % dtu_path
         dtu_tool = subprocess.check_output([cmd], shell=True).decode(sys.stdout.encoding).strip()
         if not "tmhmm" in dtu_tool:
