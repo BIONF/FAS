@@ -59,11 +59,11 @@ __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
 ### Download and install annotation tools
 
-To start using FAS, you need to download the annotation tools with annoFAS
+To start using FAS, you need to download and install the annotation tools with annoFAS
 ```
-annoFAS --fasta seed.fa --path PATH --name anno --prepare
+prepareFAS [-a path/for/annotation/tools] [-d path/to/DTU/tool/source/codes]
 ```
-The annotation tools will be download and saved in your selected directory. Inside this directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
+The annotation tools will be installed in your selected directory specified with `-a/--annoPath`. Inside this directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
 
 ### Perform feature annotation
 
