@@ -102,6 +102,7 @@ def bidirectionout(outpath):
 
 def domain_out(outpath, bidirectional, extendedout):
     arc = {}
+    groupname = outpath.split("/")[-1]
     if extendedout:
         arctree = ElTre.parse(outpath + "_architecture.xml")
         arcroot = arctree.getroot()
@@ -143,16 +144,16 @@ def domain_out(outpath, bidirectional, extendedout):
                             if feature in forward_s_path:
                                 for inst in arc[seed_id][feature]:
                                     if inst in forward_s_path[feature]:
-                                        d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                        d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
                                                      "NA\tY\n")  # weights[feature] + "\tY\n")
                                     else:
-                                        d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                        d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
                                                      "NA\tN\n")  # weights[feature] + "\tN\n")
                             else:
                                 for inst in arc[seed_id][feature]:
-                                    d0_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                    d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                  "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                     if path.tag == "query_path":
@@ -165,24 +166,24 @@ def domain_out(outpath, bidirectional, extendedout):
                             if feature in forward_q_path and feature in forward_s_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
-                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
                                                      + "NA\tY\n")  # weights[feature] + "\tY\n")
                                     else:
-                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
                                                      + "NA\tN\n")  # weights[feature] + "\tN\n")
                             elif feature in forward_q_path:
                                 for inst in arc[query_id][feature]:
                                     if inst in forward_q_path[feature]:
-                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tY\n")
                                     else:
-                                        d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
                             else:
                                 for inst in arc[query_id][feature]:
-                                    d0_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length +
+                                    d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
                                                  "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
     if extendedout:
         d0_out.close()
@@ -212,16 +213,16 @@ def domain_out(outpath, bidirectional, extendedout):
                                 if feature in reverse_q_path:
                                     for inst in arc[query_id][feature]:
                                         if inst in reverse_q_path[feature]:
-                                            d1_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" +
+                                            d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" +
                                                          query_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tY\n")
                                         else:
-                                            d1_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" +
+                                            d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" +
                                                          query_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tN\n")
                                 else:
                                     for inst in arc[query_id][feature]:
-                                        d1_out.write(seed_id + "#" + query_id + "\t" + query_id + "\t" + query_length
+                                        d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
                                                      + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
 
                         if path.tag == "query_path":
@@ -234,26 +235,26 @@ def domain_out(outpath, bidirectional, extendedout):
                                 if feature in reverse_s_path and feature in reverse_q_path:
                                     for inst in arc[seed_id][feature]:
                                         if inst in reverse_s_path[feature]:
-                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tY\n")
                                         else:
-                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tN\n")
                                 elif feature in reverse_s_path:
                                     for inst in arc[seed_id][feature]:
                                         if inst in reverse_s_path[feature]:
-                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\tNA\tY\n")
                                         else:
-                                            d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" +
+                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
                                                          seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
                                                          inst[1] + "\tNA\tN\n")
                                 else:
                                     for inst in arc[seed_id][feature]:
-                                        d1_out.write(seed_id + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
+                                        d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
                                                      "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
         if extendedout:
             d1_out.close()
