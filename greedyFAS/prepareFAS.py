@@ -180,8 +180,8 @@ def prepare_annoTool(options):
     dtuPathIn = options['dtuPath']
     force = options['force']
 
-    file = 'annotation_FAS2020b.tar.gz'
-    checksum = '4256933429 1119115794 ' + file
+    file = 'annotation_FAS2020c.tar.gz'
+    checksum = '2026191233 1108979287 ' + file
 
     current_dir = os.getcwd()
     perl_script = get_path() + '/annoFAS.pl'
