@@ -94,13 +94,15 @@ def get_options():
     optional.add_argument("--domain", dest="domain", action="store_true", help="activate domain tabular output")
     optional.add_argument("--pairwise", dest="pairwise", default=None, type=str,
                           help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                             " compared (one pair per line tab seperated)")
+                               " compared (one pair per line tab seperated)")
+    optional.add_argument("--annoPath", dest="annoPath", default=None, type=str,
+                          help="Path to Annotion tool directory")
     args = parser.parse_args()
     return args
 
 
-def anno(annojobs, projectdir, force, cores):
-    anno_options = {'prepare': 'n', 'path': projectdir.rstrip('/') + '/annotations/', 'annoPath': '', 'redo': 0,
+def anno(annojobs, projectdir, force, cores, annopath):
+    anno_options = {'prepare': 'n', 'path': projectdir.rstrip('/') + '/annotations/', 'annoPath': annopath, 'redo': 0,
                     'extract': '', 'force': force, 'cores': cores}
     for annojob in annojobs:
         name = ''.join(annojob.split('/')[-1].split('.')[:-1])
@@ -186,8 +188,8 @@ def fas(args):
     option_dict["input_linearized"] = ["pfam", "smart"]
     option_dict["input_normal"] = ["flps", "coils", "seg", "signalp", "tmhmm"]
 
-    if options.pairwise:
-        option_dict["pairwise"] = greedyFAS.read_pairwise(options.pairwise)
+    if args.pairwise:
+        option_dict["pairwise"] = greedyFAS.read_pairwise(args.pairwise)
     else:
         option_dict["pairwise"] = None
 
@@ -215,7 +217,7 @@ def main():
     annojobs = [args.seed, args.query]
     if args.ref_proteome:
         annojobs.append(args.ref_proteome)
-    anno(annojobs, args.projectdir, args.force, args.cores)
+    anno(annojobs, args.projectdir, args.force, args.cores, args.annoPath)
     fas(args)
 
 
