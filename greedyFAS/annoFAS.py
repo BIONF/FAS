@@ -58,7 +58,7 @@ def check_status(perl_script):
             flag = 1
     return flag
 
-def get_annoPath(perl_script):
+def get_toolPath(perl_script):
     status = search_string_in_file(perl_script, "my $config")
     flag = 0
     if status == 'my $config = 0;':
@@ -120,7 +120,7 @@ def main():
                                          'Only one selection allowed!', action='store', default=0)
     optional.add_argument('-f', '--force', help='Force override annotations', action='store_true')
     optional.add_argument('-c', '--cores', help='number of cores', action='store', default='')
-    optional.add_argument('--getAnnoPath', help='Get path to annotation tools', action='store_true')
+    optional.add_argument('--getToolPath', help='Get path to annotation tools', action='store_true')
 
     args = parser.parse_args()
 
@@ -133,9 +133,9 @@ def main():
         'force': args.force,
         'cores': args.cores,
     }
-    if args.getAnnoPath:
+    if args.getToolPath:
         perl_script = get_path() + '/annoFAS.pl'
-        get_annoPath(perl_script)
+        get_toolPath(perl_script)
     else:
         call_annoFAS_perl(options)
 

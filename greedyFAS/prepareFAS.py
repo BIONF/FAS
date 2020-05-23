@@ -176,7 +176,7 @@ def install_tmhmm():
     subprocess.call([makelink_tmhmm], shell=True)
 
 def prepare_annoTool(options):
-    annoPathIn = options['annoPath']
+    toolPathIn = options['toolPath']
     dtuPathIn = options['dtuPath']
     force = options['force']
 
@@ -187,13 +187,11 @@ def prepare_annoTool(options):
     perl_script = get_path() + '/annoFAS.pl'
     if check_status(perl_script, force, file) == 1:
         print('Annotation tools need to be downloaded!')
-        # get DTU tools path
-        (dtu_path, dtu_tool) = get_dtu_path(dtuPathIn)
 
         # get annotation directory
-        if not annoPathIn == '':
-            Path(annoPathIn).mkdir(parents = True, exist_ok = True)
-            anno_path = os.path.abspath(annoPathIn)
+        if not toolPathIn == '':
+            Path(toolPathIn).mkdir(parents = True, exist_ok = True)
+            anno_path = os.path.abspath(toolPathIn)
         else:
             anno_path = install_path()
         Path(anno_path).mkdir(parents = True, exist_ok = True)
@@ -212,6 +210,9 @@ def prepare_annoTool(options):
         tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
         with open('annoTools.txt', mode = 'wt') as tool_file:
             tool_file.write("#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n")
+
+        # get DTU tools path
+        (dtu_path, dtu_tool) = get_dtu_path(dtuPathIn)
 
         # install TMHMM and SignalP
         if not dtu_path == 0:
@@ -393,14 +394,14 @@ def main():
     parser = argparse.ArgumentParser(description="You are running prepareFAS version " + str(version) + ".")
     optional = parser.add_argument_group('optional arguments')
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store', default='')
-    optional.add_argument('-a', '--annoPath', help='Set path to save annotation tools', action='store', default='')
+    optional.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='')
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
 
     args = parser.parse_args()
 
     options = {
-        'annoPath': args.annoPath,
+        'toolPath': args.toolPath,
         'dtuPath': args.dtuPath,
         'force': args.force,
         'keep': args.keep
