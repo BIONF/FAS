@@ -28,7 +28,6 @@ from pathlib import Path
 import subprocess
 import re
 
-import time # remove later
 
 def appendToDict(key,value,aDict):
     if not key in aDict.keys():
@@ -38,10 +37,6 @@ def appendToDict(key,value,aDict):
         if not value in aDict[key]:
             aDict[key].append(value)
 
-# def doPfam(args):
-#     (seq, toolPath, cpus) = args
-#     pfamPath = toolPath + "/Pfam"
-#     outPfam = pfamPath + "/output_files"
 
 def doFlps(args):
     (seqFile, toolPath, threshold) = args
@@ -203,42 +198,67 @@ def doSmart(args):
     os.chdir(toolPath + "/SMART")
     smartOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = smartOut.stdout.decode().split('\n')
-    smartOutFile = toolPath + "/SMART/output_files/" + lines[-1]
+    os.chdir(currentDir)
     # save to dict
+    if ".out" in lines[-1]:
+        smartOutFile = toolPath + "/SMART/output_files/" + lines[-1]
+        return(parseHmmscan(inSeq, smartOutFile))
+    else:
+        return("No output for SMART search")
+
+
+def doPfam(args):
+    (seqFile, toolPath, cpus) = args
+    currentDir = os.path.abspath(os.getcwd())
+    # load fasta seq
+    inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
+    # do smart
+    cmd = 'perl %s/Pfam/pfam_scan_v2.pl %s "" %s' % (toolPath, os.path.abspath(seqFile), cpus)
+    os.chdir(toolPath + "/Pfam")
+    pfamOut = subprocess.run([cmd], shell=True, capture_output=True)
+    lines = pfamOut.stdout.decode().split('\n')
+    os.chdir(currentDir)
+    # save to dict
+    if ".out" in lines[-1]:
+        pfamOutFile = toolPath + "/Pfam/output_files/" + lines[-1]
+        return(parseHmmscan(inSeq, pfamOutFile))
+    else:
+        return("No output for PFAM search")
+
+
+def parseHmmscan(inSeq, hmmOut):
     annoOut = {} # annoOut[seqID,seqLen][(type,instance,clan,evalue)] = [(evalue,start,end),(evalue,start,end),(evalue,start,end)]
     annotatedSeq = {}
-    if ".out" in lines[-1]:
-        with open(smartOutFile, 'r') as file:
-            outFile = file.read()
-            outSeqs = outFile.split('>')
-            for outSeq in outSeqs:
-                if (len(outSeq) > 3) and (not (outSeq.startswith(" queryID"))) and (not ("No hits detected" in outSeq)):
-                    lines = outSeq.strip().split('\n')
-                    id = lines.pop(0).strip()
-                    annoOut[id, len(inSeq[id])] = {}
-                    tmpDict = {}
-                    for line in lines:
-                        items = line.strip().split('|')
-                        if "family:" in line:
-                            type = items[0].replace("# family: ","").strip()
-                            clan = items[2].replace(" clan: ","").strip()
-                            type_evalue = items[-1].replace(" E-value: ","").strip()
-                            tmpDict[(type,clan,type_evalue)] = []
-                        else:
-                            start = items[3].replace("# family: ","").strip()
-                            end = items[4].replace("# family: ","").strip()
-                            instance_evalue = items[10].replace("# family: ","").strip()
-                            tmpDict[(type,clan,type_evalue)].append((instance_evalue,start,end))
-                    for key in tmpDict:
-                        appendToDict((key[0], len(tmpDict[key]), key[1], key[2]), tmpDict[key], annoOut[id, len(inSeq[id])])
-                        annotatedSeq[id] = 1
-
+    with open(hmmOut, 'r') as file:
+        outFile = file.read()
+        outSeqs = outFile.split('>')
+        for outSeq in outSeqs:
+            if (len(outSeq) > 3) and (not (outSeq.startswith(" queryID"))) and (not ("No hits detected" in outSeq)):
+                lines = outSeq.strip().split('\n')
+                id = lines.pop(0).strip()
+                annoOut[id, len(inSeq[id])] = {}
+                tmpDict = {}
+                for line in lines:
+                    items = line.strip().split('|')
+                    if "family:" in line:
+                        type = items[0].replace("# family: ","").strip()
+                        clan = items[2].replace(" clan: ","").strip()
+                        type_evalue = items[-1].replace(" E-value: ","").strip()
+                        tmpDict[(type,clan,type_evalue)] = []
+                    else:
+                        start = items[3].replace("# family: ","").strip()
+                        end = items[4].replace("# family: ","").strip()
+                        instance_evalue = items[10].replace("# family: ","").strip()
+                        tmpDict[(type,clan,type_evalue)].append((instance_evalue,start,end))
+                for key in tmpDict:
+                    appendToDict((key[0], len(tmpDict[key]), key[1], key[2]), tmpDict[key], annoOut[id, len(inSeq[id])])
+                    annotatedSeq[id] = 1
     for id in inSeq:
         if not id in annotatedSeq:
             annoOut[(id, len(inSeq[id]))] = {}
-    subprocess.run(['rm', smartOutFile])
-    os.chdir(currentDir)
+    subprocess.run(['rm', hmmOut])
     return(annoOut)
+
 
 # def write_xml(outpath, proteome, prot_lengths):
 #     with open(outpath, 'w') as out:
