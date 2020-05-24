@@ -27,6 +27,7 @@ from Bio import SeqIO
 from pathlib import Path
 import subprocess
 import re
+import json
 
 
 def appendToDict(key,value,aDict):
@@ -36,6 +37,13 @@ def appendToDict(key,value,aDict):
     else:
         if not value in aDict[key]:
             aDict[key].append(value)
+
+def save2json(outDict, toolName, outDir):
+    Path(outDir).mkdir(parents = True, exist_ok = True)
+    jsonOut = json.dumps(outDict, ensure_ascii = False)
+    f = open(outDir+"/"+toolName+'.json', 'w')
+    f.write(jsonOut)
+    f.close()
 
 
 def doFlps(args):
@@ -55,17 +63,17 @@ def doFlps(args):
             tmp = line.strip().split('\t')
             if tmp[0]:
                 if not (tmp[0], len(inSeq[tmp[0]])) in forCounting:
-                    forCounting[(tmp[0], len(inSeq[tmp[0]]))] = {}
-                appendToDict(tmp[1] + "_" + tmp[7], (tmp[3], tmp[4]), forCounting[(tmp[0], len(inSeq[tmp[0]]))])
+                    forCounting[tmp[0] +";"+ str(len(inSeq[tmp[0]]))] = {}
+                appendToDict(tmp[1] + "_" + tmp[7], (str(tmp[3]) + str(tmp[4])), forCounting[tmp[0] +";"+ str(len(inSeq[tmp[0]]))])
                 annotatedSeq[tmp[0]] = 1
     for key in forCounting:
         annoOut[key] = {}
         for feature in forCounting[key]:
-            appendToDict((feature, len(forCounting[key][feature])), forCounting[key][feature], annoOut[key])
+            appendToDict((feature +";"+ str(len(forCounting[key][feature]))), forCounting[key][feature], annoOut[key])
 
     for id in inSeq:
         if not id in annotatedSeq:
-            annoOut[(id, len(inSeq[id]))] = {}
+            annoOut[id +";"+ str(len(inSeq[id]))] = {}
     return(annoOut)
 
 
@@ -84,20 +92,20 @@ def doTmhmm(args):
         for line in lines:
             if line.startswith(">"):
                 id = line.replace(">","").strip()
-                annoOut[(id, len(inSeq[id]))] = {}
+                annoOut[id +";"+ str(len(inSeq[id]))] = {}
             posList = []
             if "%pred" in line:
                 tmp = line.strip().split(',')
                 for item in tmp:
                     if item.startswith(" M"):
                         pos = item.split()
-                        posList.append((pos[1], pos[2]))
+                        posList.append(pos[1] + ";" + pos[2])
             if len(posList) > 0:
-                appendToDict(("transmembrane", len(posList)), posList, annoOut[(id, len(inSeq[id]))])
+                appendToDict(("transmembrane;" + str(len(posList))), posList, annoOut[id +";"+ str(len(inSeq[id]))])
                 annotatedSeq[id] = 1
     for id in inSeq:
         if not id in annotatedSeq:
-            annoOut[(id, len(inSeq[id]))][("transmembrane", 0)] = {}
+            annoOut[id +";"+ str(len(inSeq[id]))]["transmembrane;0"] = {}
     return(annoOut)
 
 
@@ -117,11 +125,11 @@ def doSignalp(args):
             if not line.startswith("#"):
                 if len(line) > 0:
                     tmp = line.strip().split()
-                    annoOut[(tmp[0], len(inSeq[tmp[0]]))] = {}
+                    annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))] = {}
                     if tmp[9] == "Y":
-                        appendToDict(("SIGNALP", 1), (1, int(tmp[4]) - 1), annoOut[(tmp[0], len(inSeq[tmp[0]]))])
+                        appendToDict(("SIGNALP;1"), ("1;" + str(int(tmp[4])-1)), annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))])
                     else:
-                        annoOut[(tmp[0], len(inSeq[tmp[0]]))][("SIGNALP", 0)] = {}
+                        annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))]["SIGNALP;0"] = {}
     return(annoOut)
 
 
@@ -143,7 +151,7 @@ def doCoils(args):
                 tmp = outSeq.split('\n')
                 id = tmp.pop(0).strip()
                 concatSeq = ''.join(tmp).strip()
-                annoOut[(id, len(inSeq[id]))] = {}
+                annoOut[id +";"+ str(len(inSeq[id]))] = {}
                 posList = []
                 finished = False
                 while not finished:
@@ -151,12 +159,12 @@ def doCoils(args):
                     if match:
                         start = concatSeq.find(match.group()) + 1
                         end = start + len(match.group()) - 1
-                        posList.append((start, end))
+                        posList.append(str(start) +";"+ str(end))
                         concatSeq = concatSeq.replace(match.group(), "N" * len(match.group()), 1)
                     else:
                         finished = True
                 if len(posList) > 0:
-                    appendToDict(("coiled_coil", len(posList)), posList, annoOut[(id, len(inSeq[id]))])
+                    appendToDict("coiled_coil;"+ str(len(posList)), posList, annoOut[id +";"+ str(len(inSeq[id]))])
     os.chdir(currentDir)
     return(annoOut)
 
@@ -176,15 +184,15 @@ def doSeg(args):
             if len(result) > 0:
                 lines = result.split('\n')
                 id = lines.pop(0).strip().replace(">","")
-                annoOut[(id, len(inSeq[id]))] = {}
+                annoOut[id +";"+ str(len(inSeq[id]))] = {}
                 posList = []
                 for line in lines:
                     tmp = line.strip().split()
                     if (len(tmp) == 2) and ("-" in tmp[1]):
-                        pos = tmp[1].split('-')
+                        pos = tmp[1].replace('-',';') #tmp[1].split('-')
                         posList.append(pos)
                 if len(posList) > 0:
-                    appendToDict(("low complexity regions", len(posList)), posList, annoOut[(id, len(inSeq[id]))])
+                    appendToDict("low complexity regions;" + str(len(posList)), posList, annoOut[id +";"+ str(len(inSeq[id]))])
     return(annoOut)
 
 
@@ -236,7 +244,7 @@ def parseHmmscan(inSeq, hmmOut):
             if (len(outSeq) > 3) and (not (outSeq.startswith(" queryID"))) and (not ("No hits detected" in outSeq)):
                 lines = outSeq.strip().split('\n')
                 id = lines.pop(0).strip()
-                annoOut[id, len(inSeq[id])] = {}
+                annoOut[id +";"+ str(len(inSeq[id]))] = {}
                 tmpDict = {}
                 for line in lines:
                     items = line.strip().split('|')
@@ -244,18 +252,19 @@ def parseHmmscan(inSeq, hmmOut):
                         type = items[0].replace("# family: ","").strip()
                         clan = items[2].replace(" clan: ","").strip()
                         type_evalue = items[-1].replace(" E-value: ","").strip()
-                        tmpDict[(type,clan,type_evalue)] = []
+                        tmpDict[type +";"+ clan +";"+ type_evalue] = []
                     else:
                         start = items[3].replace("# family: ","").strip()
                         end = items[4].replace("# family: ","").strip()
                         instance_evalue = items[10].replace("# family: ","").strip()
-                        tmpDict[(type,clan,type_evalue)].append((instance_evalue,start,end))
+                        tmpDict[type +";"+ clan +";"+ type_evalue].append((instance_evalue  +";"+ start +";"+ end))
                 for key in tmpDict:
-                    appendToDict((key[0], len(tmpDict[key]), key[1], key[2]), tmpDict[key], annoOut[id, len(inSeq[id])])
+                    keyTmp = key.split(';')
+                    appendToDict((keyTmp[0] +";"+ str(len(tmpDict[key])) +";"+ keyTmp[1] +";"+ keyTmp[2]), tmpDict[key], annoOut[id +";"+ str(len(inSeq[id]))])
                     annotatedSeq[id] = 1
     for id in inSeq:
         if not id in annotatedSeq:
-            annoOut[(id, len(inSeq[id]))] = {}
+            annoOut[id +";"+ str(len(inSeq[id]))] = {}
     subprocess.run(['rm', hmmOut])
     return(annoOut)
 
