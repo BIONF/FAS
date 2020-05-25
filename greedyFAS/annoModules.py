@@ -27,25 +27,16 @@ from Bio import SeqIO
 from pathlib import Path
 import subprocess
 import re
+from collections import defaultdict
 import json
 
-
-def appendToDict(key,value,aDict):
-    if not key in aDict.keys():
-        aDict[key] = []
-        aDict[key].append(value)
-    else:
-        if not value in aDict[key]:
-            aDict[key].append(value)
-
-# def appendToDict(key,value,aDict):
-#     if not key in aDict.keys():
-#         aDict[key] = {}
-#         aDict[key].append(value)
-#     else:
-#         if not value in aDict[key]:
-#             aDict[key].append(value)
-
+def mergeNestedDic(dictList):
+    out = defaultdict(list)
+    out.update(dictList.pop(0))
+    for dd in dictList:
+        for key, value in dd.items():
+            out[key].update(value)
+    return out
 
 def save2json(outDict, toolName, outDir):
     Path(outDir).mkdir(parents = True, exist_ok = True)
@@ -260,18 +251,15 @@ def parseHmmscan(inSeq, hmmOut, toolName):
             if (len(outSeq) > 3) and (not (outSeq.startswith(" queryID"))) and (not ("No hits detected" in outSeq)):
                 lines = outSeq.strip().split('\n')
                 id = lines.pop(0).strip()
-                # annoOut[id +";"+ str(len(inSeq[id]))] = {}
                 annoOut[id] = {}
                 annoOut[id]["length"] = len(inSeq[id])
                 annoOut[id][toolName] = {}
-                # tmpDict = {}
                 for line in lines:
                     items = line.strip().split('|')
                     if "family:" in line:
                         type = items[0].replace("# family: ","").strip()
                         clan = items[2].replace(" clan: ","").strip()
                         type_evalue = items[-1].replace(" E-value: ","").strip()
-                        # tmpDict[type +";"+ clan +";"+ type_evalue] = []
                         annoOut[id][toolName][toolName+"_"+type] = {}
                         annoOut[id][toolName][toolName+"_"+type]["clan"] = clan
                         annoOut[id][toolName][toolName+"_"+type]["evalue"] = type_evalue
@@ -281,15 +269,9 @@ def parseHmmscan(inSeq, hmmOut, toolName):
                         start = items[3].replace("# family: ","").strip()
                         end = items[4].replace("# family: ","").strip()
                         instance_evalue = items[10].replace("# family: ","").strip()
-                        # tmpDict[type +";"+ clan +";"+ type_evalue].append((instance_evalue  +";"+ start +";"+ end))
                         annoOut[id][toolName][toolName+"_"+type]["instance"].append((start,end,instance_evalue))
-                # for key in tmpDict:
-                    # keyTmp = key.split(';')
-                    # appendToDict((keyTmp[0] +";"+ str(len(tmpDict[key])) +";"+ keyTmp[1] +";"+ keyTmp[2]), tmpDict[key], annoOut[id +";"+ str(len(inSeq[id]))])
-
     for id in inSeq:
         if not id in annotatedSeq:
-            # annoOut[id +";"+ str(len(inSeq[id]))] = {}
             annoOut[id] = {}
             annoOut[id]["length"] = len(inSeq[id])
             annoOut[id][toolName] = {}
