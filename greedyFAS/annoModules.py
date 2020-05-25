@@ -38,6 +38,15 @@ def appendToDict(key,value,aDict):
         if not value in aDict[key]:
             aDict[key].append(value)
 
+# def appendToDict(key,value,aDict):
+#     if not key in aDict.keys():
+#         aDict[key] = {}
+#         aDict[key].append(value)
+#     else:
+#         if not value in aDict[key]:
+#             aDict[key].append(value)
+
+
 def save2json(outDict, toolName, outDir):
     Path(outDir).mkdir(parents = True, exist_ok = True)
     jsonOut = json.dumps(outDict, ensure_ascii = False)
@@ -55,25 +64,26 @@ def doFlps(args):
     flpsOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = flpsOut.stdout.decode().split('\n')
     # save to dict
-    annoOut = {} # annoOut[seqID,seqLen][(type,instance)] = [(start,end),(start,end),(start,end)]
+    annoOut = {}
     annotatedSeq = {}
-    forCounting = {}
     if len(lines) > 0:
         for line in lines:
             tmp = line.strip().split('\t')
             if tmp[0]:
-                if not (tmp[0], len(inSeq[tmp[0]])) in forCounting:
-                    forCounting[tmp[0] +";"+ str(len(inSeq[tmp[0]]))] = {}
-                appendToDict(tmp[1] + "_" + tmp[7], (str(tmp[3]) + str(tmp[4])), forCounting[tmp[0] +";"+ str(len(inSeq[tmp[0]]))])
+                if not tmp[0] in annoOut:
+                    annoOut[tmp[0]] = {}
+                    annoOut[tmp[0]]["length"] = len(inSeq[tmp[0]])
+                    annoOut[tmp[0]]["flps"] = {}
+                if not "flps_" + tmp[1] + "_" + tmp[7] in annoOut[tmp[0]]["flps"]:
+                    annoOut[tmp[0]]["flps"]["flps_" + tmp[1] + "_" + tmp[7]] = []
+                annoOut[tmp[0]]["flps"]["flps_" + tmp[1] + "_" + tmp[7]].append((tmp[3],tmp[4]))
                 annotatedSeq[tmp[0]] = 1
-    for key in forCounting:
-        annoOut[key] = {}
-        for feature in forCounting[key]:
-            appendToDict((feature +";"+ str(len(forCounting[key][feature]))), forCounting[key][feature], annoOut[key])
 
     for id in inSeq:
         if not id in annotatedSeq:
-            annoOut[id +";"+ str(len(inSeq[id]))] = {}
+            annoOut[id] = {}
+            annoOut[id]["length"] = len(inSeq[id])
+            annoOut[id]["flps"] = {}
     return(annoOut)
 
 
@@ -86,26 +96,28 @@ def doTmhmm(args):
     tmhmmOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = tmhmmOut.stdout.decode().split('\n')
     # save to dict
-    annoOut = {} # annoOut[seqID,seqLen][(type,instance)] = [(start,end),(start,end),(start,end)]
+    annoOut = {}
     annotatedSeq = {}
     if len(lines) > 0:
         for line in lines:
             if line.startswith(">"):
                 id = line.replace(">","").strip()
-                annoOut[id +";"+ str(len(inSeq[id]))] = {}
-            posList = []
+                annoOut[id] = {}
+                annoOut[id]["length"] = len(inSeq[id])
+                annoOut[id]["tmhmm"] = {}
+                annoOut[id]["tmhmm"]["tmhmm_transmembrane"] = []
             if "%pred" in line:
                 tmp = line.strip().split(',')
                 for item in tmp:
                     if item.startswith(" M"):
                         pos = item.split()
-                        posList.append(pos[1] + ";" + pos[2])
-            if len(posList) > 0:
-                appendToDict(("transmembrane;" + str(len(posList))), posList, annoOut[id +";"+ str(len(inSeq[id]))])
+                        annoOut[id]["tmhmm"]["tmhmm_transmembrane"].append((pos[1], pos[2]))
                 annotatedSeq[id] = 1
     for id in inSeq:
         if not id in annotatedSeq:
-            annoOut[id +";"+ str(len(inSeq[id]))]["transmembrane;0"] = {}
+            annoOut[id] = {}
+            annoOut[id]["length"] = len(inSeq[id])
+            annoOut[id]["tmhmm"] = {}
     return(annoOut)
 
 
@@ -118,18 +130,22 @@ def doSignalp(args):
     signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = signalpOut.stdout.decode().split('\n')
     # save to dict
-    annoOut = {} # annoOut[seqID,seqLen][(type,instance)] = [(start,end),(start,end),(start,end)]
-    annotatedSeq = {}
+    annoOut = {}
     if len(lines) > 0:
         for line in lines:
             if not line.startswith("#"):
                 if len(line) > 0:
                     tmp = line.strip().split()
-                    annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))] = {}
+                    # annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))] = {}
                     if tmp[9] == "Y":
-                        appendToDict(("SIGNALP;1"), ("1;" + str(int(tmp[4])-1)), annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))])
+                        annoOut[tmp[0]] = {}
+                        annoOut[tmp[0]]["length"] = len(inSeq[tmp[0]])
+                        annoOut[tmp[0]]["signalp"] = {}
+                        annoOut[tmp[0]]["signalp"]["signalp_SIGNALP"] = (1,int(tmp[4])-1)
                     else:
-                        annoOut[tmp[0] + ";" + str(len(inSeq[tmp[0]]))]["SIGNALP;0"] = {}
+                        annoOut[tmp[0]] = {}
+                        annoOut[tmp[0]]["length"] = len(inSeq[tmp[0]])
+                        annoOut[tmp[0]]["signalp"] = {}
     return(annoOut)
 
 
@@ -144,27 +160,27 @@ def doCoils(args):
     coilsOut = subprocess.run([cmd], shell=True, capture_output=True)
     results = coilsOut.stdout.decode().split('>')
     # save to dict
-    annoOut = {} # annoOut[seqID,seqLen][(type,instance)] = [(start,end),(start,end),(start,end)]
+    annoOut = {}
     if len(results) > 0:
         for outSeq in results:
             if len(outSeq) > 0:
                 tmp = outSeq.split('\n')
                 id = tmp.pop(0).strip()
                 concatSeq = ''.join(tmp).strip()
-                annoOut[id +";"+ str(len(inSeq[id]))] = {}
-                posList = []
+                annoOut[id] = {}
+                annoOut[id]["length"] = len(inSeq[id])
+                annoOut[id]["coils"] = {}
+                annoOut[id]["coils"]["coils_coiled_coil"] = []
                 finished = False
                 while not finished:
                     match = re.search(r'x+', concatSeq)
                     if match:
                         start = concatSeq.find(match.group()) + 1
                         end = start + len(match.group()) - 1
-                        posList.append(str(start) +";"+ str(end))
+                        annoOut[id]["coils"]["coils_coiled_coil"].append((start, end))
                         concatSeq = concatSeq.replace(match.group(), "N" * len(match.group()), 1)
                     else:
                         finished = True
-                if len(posList) > 0:
-                    appendToDict("coiled_coil;"+ str(len(posList)), posList, annoOut[id +";"+ str(len(inSeq[id]))])
     os.chdir(currentDir)
     return(annoOut)
 
@@ -178,21 +194,21 @@ def doSeg(args):
     signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
     results = signalpOut.stdout.decode().split('>')
     # save to dict
-    annoOut = {} # annoOut[seqID,seqLen][(type,instance)] = [(start,end),(start,end),(start,end)]
+    annoOut = {}
     if len(results) > 0:
         for result in results:
             if len(result) > 0:
                 lines = result.split('\n')
                 id = lines.pop(0).strip().replace(">","")
-                annoOut[id +";"+ str(len(inSeq[id]))] = {}
-                posList = []
+                annoOut[id] = {}
+                annoOut[id]["length"] = len(inSeq[id])
+                annoOut[id]["seg"] = {}
+                annoOut[id]["seg"]["seg_low_complexity_regions"] = []
                 for line in lines:
                     tmp = line.strip().split()
                     if (len(tmp) == 2) and ("-" in tmp[1]):
-                        pos = tmp[1].replace('-',';') #tmp[1].split('-')
-                        posList.append(pos)
-                if len(posList) > 0:
-                    appendToDict("low complexity regions;" + str(len(posList)), posList, annoOut[id +";"+ str(len(inSeq[id]))])
+                        pos = tmp[1].split('-')
+                        annoOut[id]["seg"]["seg_low_complexity_regions"].append(pos)
     return(annoOut)
 
 
@@ -210,7 +226,7 @@ def doSmart(args):
     # save to dict
     if ".out" in lines[-1]:
         smartOutFile = toolPath + "/SMART/output_files/" + lines[-1]
-        return(parseHmmscan(inSeq, smartOutFile))
+        return(parseHmmscan(inSeq, smartOutFile,"smart"))
     else:
         return("No output for SMART search")
 
@@ -229,13 +245,13 @@ def doPfam(args):
     # save to dict
     if ".out" in lines[-1]:
         pfamOutFile = toolPath + "/Pfam/output_files/" + lines[-1]
-        return(parseHmmscan(inSeq, pfamOutFile))
+        return(parseHmmscan(inSeq, pfamOutFile, "pfam"))
     else:
         return("No output for PFAM search")
 
 
-def parseHmmscan(inSeq, hmmOut):
-    annoOut = {} # annoOut[seqID,seqLen][(type,instance,clan,evalue)] = [(evalue,start,end),(evalue,start,end),(evalue,start,end)]
+def parseHmmscan(inSeq, hmmOut, toolName):
+    annoOut = {}
     annotatedSeq = {}
     with open(hmmOut, 'r') as file:
         outFile = file.read()
@@ -244,41 +260,38 @@ def parseHmmscan(inSeq, hmmOut):
             if (len(outSeq) > 3) and (not (outSeq.startswith(" queryID"))) and (not ("No hits detected" in outSeq)):
                 lines = outSeq.strip().split('\n')
                 id = lines.pop(0).strip()
-                annoOut[id +";"+ str(len(inSeq[id]))] = {}
-                tmpDict = {}
+                # annoOut[id +";"+ str(len(inSeq[id]))] = {}
+                annoOut[id] = {}
+                annoOut[id]["length"] = len(inSeq[id])
+                annoOut[id][toolName] = {}
+                # tmpDict = {}
                 for line in lines:
                     items = line.strip().split('|')
                     if "family:" in line:
                         type = items[0].replace("# family: ","").strip()
                         clan = items[2].replace(" clan: ","").strip()
                         type_evalue = items[-1].replace(" E-value: ","").strip()
-                        tmpDict[type +";"+ clan +";"+ type_evalue] = []
+                        # tmpDict[type +";"+ clan +";"+ type_evalue] = []
+                        annoOut[id][toolName][toolName+"_"+type] = {}
+                        annoOut[id][toolName][toolName+"_"+type]["clan"] = clan
+                        annoOut[id][toolName][toolName+"_"+type]["evalue"] = type_evalue
+                        annoOut[id][toolName][toolName+"_"+type]["instance"] = []
+                        annotatedSeq[id] = 1
                     else:
                         start = items[3].replace("# family: ","").strip()
                         end = items[4].replace("# family: ","").strip()
                         instance_evalue = items[10].replace("# family: ","").strip()
-                        tmpDict[type +";"+ clan +";"+ type_evalue].append((instance_evalue  +";"+ start +";"+ end))
-                for key in tmpDict:
-                    keyTmp = key.split(';')
-                    appendToDict((keyTmp[0] +";"+ str(len(tmpDict[key])) +";"+ keyTmp[1] +";"+ keyTmp[2]), tmpDict[key], annoOut[id +";"+ str(len(inSeq[id]))])
-                    annotatedSeq[id] = 1
+                        # tmpDict[type +";"+ clan +";"+ type_evalue].append((instance_evalue  +";"+ start +";"+ end))
+                        annoOut[id][toolName][toolName+"_"+type]["instance"].append((start,end,instance_evalue))
+                # for key in tmpDict:
+                    # keyTmp = key.split(';')
+                    # appendToDict((keyTmp[0] +";"+ str(len(tmpDict[key])) +";"+ keyTmp[1] +";"+ keyTmp[2]), tmpDict[key], annoOut[id +";"+ str(len(inSeq[id]))])
+
     for id in inSeq:
         if not id in annotatedSeq:
-            annoOut[id +";"+ str(len(inSeq[id]))] = {}
+            # annoOut[id +";"+ str(len(inSeq[id]))] = {}
+            annoOut[id] = {}
+            annoOut[id]["length"] = len(inSeq[id])
+            annoOut[id][toolName] = {}
     subprocess.run(['rm', hmmOut])
     return(annoOut)
-
-
-# def write_xml(outpath, proteome, prot_lengths):
-#     with open(outpath, 'w') as out:
-#         out.write('<?xml version="1.0"?>\n<tool name="fLPS">\n')
-#         for protein in proteome:
-#             out.write('\t<protein id="' + protein + '" length="' + str(prot_lengths[protein]) + '">\n')
-#             for feature in proteome[protein]:
-#                 out.write('\t\t<feature type="' + feature + '" instance="' + str(len(proteome[protein][feature])) +
-#                           '">\n')
-#                 for instance in proteome[protein][feature]:
-#                     out.write('\t\t\t<start start="' + instance[0] + '">\n\t\t\t<end end="' + instance[1] + '">\n')
-#                 out.write('\t\t</feature>\n')
-#             out.write('\t</protein>\n')
-#         out.write('</tool>')
