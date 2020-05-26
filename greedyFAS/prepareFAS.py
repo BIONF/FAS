@@ -31,21 +31,15 @@ import argparse
 import readline
 import glob
 import inspect
-import greedyFAS
 from os.path import expanduser
 
 home = expanduser("~")
 
-
-def get_path():
-    return(os.path.dirname(inspect.getfile(greedyFAS)).strip())
-
-
-def search_string_in_file(file_name, string_to_search):
-    with open(file_name, 'r') as read_obj:
-        for line in read_obj:
-            if string_to_search in line:
-                return(line.rstrip())
+def checkFileExist(file):
+    try:
+        my_abs_path = Path(file).resolve(strict=True)
+    except FileNotFoundError:
+        sys.exit("%s not found" % file)
 
 
 def complete(text, state):
@@ -95,17 +89,6 @@ def query_yes_no(question, default="yes"):
                              "(or 'y' or 'n').\n")
 
 
-def install_path():
-    anno_path = expanduser("~") + "/annotation_fas"
-    print("Annotation dir: %s (y/n)" % anno_path)
-    if not query_yes_no("anno_path?"):
-        readline.set_completer_delims(' \t\n;')
-        readline.parse_and_bind("tab: complete")
-        readline.set_completer(complete)
-        anno_path = input('Enter annotation dir: ')
-    return(anno_path)
-
-
 def get_dtu_path(dtuPathIn):
     if not dtuPathIn == '':
         if not os.path.isdir(dtuPathIn):
@@ -134,27 +117,24 @@ def get_dtu_path(dtuPathIn):
         return 0, 0
 
 
-def check_status(perl_script, force, tarfile):
-    status = search_string_in_file(perl_script, "my $config")
-    flag = 0
-    if status == 'my $config = 0;':
-        flag = 1
-    else:
-        anno_path_tmp = search_string_in_file(perl_script, "my $annotationPath")
-        anno_path_tmp = anno_path_tmp.replace('my $annotationPath =', '')
-        anno_path_tmp = re.sub(r'[;"\s]', '', anno_path_tmp)
-        if force:
-            print("Annotation tools found in %s will be deleted and reinstalled! Enter to continue." % anno_path_tmp)
-            if query_yes_no(""):
-                backupCmd = 'mv %s/%s ../' % (anno_path_tmp, tarfile)
-                rm_annotools = 'rm -rf %s/*' % (anno_path_tmp)
-                mvCmd = 'mv ../%s %s/' % (tarfile, anno_path_tmp)
-                subprocess_cmd([backupCmd, rm_annotools, mvCmd])
-                flag = 1
-            else:
-                flag = anno_path_tmp
-        else:
-            flag = anno_path_tmp
+def check_status(toolPath, force, tarfile):
+    flag = 1
+    if os.path.isfile(toolPath+"/annoTools.txt"):
+        with open(toolPath+"/annoTools.txt") as f:
+            if '#checked' in f.read():
+                if force:
+                    print("Annotation tools found in %s will be deleted and reinstalled! Enter to continue." % toolPath)
+                    if query_yes_no(""):
+                        backupCmd = 'mv %s/%s ../' % (toolPath, tarfile)
+                        rm_annotools = 'rm -rf %s/*' % (toolPath)
+                        mvCmd = 'mv ../%s %s/' % (tarfile, toolPath)
+                        subprocess_cmd([backupCmd, rm_annotools, mvCmd])
+                        flag = 1
+                    else:
+                        flag = toolPath
+                else:
+                    flag = toolPath
+        f.close()
     return flag
 
 def install_signalp():
@@ -176,7 +156,7 @@ def install_tmhmm():
     subprocess.call([makelink_tmhmm], shell=True)
 
 def prepare_annoTool(options):
-    toolPathIn = options['toolPath']
+    anno_path = options['toolPath']
     dtuPathIn = options['dtuPath']
     force = options['force']
 
@@ -184,16 +164,7 @@ def prepare_annoTool(options):
     checksum = '2026191233 1108979287 ' + file
 
     current_dir = os.getcwd()
-    perl_script = get_path() + '/annoFAS.pl'
-    if check_status(perl_script, force, file) == 1:
-        print('Annotation tools need to be downloaded!')
-
-        # get annotation directory
-        if not toolPathIn == '':
-            Path(toolPathIn).mkdir(parents = True, exist_ok = True)
-            anno_path = os.path.abspath(toolPathIn)
-        else:
-            anno_path = install_path()
+    if check_status(anno_path, force, file) == 1:
         Path(anno_path).mkdir(parents = True, exist_ok = True)
         anno_path = os.path.abspath(anno_path)
         os.chdir(anno_path)
@@ -204,7 +175,7 @@ def prepare_annoTool(options):
             mvCmd = 'mv ../%s %s/' % (file, anno_path)
             subprocess_cmd([backupCmd, rm_annotools, mvCmd])
 
-        print('Annotation tools will be saved in ')
+        print('Annotation tools will be installed in ')
         print(os.getcwd())
         print('----------------------------------')
         tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
@@ -310,20 +281,11 @@ def prepare_annoTool(options):
             subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
             if not options['keep']:
                 subprocess.call(['rm', anno_path + '/' + file])
-
-            # add path to annotation dir to annFASpl script
-            mod_anno_path = anno_path.replace('/', '\/')
-            sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
-                                                                                                     perl_script)
-            sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
-            subprocess.call([sed_cmd1], shell=True)
-            subprocess.call([sed_cmd2], shell=True)
         os.chdir(current_dir)
         return(anno_path)
     else:
         os.chdir(current_dir)
-        # print("ANNOTAION TOOLS FOUND AT %s!" % )
-        return(check_status(perl_script, force, file))
+        return(check_status(anno_path, force, file))
 
 
 def checkExcutable(anno_path):
@@ -385,16 +347,16 @@ def checkExcutable(anno_path):
                 sys.exit("Error with SignalP. You can reinstall it by running prepareFAS with --force!")
         except:
             sys.exit("Error with SignalP. You can reinstall it by running prepareFAS with --force!")
-
     return(True)
 
 
 def main():
     version = "1.0.0"
     parser = argparse.ArgumentParser(description="You are running prepareFAS version " + str(version) + ".")
+    required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
+    required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='', required=True)
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store', default='')
-    optional.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='')
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
 
@@ -406,19 +368,18 @@ def main():
         'force': args.force,
         'keep': args.keep
     }
-    anno_path = prepare_annoTool(options)
 
+    anno_path = prepare_annoTool(options)
     allRun = checkExcutable(anno_path)
+
     if allRun:
-        print("Done! Annotation tools are installed in %s" % anno_path)
-        # add path to annotation dir to annFAS.pl script
-        perl_script = get_path() + '/annoFAS.pl'
-        mod_anno_path = anno_path.replace('/', '\/')
-        sed_cmd1 = 'sed -i -e \'s/my $annotationPath = .*/my $annotationPath = \"%s\";/\' %s' % (mod_anno_path,
-                                                                                                 perl_script)
-        sed_cmd2 = 'sed -i -e \'s/$config = 0/$config = 1/\' %s' % perl_script
-        subprocess.call([sed_cmd1], shell=True)
-        subprocess.call([sed_cmd2], shell=True)
+        with open(anno_path+"/annoTools.txt") as f:
+            if not '#checked' in f.read():
+                with open(anno_path+"/annoTools.txt","a") as file:
+                    file.write("#checked")
+                    file.close()
+        f.close()
+        sys.exit("Done! Annotation tools can be found in %s" % anno_path)
     else:
         sys.exit("Some errors occur with annotation tools. Please check if they can be excuted at %s" % anno_path)
 
