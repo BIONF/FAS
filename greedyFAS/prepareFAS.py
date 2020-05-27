@@ -351,7 +351,7 @@ def checkExcutable(anno_path):
 
 
 def main():
-    version = "1.0.0"
+    version = "1.1.0"
     parser = argparse.ArgumentParser(description="You are running prepareFAS version " + str(version) + ".")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
