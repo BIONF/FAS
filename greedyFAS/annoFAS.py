@@ -1,7 +1,7 @@
 #!/bin/env python
 
 #######################################################################
-# Copyright (C) 2019 Vinh Tran
+# Copyright (C) 2020 Vinh Tran
 #
 #  This file is part of FAS.
 #
