@@ -27,7 +27,7 @@ import time
 from os.path import expanduser
 from pathlib import Path
 import multiprocessing as mp
-import annoModules
+import greedyFAS.annoModules as annoModules
 
 home = expanduser("~")
 
