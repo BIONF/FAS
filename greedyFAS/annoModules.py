@@ -27,25 +27,44 @@ from Bio import SeqIO
 from pathlib import Path
 import subprocess
 import re
-from collections import defaultdict
+import collections
 import json
 
+### general functions
 def mergeNestedDic(dictList):
-    out = defaultdict(list)
+    out = collections.defaultdict(list)
     out.update(dictList.pop(0))
     for dd in dictList:
         for key, value in dd.items():
             out[key].update(value)
     return out
 
-def save2json(outDict, toolName, outDir):
+
+def save2json(dict2save, outName, outDir):
     Path(outDir).mkdir(parents = True, exist_ok = True)
-    jsonOut = json.dumps(outDict, ensure_ascii = False)
-    f = open(outDir+"/"+toolName+'.json', 'w')
+    jsonOut = json.dumps(dict2save, ensure_ascii = False)
+    f = open(outDir+"/"+outName+'.json', 'w')
     f.write(jsonOut)
     f.close()
 
 
+def checkFileExist(file):
+    try:
+        my_abs_path = Path(file).resolve(strict=True)
+    except FileNotFoundError:
+        sys.exit("%s not found" % file)
+
+
+def checkFileEmpty(file):
+    flag = False
+    try:
+        if os.path.getsize(file) == 0:
+            flag = True
+    except OSError as e:
+            flag = True
+    return(flag)
+
+### functions for doing annotation with single tool
 def doFlps(args):
     (seqFile, toolPath, threshold) = args
     # load fasta seq
@@ -160,15 +179,15 @@ def doCoils(args):
                 concatSeq = ''.join(tmp).strip()
                 annoOut[id] = {}
                 annoOut[id]["length"] = len(inSeq[id])
-                annoOut[id]["coils"] = {}
-                annoOut[id]["coils"]["coils_coiled_coil"] = []
+                annoOut[id]["coils2"] = {}
+                annoOut[id]["coils2"]["coils_coiled_coil"] = []
                 finished = False
                 while not finished:
                     match = re.search(r'x+', concatSeq)
                     if match:
                         start = concatSeq.find(match.group()) + 1
                         end = start + len(match.group()) - 1
-                        annoOut[id]["coils"]["coils_coiled_coil"].append((start, end))
+                        annoOut[id]["coils2"]["coils_coiled_coil"].append((start, end))
                         concatSeq = concatSeq.replace(match.group(), "N" * len(match.group()), 1)
                     else:
                         finished = True
@@ -204,7 +223,7 @@ def doSeg(args):
 
 
 def doSmart(args):
-    (seqFile, toolPath, cpus) = args
+    (seqFile, toolPath, cpus, eFeature, eInstance) = args
     currentDir = os.path.abspath(os.getcwd())
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
@@ -217,13 +236,14 @@ def doSmart(args):
     # save to dict
     if ".out" in lines[-1]:
         smartOutFile = toolPath + "/SMART/output_files/" + lines[-1]
-        return(parseHmmscan(inSeq, smartOutFile,"smart"))
+        annoOut, clanOut = parseHmmscan(inSeq, smartOutFile, "smart", eFeature, eInstance)
+        return(annoOut)
     else:
         return("No output for SMART search")
 
 
 def doPfam(args):
-    (seqFile, toolPath, cpus) = args
+    (seqFile, toolPath, cpus, eFeature, eInstance) = args
     currentDir = os.path.abspath(os.getcwd())
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
@@ -236,13 +256,15 @@ def doPfam(args):
     # save to dict
     if ".out" in lines[-1]:
         pfamOutFile = toolPath + "/Pfam/output_files/" + lines[-1]
-        return(parseHmmscan(inSeq, pfamOutFile, "pfam"))
+        annoOut, clanOut = parseHmmscan(inSeq, pfamOutFile, "pfam", eFeature, eInstance)
+        return(annoOut, clanOut)
     else:
         return("No output for PFAM search")
 
 
-def parseHmmscan(inSeq, hmmOut, toolName):
+def parseHmmscan(inSeq, hmmOut, toolName, eFeature, eInstance):
     annoOut = {}
+    clanOut = {}
     annotatedSeq = {}
     with open(hmmOut, 'r') as file:
         outFile = file.read()
@@ -260,20 +282,134 @@ def parseHmmscan(inSeq, hmmOut, toolName):
                         type = items[0].replace("# family: ","").strip()
                         clan = items[2].replace(" clan: ","").strip()
                         type_evalue = items[-1].replace(" E-value: ","").strip()
-                        annoOut[id][toolName][toolName+"_"+type] = {}
-                        annoOut[id][toolName][toolName+"_"+type]["clan"] = clan
-                        annoOut[id][toolName][toolName+"_"+type]["evalue"] = type_evalue
-                        annoOut[id][toolName][toolName+"_"+type]["instance"] = []
-                        annotatedSeq[id] = 1
+                        if float(type_evalue) <= eFeature:
+                            annoOut[id][toolName][toolName+"_"+type] = {}
+                            annoOut[id][toolName][toolName+"_"+type]["evalue"] = type_evalue
+                            annoOut[id][toolName][toolName+"_"+type]["instance"] = []
+                            clanOut[toolName+"_"+type] = clan
+                            annotatedSeq[id] = 1
                     else:
-                        start = items[3].replace("# family: ","").strip()
-                        end = items[4].replace("# family: ","").strip()
-                        instance_evalue = items[10].replace("# family: ","").strip()
-                        annoOut[id][toolName][toolName+"_"+type]["instance"].append((start,end,instance_evalue))
+                        if float(type_evalue) <= eFeature:
+                            start = items[3].replace("# family: ","").strip()
+                            end = items[4].replace("# family: ","").strip()
+                            instance_evalue = items[10].replace("# family: ","").strip()
+                            if float(instance_evalue) <= eInstance:
+                                annoOut[id][toolName][toolName+"_"+type]["instance"].append((start,end,instance_evalue))
     for id in inSeq:
         if not id in annotatedSeq:
             annoOut[id] = {}
             annoOut[id]["length"] = len(inSeq[id])
             annoOut[id][toolName] = {}
     subprocess.run(['rm', hmmOut])
-    return(annoOut)
+    return(annoOut, collections.OrderedDict(sorted(clanOut.items())))
+
+
+### functions for doing annotation for multiple tools
+def getAnnoTools(toolPath):
+    checkFileExist(toolPath+"/annoTools.txt")
+    toolList = []
+    with open(toolPath+"/annoTools.txt") as f:
+        file =  f.readlines()
+        if not '#checked' in "".join(file):
+            sys.exit("Annotation tools not ready. Please run prepareFAS first!")
+        else:
+            for tool in file:
+                if (not "#" in tool) and (len(tool) > 1):
+                    toolList.append(tool.strip().lower())
+    return(toolList)
+
+def createAnnoJobs(args):
+    (outName, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
+    currentDir = os.path.abspath(os.getcwd())
+    annoJobs = []
+    # create tmp sequence files for running parallely
+    Path(currentDir+"/tmp").mkdir(parents = True, exist_ok = True)
+    for s in SeqIO.parse(seqFile, "fasta"):
+        tmpFile = open(currentDir+"/tmp/"+outName+"_"+s.id+".fa", "w")
+        tmpFile.write(str(">" + s.id + "\n" + s.seq))
+        tmpFile.close()
+        annoJobs.append([currentDir+"/tmp/"+outName+"_"+s.id+".fa", toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores])
+    return(annoJobs)
+
+
+def removeTmpFasta(outName):
+    currentDir = os.path.abspath(os.getcwd())
+    rmCmd = 'rm %s/tmp/%s_*.fa' % (currentDir, outName)
+    subprocess.run([rmCmd], shell=True)
+
+
+def doAnno(args):
+    (seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
+    annoList = []
+    clanDict = {}
+    final = {}
+    if 'flps' in toolList:
+        # print("do flps...")
+        anno = doFlps([seqFile, toolPath, eFlps])
+        annoList.append(anno)
+    if 'tmhmm' in toolList:
+        # print("do tmhmm...")
+        anno = doTmhmm([seqFile, toolPath])
+        annoList.append(anno)
+    if 'signalp' in toolList:
+        # print("do signalp...")
+        anno = doSignalp([seqFile, toolPath, signalpOrg])
+        annoList.append(anno)
+    if 'coils2' in toolList:
+        # print("do coils...")
+        anno = doCoils([seqFile, toolPath])
+        annoList.append(anno)
+    if 'seg' in toolList:
+        # print("do seg...")
+        anno = doSeg([seqFile, toolPath])
+        annoList.append(anno)
+    if 'smart' in toolList:
+        # print("do smart...")
+        anno = doSmart([seqFile, toolPath, hmmCores, eFeature, eInstance])
+        annoList.append(anno)
+    if 'pfam' in toolList:
+        # print("do pfam...")
+        anno, clanDict = doPfam([seqFile, toolPath, hmmCores, eFeature, eInstance])
+        annoList.append(anno)
+        final["clan"] = clanDict
+
+    final["feature"] = mergeNestedDic(annoList)
+    return(final)
+
+### function for posprocessing annotation dictionary
+def countFeatures(annoDict):
+    out = []
+    for prot in list(annoDict.keys()):
+        for toolName in list(annoDict[prot].keys()):
+            if not toolName == 'length':
+                for feat, value in annoDict[prot][toolName].items():
+                    out.extend([feat] * len(value))
+    out.sort()
+    count = collections.Counter(out)
+    return(dict(count))
+
+
+
+def replaceAnno(oldAnnoFile, newAnnoDict, redo):
+    with open(oldAnnoFile) as f:
+        annoDict = json.load(f)
+        f.close()
+        for prot in list(annoDict["feature"].keys()):
+            annoDict["feature"][prot][redo] = dict(newAnnoDict["feature"])[prot][redo]
+        if "clan" in newAnnoDict:
+            annoDict["clan"] = newAnnoDict["clan"]
+        return(annoDict)
+
+
+def extractAnno(seqFile, existingAnno):
+    inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
+    with open(existingAnno) as f:
+        existingDict = json.load(f)
+        f.close()
+        annoDict = {}
+        annoDict["feature"] = dict((prot, existingDict["feature"][prot]) for prot in list(inSeq.keys()))
+        allPfam = []
+        for prot in list(inSeq.keys()):
+            allPfam.extend(list(annoDict["feature"][prot]["pfam"].keys()))
+        annoDict["clan"] = dict((pfam, existingDict["clan"][pfam]) for pfam in allPfam)
+        return(annoDict)
