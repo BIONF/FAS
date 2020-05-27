@@ -132,6 +132,7 @@ def main():
 
     # run annoFAS
     start = time.time()
+    print("PID " + str(os.getpid()))
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName])
     ende = time.time()
     print("Finished in " + '{:5.3f}s'.format(ende-start))
