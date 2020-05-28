@@ -29,36 +29,38 @@ from pathlib import Path
 import multiprocessing as mp
 import greedyFAS.annoModules as annoModules
 
-home = expanduser("~")
+home = expanduser('~')
 
 def runAnnoFas(args):
     (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName) = args
     # do annotation
-    outFile = outPath+"/"+outName+".json"
+    outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
-        if extract == "":
-            print("Doing annotation...")
+        if extract == '':
+            print('Doing annotation...')
             annoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, annoModules.getAnnoTools(toolPath), eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
             pool = mp.Pool(mp.cpu_count()-1)
             annoOut = pool.map(annoModules.doAnno, annoJobs)
             annoDict = annoModules.mergeNestedDic(annoOut)
-            annoDict["count"] = annoModules.countFeatures(annoDict["feature"])
+            annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
+            annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
             annoModules.save2json(annoDict, outName, outPath)
             # remove tmp sequence files
             annoModules.removeTmpFasta(outName)
             pool.close()
         else:
-            if oldName == "":
-                print("No reference annotaion given! Use --name <name of annotation file>")
+            if oldName == '':
+                print('No reference annotaion given! Use --name <name of annotation file>')
             else:
-                print("Extracting annotations...")
-                annoDict = annoModules.extractAnno(seqFile, outPath+"/"+oldName+".json")
-                annoDict["count"] = annoModules.countFeatures(annoDict["feature"])
+                print('Extracting annotations...')
+                annoDict = annoModules.extractAnno(seqFile, outPath+'/'+oldName+'.json')
+                annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
+                annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
                 annoModules.save2json(annoDict, outName, outPath)
     else:
-        if not redo == "":
-            print("Redoing annotation for %s..." % redo)
+        if not redo == '':
+            print('Redoing annotation for %s...' % redo)
             redoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, [redo], eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # redo annotation
             pool = mp.Pool(mp.cpu_count()-1)
@@ -66,18 +68,19 @@ def runAnnoFas(args):
             redoAnnoDict = annoModules.mergeNestedDic(annoOut)
             # replace old annotations and save to json output
             annoDict = annoModules.replaceAnno(outFile, redoAnnoDict, redo)
-            annoDict["count"] = annoModules.countFeatures(annoDict["feature"])
+            annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
+            annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
             annoModules.save2json(annoDict, outName, outPath)
             # remove tmp sequence files
             annoModules.removeTmpFasta(outName)
             pool.close()
         else:
-            print(outFile + " already exists!")
+            print(outFile + ' already exists!')
 
 
 def main():
-    version = "1.1.0"
-    parser = argparse.ArgumentParser(description="You are running annoFAS version " + str(version) + ".")
+    version = '1.1.0'
+    parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-i', '--fasta', help='Input sequence(s) in fasta format', action='store', default='',
@@ -91,10 +94,10 @@ def main():
     optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance', action='store', default=0.01, type=float)
     optional.add_argument('--hmmCores', help='Number of CPUs used for hmm search', action='store', default=1, type=int)
     optional.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
-    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search', choices=['euk', 'gram+', 'gram-'], action='store', default="euk", type=str)
+    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search', choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
     optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils2|seg|pfam|signalp|smart|tmhmm. '
                                          'Only one selection allowed!', choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
-                                         action='store', default="", type=str)
+                                         action='store', default='', type=str)
     optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence',
                           action='store_true', default='')
 
@@ -116,8 +119,8 @@ def main():
         my_abs_path = Path(outPath).resolve(strict=True)
     except FileNotFoundError:
         Path(outPath).mkdir(parents = True, exist_ok = True)
-    if args.extract == "":
-        oldName = ""
+    if args.extract == '':
+        oldName = ''
         outName = args.name
         if len(outName) == 0:
             outName = seqFile.split('/')[-1].split('.')[0]
@@ -132,10 +135,10 @@ def main():
 
     # run annoFAS
     start = time.time()
-    print("PID " + str(os.getpid()))
+    print('PID ' + str(os.getpid()))
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName])
     ende = time.time()
-    print("Finished in " + '{:5.3f}s'.format(ende-start))
+    print('Finished in ' + '{:5.3f}s'.format(ende-start))
 
 
 if __name__ == '__main__':

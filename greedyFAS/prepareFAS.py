@@ -33,13 +33,13 @@ import glob
 import inspect
 from os.path import expanduser
 
-home = expanduser("~")
+home = expanduser('~')
 
 def checkFileExist(file):
     try:
         my_abs_path = Path(file).resolve(strict=True)
     except FileNotFoundError:
-        sys.exit("%s not found" % file)
+        sys.exit('%s not found' % file)
 
 
 def complete(text, state):
@@ -66,17 +66,17 @@ def download_data(file, checksum):
         sys.exit('Cannot download annotation tools!')
 
 
-def query_yes_no(question, default="yes"):
-    valid = {"yes": True, "y": True, "ye": True,
-             "no": False, "n": False}
+def query_yes_no(question, default='yes'):
+    valid = {'yes': True, 'y': True, 'ye': True,
+             'no': False, 'n': False}
     if default is None:
-        prompt = " [y/n] "
-    elif default == "yes":
-        prompt = " [Y/n] "
-    elif default == "no":
-        prompt = " [y/N] "
+        prompt = ' [y/n] '
+    elif default == 'yes':
+        prompt = ' [Y/n] '
+    elif default == 'no':
+        prompt = ' [y/N] '
     else:
-        raise ValueError("invalid default answer: '%s'" % default)
+        raise ValueError('invalid default answer: '%s'' % default)
     while True:
         # sys.stdout.write(question + prompt)
         choice = sys.stdin.readline().rstrip().lower()
@@ -85,33 +85,33 @@ def query_yes_no(question, default="yes"):
         elif choice in valid:
             return valid[choice]
         else:
-            sys.stdout.write("Please respond with 'yes' or 'no' "
-                             "(or 'y' or 'n').\n")
+            sys.stdout.write('Please respond with 'yes' or 'no' '
+                             '(or 'y' or 'n').\n')
 
 
 def get_dtu_path(dtuPathIn):
     if not dtuPathIn == '':
         if not os.path.isdir(dtuPathIn):
-            sys.exit(dtuPathIn + " not found!")
+            sys.exit(dtuPathIn + ' not found!')
         else:
             dtu_path = os.path.abspath(dtuPathIn)
     else:
-        print("Do you want to use TMHMM and SignalP? (y/n)")
-        if query_yes_no("Source path?"):
+        print('Do you want to use TMHMM (v2.0c) and SignalP (v4.1g)? (y/n)')
+        if query_yes_no('Source path?'):
             readline.set_completer_delims(' \t\n;')
-            readline.parse_and_bind("tab: complete")
+            readline.parse_and_bind('tab: complete')
             readline.set_completer(complete)
-            dtu_path = input('Please download TMHMM and SignalP at https://services.healthtech.dtu.dk/ and enter path to the downloaded tar files:')
+            dtu_path = input('Please download TMHMM 2.0c and SignalP 4.1g at https://services.healthtech.dtu.dk/ and enter path to the downloaded tar files:')
         else:
-            dtu_path = ""
+            dtu_path = ''
 
     if not dtu_path == '':
-        cmd = 'ls %s | grep \"signalp\|tmhmm\"' % dtu_path
+        cmd = 'ls %s | grep \'signalp-4.1g\|tmhmm-2.0c\'' % dtu_path
         dtu_tool = subprocess.check_output([cmd], shell=True).decode(sys.stdout.encoding).strip()
-        if not "tmhmm" in dtu_tool:
+        if not 'tmhmm' in dtu_tool:
             sys.exit('TMHMM not found in %s' % dtu_path)
-        if not "signalp" in dtu_tool:
-            sys.exit('SignalP not found in %s' % dtu_path)
+        if not 'signalp' in dtu_tool:
+            sys.exit('signalp-4.1g not found in %s' % dtu_path)
         return dtu_path, dtu_tool
     else:
         return 0, 0
@@ -119,12 +119,12 @@ def get_dtu_path(dtuPathIn):
 
 def check_status(toolPath, force, tarfile):
     flag = 1
-    if os.path.isfile(toolPath+"/annoTools.txt"):
-        with open(toolPath+"/annoTools.txt") as f:
+    if os.path.isfile(toolPath+'/annoTools.txt'):
+        with open(toolPath+'/annoTools.txt') as f:
             if '#checked' in f.read():
                 if force:
-                    print("Annotation tools found in %s will be deleted and reinstalled! Enter to continue." % toolPath)
-                    if query_yes_no(""):
+                    print('Annotation tools found in %s will be deleted and reinstalled! Enter to continue.' % toolPath)
+                    if query_yes_no(''):
                         backupCmd = 'mv %s/%s ../' % (toolPath, tarfile)
                         rm_annotools = 'rm -rf %s/*' % (toolPath)
                         mvCmd = 'mv ../%s %s/' % (tarfile, toolPath)
@@ -140,9 +140,9 @@ def check_status(toolPath, force, tarfile):
 def install_signalp():
     mv_cmd1 = 'mv signalp-4.1* SignalP'
     subprocess.call([mv_cmd1], shell=True)
-    os.chdir("SignalP")
-    signalp_path = os.getcwd().replace("/","\/")
-    addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+"/signalp")
+    os.chdir('SignalP')
+    signalp_path = os.getcwd().replace('/','\/')
+    addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+'/signalp')
     subprocess.call([addPath_signalp], shell=True)
     # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
     # subprocess.call([makelink_signalp], shell=True)
@@ -151,7 +151,7 @@ def install_tmhmm():
     mv_cmd2 = 'mv tmhmm* TMHMM'
     subprocess.call([mv_cmd2], shell=True)
     machine = os.uname()[4]
-    os.chdir("TMHMM")
+    os.chdir('TMHMM')
     makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
     subprocess.call([makelink_tmhmm], shell=True)
 
@@ -180,7 +180,7 @@ def prepare_annoTool(options):
         print('----------------------------------')
         tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
         with open('annoTools.txt', mode = 'wt') as tool_file:
-            tool_file.write("#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n")
+            tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n')
 
         # get DTU tools path
         (dtu_path, dtu_tool) = get_dtu_path(dtuPathIn)
@@ -189,7 +189,7 @@ def prepare_annoTool(options):
         if not dtu_path == 0:
             print('Installing SignalP and TMHMM...')
             for tool in dtu_tool.split('\n'):
-                print(dtu_path + "/" + tool)
+                print(dtu_path + '/' + tool)
                 tar_cmd = 'tar xf %s/%s --directory %s 2> /dev/null' % (dtu_path, tool, anno_path)
                 subprocess.call([tar_cmd], shell=True)
 
@@ -207,9 +207,9 @@ def prepare_annoTool(options):
                 subprocess.call([rm_tmhmm], shell=True)
             os.chdir(anno_path)
 
-            dtu_tool_list = ["TMHMM", "SignalP"]
+            dtu_tool_list = ['TMHMM', 'SignalP']
             with open('annoTools.txt', mode = 'a') as tool_file:
-                tool_file.write("TMHMM\nSignalP\n")
+                tool_file.write('TMHMM\nSignalP\n')
         tool_file.close()
 
         # create folders for other annotation tools
@@ -220,7 +220,6 @@ def prepare_annoTool(options):
             if len(os.listdir(anno_path + '/' + folder)) == 0:
                 print(anno_path + '/' + folder)
                 emptyFlag = 1
-        Path(anno_path + '/Pfam/output_files').mkdir(parents = True, exist_ok = True)
 
         # download annotation tools
         if emptyFlag == 1:
@@ -238,7 +237,7 @@ def prepare_annoTool(options):
 
             # copy tools to their folders
             for tool in tools:
-                if tool == "fLPS":
+                if tool == 'fLPS':
                     print('Downloading fLPS ...')
                     fLPS_file = 'fLPS.tar.gz'
                     fLPS_url = 'http://biology.mcgill.ca/faculty/harrison/' + fLPS_file
@@ -253,23 +252,23 @@ def prepare_annoTool(options):
                 print('---------------------')
 
             # make symlink for fLPS (depend on OS system)
-            source = os.getcwd() + "/fLPS/bin"
-            target = os.getcwd() + "/fLPS/"
-            if platform == "darwin":
-                source = source + "/mac64/fLPS"
+            source = os.getcwd() + '/fLPS/bin'
+            target = os.getcwd() + '/fLPS/'
+            if platform == 'darwin':
+                source = source + '/mac64/fLPS'
                 subprocess.call(['ln', '-fs', source, target])
             else:
-                source = source + "/linux/fLPS"
+                source = source + '/linux/fLPS'
                 subprocess.call(['ln', '-fs', source, target])
             # re-compile COILS2 for mac OS
-            if platform == "darwin":
-                coils_path = anno_path + "/COILS2"
+            if platform == 'darwin':
+                coils_path = anno_path + '/COILS2'
                 os.chdir(coils_path)
                 subprocess.call(['tar', 'xf', 'ncoils.tar.gz'])
-                coils_bin = coils_path + "/coils"
+                coils_bin = coils_path + '/coils'
                 os.chdir(coils_bin)
                 compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm'
-                COILSDIR = 'echo \"export COILSDIR=%s\" >> ~/.bash_profile' % coils_bin
+                COILSDIR = 'echo \'export COILSDIR=%s\' >> ~/.bash_profile' % coils_bin
                 subprocess_cmd((compile_cmd, COILSDIR))
                 os.chdir(coils_path)
                 makelink_cmd = 'ln -s -f coils/ncoils-osf ./COILS2'
@@ -289,70 +288,70 @@ def prepare_annoTool(options):
 
 
 def checkExcutable(anno_path):
-    with open(anno_path+"/annoTools.txt") as file:
+    with open(anno_path+'/annoTools.txt') as file:
         availTool = [line.strip() for line in file]
-    print("Checking if annotation tools are excutable...")
+    print('Checking if annotation tools are excutable...')
     # test pfam and smart
     if not os.path.isfile(anno_path + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
-        sys.exit("Pfam hmm file not found. Please run prepareFAS with --force!")
+        sys.exit('Pfam hmm file not found. Please run prepareFAS with --force!')
     if not os.path.isfile(anno_path + '/SMART/SMART-hmms/SMART.hmm'):
-        sys.exit("SMART hmm file not found. Please run prepareFAS with --force!")
+        sys.exit('SMART hmm file not found. Please run prepareFAS with --force!')
     # test seg
-    if "SEG" in availTool:
+    if 'SEG' in availTool:
         segCmd = '%s/SEG/seg' % anno_path
         try:
             p1 = subprocess.Popen([segCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output1, err1 = p1.communicate()
-            if not "Usage" in err1.decode('UTF-8').strip():
-                sys.exit("Error with SEG. You can reinstall it by running prepareFAS with --force!")
+            if not 'Usage' in err1.decode('UTF-8').strip():
+                sys.exit('Error with SEG. You can reinstall it by running prepareFAS with --force!')
         except:
-            sys.exit("Error with SEG. You can reinstall it by running prepareFAS with --force!")
+            sys.exit('Error with SEG. You can reinstall it by running prepareFAS with --force!')
     # test fLPS
-    if "fLPS" in availTool:
+    if 'fLPS' in availTool:
         flpsCmd = '%s/fLPS/fLPS' % anno_path
         try:
             p2 = subprocess.Popen([flpsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output2, err2 = p2.communicate()
-            if not err2.decode('UTF-8').strip() == "There is no sequence file. Please supply one.":
-                sys.exit("Error with fLPS. You can reinstall it by running prepareFAS with --force!")
+            if not err2.decode('UTF-8').strip() == 'There is no sequence file. Please supply one.':
+                sys.exit('Error with fLPS. You can reinstall it by running prepareFAS with --force!')
         except:
-            sys.exit("Error with fLPS. You can reinstall it by running prepareFAS with --force!")
+            sys.exit('Error with fLPS. You can reinstall it by running prepareFAS with --force!')
     # test COILS2
-    if "COILS2" in availTool:
+    if 'COILS2' in availTool:
         coilsCmd = '%s/COILS2/COILS2' % anno_path
         try:
             p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output3, err3 = p3.communicate()
-            if not err3.decode('UTF-8').strip() == "Error reading "+os.getcwd()+"/new.mat":
-                sys.exit("Error with COILS2. You can reinstall it by running prepareFAS with --force!")
+            if not err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
+                sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
         except:
-            sys.exit("Error with COILS2. You can reinstall it by running prepareFAS with --force!")
+            sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
     # test tmhmm
-    if "TMHMM" in availTool:
+    if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
         try:
             p4 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output4, err4 = p4.communicate()
-            if "Error: No modelfile given" in err4.decode('UTF-8').strip():
-                sys.exit("Error with TMHMM. You can reinstall it by running prepareFAS with --force!")
+            if 'Error: No modelfile given' in err4.decode('UTF-8').strip():
+                sys.exit('Error with TMHMM. You can reinstall it by running prepareFAS with --force!')
         except:
-            sys.exit("Error with TMHMM. You can reinstall it by running prepareFAS with --force!")
+            sys.exit('Error with TMHMM. You can reinstall it by running prepareFAS with --force!')
     # test signalp
-    if "SignalP" in availTool:
+    if 'SignalP' in availTool:
         signalpCmd = '%s/SignalP/signalp' % anno_path
         try:
-            p5 = subprocess.Popen([signalpCmd, "-V"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p5 = subprocess.Popen([signalpCmd, '-V'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output5, err5 = p5.communicate()
-            if not err5.decode('UTF-8').strip() == "":
-                sys.exit("Error with SignalP. You can reinstall it by running prepareFAS with --force!")
+            if not err5.decode('UTF-8').strip() == '':
+                sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
         except:
-            sys.exit("Error with SignalP. You can reinstall it by running prepareFAS with --force!")
+            sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
     return(True)
 
 
 def main():
-    version = "1.1.0"
-    parser = argparse.ArgumentParser(description="You are running prepareFAS version " + str(version) + ".")
+    version = '1.1.0'
+    parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='', required=True)
@@ -373,15 +372,15 @@ def main():
     allRun = checkExcutable(anno_path)
 
     if allRun:
-        with open(anno_path+"/annoTools.txt") as f:
+        with open(anno_path+'/annoTools.txt') as f:
             if not '#checked' in f.read():
-                with open(anno_path+"/annoTools.txt","a") as file:
-                    file.write("#checked")
+                with open(anno_path+'/annoTools.txt','a') as file:
+                    file.write('#checked')
                     file.close()
         f.close()
-        sys.exit("Done! Annotation tools can be found in %s" % anno_path)
+        sys.exit('Done! Annotation tools can be found in %s' % anno_path)
     else:
-        sys.exit("Some errors occur with annotation tools. Please check if they can be excuted at %s" % anno_path)
+        sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 
 if __name__ == '__main__':
