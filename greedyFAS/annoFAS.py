@@ -32,7 +32,7 @@ import greedyFAS.annoModules as annoModules
 home = expanduser('~')
 
 def runAnnoFas(args):
-    (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName) = args
+    (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName, cpus) = args
     # do annotation
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
@@ -40,7 +40,7 @@ def runAnnoFas(args):
             print('Doing annotation...')
             annoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, annoModules.getAnnoTools(toolPath), eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
-            pool = mp.Pool(mp.cpu_count()-1)
+            pool = mp.Pool(cpus)
             annoOut = pool.map(annoModules.doAnno, annoJobs)
             annoDict = annoModules.mergeNestedDic(annoOut)
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
@@ -92,6 +92,7 @@ def main():
     optional.add_argument('-n', '--name', help='Name of annotation file', action='store', default='')
     optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain', action='store', default=0.001, type=float)
     optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance', action='store', default=0.01, type=float)
+    optional.add_argument('--cpus', help='Number of CPUs used for annotation', action='store', default=0, type=int)
     optional.add_argument('--hmmCores', help='Number of CPUs used for hmm search', action='store', default=1, type=int)
     optional.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
     optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search', choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
@@ -112,6 +113,9 @@ def main():
     eFeature = args.eFeature
     eInstance = args.eInstance
     hmmCores = args.hmmCores
+    cpus = args.cpus
+    if cpus == 0:
+        cpus = mp.cpu_count()-1
 
     # option for saving json file
     outPath = os.path.abspath(args.outPath)
@@ -136,7 +140,7 @@ def main():
     # run annoFAS
     start = time.time()
     print('PID ' + str(os.getpid()))
-    runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName])
+    runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName, cpus])
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 
