@@ -298,9 +298,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                     if re.search('^\d+', line.lstrip()):
                         items = line.lstrip().split()
                         if float(items[0]) <= eFeature:
-                            outDict[query][toolName][toolName+'_'+items[8]] = {}
-                            outDict[query][toolName][toolName+'_'+items[8]]['evalue'] = float(items[0])
-                            outDict[query][toolName][toolName+'_'+items[8]]['instance'] = []
+                            outDict[query][toolName][toolName+'_'+items[8]] = []
                 for line in tmp[1].split('\n'):
                     if line.startswith('>>'):
                         dom = line.strip().split()[1]
@@ -308,7 +306,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                         items = line.lstrip().split()
                         if toolName+'_'+dom in outDict[query][toolName]:
                             if float(items[4]) <= eInstance:
-                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]), int(items[13]), float(items[4])))
+                                outDict[query][toolName][toolName+'_'+dom].append((int(items[12]), int(items[13])))
     return(outDict)
 
 def readClanFile(toolPath):
