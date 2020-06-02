@@ -41,7 +41,7 @@ setup(
                             "parseInterPro = greedyFAS.parserInterPro:main",
                             "annoFAS = greedyFAS.annoFAS:main",
                             "prepareFAS = greedyFAS.prepareFAS:main",
-                            "calcFAS = greedyFAS.easyFAS:main",
+                            "calcFAS = greedyFAS.calcFAS:main",
                             "fasHamstr = greedyFAS.fasHamstr:main",
                             "processAnnotation = greedyFAS.processAnnotation:main"],
     },

@@ -138,7 +138,7 @@ def anno(annojobs, args):
         outpath = os.path.abspath(args.annotation_dir + '/' + name)
         annotate = True
         seqfile = annojob
-        if os.path.isdir(args.annotation_dir + '/' + name):
+        if os.path.isdir(args.annotation_dir + '/' + name + '/' + name + '.json'):
             print('Annotation for "' + name + '" already exists.')
             if args.force:
                 print('Overwriting...')
@@ -262,10 +262,12 @@ def main():
         os.mkdir(args.annotation_dir)
     if not os.path.isdir(args.out_dir):
         os.mkdir(args.out_dir)
-    annojobs = [args.seed, args.query]
-    if args.ref_proteome:
+    annojobs = [args.seed]
+    if args.query not in annojobs:
+        annojobs.append(nargs.query)
+    if args.ref_proteome and args.ref_proteome not in annojobs:
         annojobs.append(args.ref_proteome)
-    if args.ref_2:
+    if args.ref_2 and args.ref_2 not in annojobs:
         annojobs.append(args.ref_2)
     anno(annojobs, args)
     fas(args)
