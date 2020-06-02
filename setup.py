@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.0.0",
+    version="1.1.0",
     description="A tool to compare protein feature architectures",
     long_description=long_description,
     author="Julian Dosch",
@@ -41,7 +41,7 @@ setup(
                             "parseInterPro = greedyFAS.parserInterPro:main",
                             "annoFAS = greedyFAS.annoFAS:main",
                             "prepareFAS = greedyFAS.prepareFAS:main",
-                            "easyFAS = greedyFAS.easyFAS:main",
+                            "calcFAS = greedyFAS.easyFAS:main",
                             "fasHamstr = greedyFAS.fasHamstr:main",
                             "processAnnotation = greedyFAS.processAnnotation:main"],
     },

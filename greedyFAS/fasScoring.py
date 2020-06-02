@@ -29,8 +29,8 @@ elif version_info.major == 2:
     from fasWeighting import w_weight_const_rescale
 
 
-def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome,
-                  clan_dict, query_clans, protein_lengths, option):
+def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
+                  option):
     """Used to be main Scoring function, starts the functions for the scores and calculates the complete FAS score,
     only used during priority mode to make greedy decisions
 
@@ -42,7 +42,6 @@ def sf_calc_score(path, protein, weights, search_features, query_features, seed_
     :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
     :param clan_dict: dictionary that maps features to clans
     :param query_clans: (Pfam)-clans of the current query protein
-    :param protein_lengths: dictionary that contains the length of each protein in the seed and query
     :param option: dictionary that contains the main option variables of FAS
     :return: score_ms, score_ps, score_cs, final_score
     """
@@ -58,7 +57,7 @@ def sf_calc_score(path, protein, weights, search_features, query_features, seed_
     tmp = sf_ms_score(path, protein, seed_proteome, query_features, option)
     score_ms = round(tmp[0], 4)
     score_ps = round(
-        sf_ps_score(path, tmp[2], protein, query_features, seed_proteome, protein_lengths), 4)
+        sf_ps_score(path, tmp[2], protein, query_features, seed_proteome), 4)
     final_score = (score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1]) + (
         score_ps * option["score_weights"][2])
     if option["weight_const"]:
@@ -125,7 +124,7 @@ def sf_cs_score(path, clan_dict, query_clans, features):
     for i in path:
         feature = features[i]
 
-        if clan_dict[feature[0]] != "NO_CLAN":
+        if feature[0] in clan_dict:
             if clan_dict[feature[0]] in path_clans:
                 path_clans[clan_dict[feature[0]]] += 1
             else:
@@ -166,7 +165,7 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
     for i in path:
         if i in search_features:
             feature = search_features[i]
-            if clan_dict[feature[0]] != "NO_CLAN":
+            if feature[0] in clan_dict:
                 if clan_dict[feature[0]] in s_clans:
                     s_clans[clan_dict[feature[0]]] += 1
                 else:
@@ -174,7 +173,7 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
     for i in query_path:
         if i in query_features:
             feature = query_features[i]
-            if clan_dict[feature[0]] != "NO_CLAN":
+            if feature[0] in clan_dict:
                 if clan_dict[feature[0]] in q_clans:
                     q_clans[clan_dict[feature[0]]] += 1
                 else:
@@ -315,7 +314,7 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
     return final_score, search_domains, scale, final_weight, common_feature
 
 
-def sf_ps_score(path, scale, protein, features, seed_proteome, protein_lengths):
+def sf_ps_score(path, scale, protein, features, seed_proteome):
     """Calculates positional score
 
     :param path: Path to score
@@ -323,7 +322,6 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, protein_lengths):
     :param protein: protein id
     :param features: features (seed or query) [dict]
     :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
-    :param protein_lengths: dictionary that contains the length of each protein in the seed and query
     :return: final_score (PS)
     """
     count = {}
@@ -337,11 +335,10 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, protein_lengths):
                 scores[feature[0]] = 0.0
                 count[feature[0]] = 0
             for instance in seed_proteome[protein][feature[0]][2:]:
-                pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(
-                    protein_lengths["seed_" + str(protein)])
+                pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(seed_proteome[protein]["length"])
                 match = 1.0 - float(abs(feature[1]) - pos)
                 logging.debug(str(float(instance[1])) + " + " + str(float(instance[2])) + " / 2.0 / " + str(
-                    float(protein_lengths["seed_" + str(protein)])) + " = " + str(pos))
+                    float(seed_proteome[protein]["length"])) + " = " + str(pos))
                 if best_match < match:
                     best_match = match
             scores[feature[0]] += best_match

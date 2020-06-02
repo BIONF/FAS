@@ -27,11 +27,9 @@ import xml.etree.ElementTree as ElTre
 import argparse
 if version_info.major == 3:
     from greedyFAS import greedyFAS
-    from greedyFAS.processAnnotation import get_data
     from greedyFAS.fasInput import xmlreader
 elif version_info.major == 2:
     import greedyFAS
-    from processAnnotation import get_data
     from fasInput import xmlreader
 
 

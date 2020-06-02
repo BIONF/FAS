@@ -23,6 +23,7 @@
 import xml.etree.ElementTree as ElTre
 import os
 import logging
+import json
 
 
 def xmlreader(path, mode, tool, assess, proteome, protein_lengths, clan_dict, option):
@@ -211,3 +212,9 @@ def read_pairwise(path):
             pairwise.append(line.rstrip('\n').split('\t'))
             line = infile.readline()
     return pairwise
+
+
+def read_json(path):
+    with open(path, 'r') as infile:
+        in_dict = json.loads(infile.read())
+    return in_dict
