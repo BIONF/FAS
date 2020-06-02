@@ -90,12 +90,12 @@ def main():
                           required=True)
     optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('-n', '--name', help='Name of annotation file', action='store', default='')
-    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain', action='store', default=0.001, type=float)
-    optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance', action='store', default=0.01, type=float)
-    optional.add_argument('--cpus', help='Number of CPUs used for annotation', action='store', default=0, type=int)
+    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.0001', action='store', default=0.001, type=float)
+    optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance. Default = 0.01', action='store', default=0.01, type=float)
+    optional.add_argument('--cpus', help='Number of CPUs used for annotation. Default = available cores - 1', action='store', default=0, type=int)
     optional.add_argument('--hmmCores', help='Number of CPUs used for hmm search', action='store', default=1, type=int)
-    optional.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
-    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search', choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
+    optional.add_argument('--eFlps', help='eValue cutoff for fLPS. Default = 0.0000001', action='store', default=0.0000001, type=float)
+    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search. Default = "euk"', choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
     optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils2|seg|pfam|signalp|smart|tmhmm. '
                                          'Only one selection allowed!', choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
                                          action='store', default='', type=str)
