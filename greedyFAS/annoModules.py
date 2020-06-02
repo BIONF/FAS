@@ -153,7 +153,7 @@ def doSignalp(args):
                         annoOut[tmp[0]] = {}
                         annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
                         annoOut[tmp[0]]['signalp'] = {}
-                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = (1,int(tmp[4])-1)
+                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = [1,int(tmp[4])-1]
                     else:
                         annoOut[tmp[0]] = {}
                         annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
