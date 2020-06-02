@@ -85,8 +85,10 @@ def doFlps(args):
                     annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
                     annoOut[tmp[0]]['flps'] = {}
                 if not 'flps_' + tmp[1] + '_' + tmp[7] in annoOut[tmp[0]]['flps']:
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]] = []
-                annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]].append((int(tmp[3]),int(tmp[4])))
+                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]] = {}
+                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['evalue'] = float(threshold)
+                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'] = []
+                annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'].append((int(tmp[3]),int(tmp[4]),float(tmp[6])))
                 annotatedSeq[tmp[0]] = 1
 
     for id in inSeq:
@@ -115,16 +117,18 @@ def doTmhmm(args):
                 annoOut[id] = {}
                 annoOut[id]['length'] = len(inSeq[id])
                 annoOut[id]['tmhmm'] = {}
-                annoOut[id]['tmhmm']['tmhmm_transmembrane'] = []
+                annoOut[id]['tmhmm']['tmhmm_transmembrane'] = {}
+                annoOut[id]['tmhmm']['tmhmm_transmembrane']['evalue'] = 'NA'
+                annoOut[id]['tmhmm']['tmhmm_transmembrane']['instance'] = []
             if '%pred' in line:
                 tmp = line.strip().split(',')
                 for item in tmp:
                     if item.startswith(' M'):
                         pos = item.split()
-                        annoOut[id]['tmhmm']['tmhmm_transmembrane'].append((int(pos[1]), int(pos[2])))
+                        annoOut[id]['tmhmm']['tmhmm_transmembrane']['instance'].append((int(pos[1]), int(pos[2]), 'NA'))
                 annotatedSeq[id] = 1
     for id in inSeq:
-        if len(annoOut[id]['tmhmm']['tmhmm_transmembrane']) == 0:
+        if len(annoOut[id]['tmhmm']['tmhmm_transmembrane']['instance']) == 0:
             annoOut[id]['tmhmm'].pop('tmhmm_transmembrane', None)
         if not id in annotatedSeq:
             annoOut[id] = {}
@@ -148,12 +152,13 @@ def doSignalp(args):
             if not line.startswith('#'):
                 if len(line) > 0:
                     tmp = line.strip().split()
-                    # annoOut[tmp[0] + ';' + str(len(inSeq[tmp[0]]))] = {}
                     if tmp[9] == 'Y':
                         annoOut[tmp[0]] = {}
                         annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
                         annoOut[tmp[0]]['signalp'] = {}
-                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = [1,int(tmp[4])-1]
+                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = {}
+                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['evalue'] = 'NA'
+                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['instance'] = [1, int(tmp[4])-1, 'NA']
                     else:
                         annoOut[tmp[0]] = {}
                         annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
@@ -182,20 +187,22 @@ def doCoils(args):
                 annoOut[id] = {}
                 annoOut[id]['length'] = len(inSeq[id])
                 annoOut[id]['coils2'] = {}
-                annoOut[id]['coils2']['coils_coiled_coil'] = []
+                annoOut[id]['coils2']['coils_coiled_coil'] = {}
+                annoOut[id]['coils2']['coils_coiled_coil']['evalue'] = 'NA'
+                annoOut[id]['coils2']['coils_coiled_coil']['instance'] = []
                 finished = False
                 while not finished:
                     match = re.search(r'x+', concatSeq)
                     if match:
                         start = concatSeq.find(match.group()) + 1
                         end = start + len(match.group()) - 1
-                        annoOut[id]['coils2']['coils_coiled_coil'].append((int(start), int(end)))
+                        annoOut[id]['coils2']['coils_coiled_coil']['instance'].append((int(start), int(end), 'NA'))
                         concatSeq = concatSeq.replace(match.group(), 'N' * len(match.group()), 1)
                     else:
                         finished = True
     os.chdir(currentDir)
     for id in inSeq:
-        if len(annoOut[id]['coils2']['coils_coiled_coil']) == 0:
+        if len(annoOut[id]['coils2']['coils_coiled_coil']['instance']) == 0:
             annoOut[id]['coils2'].pop('coils_coiled_coil', None)
     return(annoOut)
 
@@ -218,14 +225,16 @@ def doSeg(args):
                 annoOut[id] = {}
                 annoOut[id]['length'] = len(inSeq[id])
                 annoOut[id]['seg'] = {}
-                annoOut[id]['seg']['seg_low_complexity_regions'] = []
+                annoOut[id]['seg']['seg_low_complexity_regions'] = {}
+                annoOut[id]['seg']['seg_low_complexity_regions']['evalue'] = 'NA'
+                annoOut[id]['seg']['seg_low_complexity_regions']['instance'] = []
                 for line in lines:
                     tmp = line.strip().split()
                     if (len(tmp) == 2) and ('-' in tmp[1]):
                         pos = tmp[1].split('-')
-                        annoOut[id]['seg']['seg_low_complexity_regions'].append((int(pos[0]), int(pos[1])))
+                        annoOut[id]['seg']['seg_low_complexity_regions']['instance'].append((int(pos[0]), int(pos[1]), 'NA'))
     for id in inSeq:
-        if len(annoOut[id]['seg']['seg_low_complexity_regions']) == 0:
+        if len(annoOut[id]['seg']['seg_low_complexity_regions']['instance']) == 0:
             annoOut[id]['seg'].pop('seg_low_complexity_regions', None)
     return(annoOut)
 
@@ -298,7 +307,9 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                     if re.search('^\d+', line.lstrip()):
                         items = line.lstrip().split()
                         if float(items[0]) <= eFeature:
-                            outDict[query][toolName][toolName+'_'+items[8]] = []
+                            outDict[query][toolName][toolName+'_'+items[8]] = {}
+                            outDict[query][toolName][toolName+'_'+items[8]]['evalue'] = float(items[0])
+                            outDict[query][toolName][toolName+'_'+items[8]]['instance'] = []
                 for line in tmp[1].split('\n'):
                     if line.startswith('>>'):
                         dom = line.strip().split()[1]
@@ -306,7 +317,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                         items = line.lstrip().split()
                         if toolName+'_'+dom in outDict[query][toolName]:
                             if float(items[4]) <= eInstance:
-                                outDict[query][toolName][toolName+'_'+dom].append((int(items[12]), int(items[13])))
+                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]), int(items[13]), float(items[4])))
     return(outDict)
 
 def readClanFile(toolPath):
