@@ -259,7 +259,7 @@ def main():
         os.mkdir(args.out_dir)
     annojobs = [args.seed]
     if args.query not in annojobs:
-        annojobs.append(nargs.query)
+        annojobs.append(args.query)
     if args.ref_proteome and args.ref_proteome not in annojobs:
         annojobs.append(args.ref_proteome)
     if args.ref_2 and args.ref_2 not in annojobs:
