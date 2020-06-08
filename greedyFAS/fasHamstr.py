@@ -28,9 +28,6 @@ import argparse
 if version_info.major == 3:
     from greedyFAS import greedyFAS
     from greedyFAS.fasInput import xmlreader
-elif version_info.major == 2:
-    import greedyFAS
-    from fasInput import xmlreader
 
 
 def main():

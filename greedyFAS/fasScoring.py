@@ -25,8 +25,6 @@ import logging
 from sys import version_info
 if version_info.major == 3:
     from greedyFAS.fasWeighting import w_weight_const_rescale
-elif version_info.major == 2:
-    from fasWeighting import w_weight_const_rescale
 
 
 def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
@@ -57,7 +55,7 @@ def sf_calc_score(path, protein, weights, search_features, query_features, seed_
     tmp = sf_ms_score(path, protein, seed_proteome, query_features, option)
     score_ms = round(tmp[0], 4)
     score_ps = round(
-        sf_ps_score(path, tmp[2], protein, query_features, seed_proteome), 4)
+        sf_ps_score(path, tmp[2], protein, query_features, seed_proteome, option), 4)
     final_score = (score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1]) + (
         score_ps * option["score_weights"][2])
     if option["weight_const"]:
@@ -205,6 +203,7 @@ def sf_ms_score(path, protein, proteome, features, option):
     scale = 0
     scores = []
     final_score = 0
+    tools = option["input_linearized"] + option["input_normal"]
     for i in path:
         feature = features[i]
         if feature[0] in domains:
@@ -213,16 +212,30 @@ def sf_ms_score(path, protein, proteome, features, option):
             domains[feature[0]] = 1
     for feature in domains:
         scale += 1
-        if feature in proteome[protein]:
-            s_length = len(proteome[protein][feature]) - 2
-            if option["classicMS"]:
-                p_score = float(domains[feature] * s_length) / \
-                          float(max(domains[feature], s_length) * max(domains[feature], s_length))
-            else:
-                p_score = min(float(domains[feature] * s_length) / float(domains[feature] * domains[feature]), 1.0)
-            scores.append((feature, p_score))
-        else:
-            scores.append((feature, 0.0))
+        p_score = 0.0
+        for tool in tools:
+            if feature in proteome[protein][tool]:
+                e_feature = False
+                try:
+                    if proteome[protein][tool][feature]["evalue"] <= option["eFeature"]:
+                        e_feature = True
+                except TypeError:
+                    e_feature = True
+                if e_feature:
+                    s_length = 0
+                    for instance in proteome[protein][tool][feature]["instance"]:
+                        e_instance = False
+                        try:
+                            if instance[2] <= option["eInstance"]:
+                                s_length += 1
+                        except TypeError:
+                            s_length += 1
+                    if option["classicMS"]:
+                        p_score = float(domains[feature] * s_length) / \
+                                  float(max(domains[feature], s_length) * max(domains[feature], s_length))
+                    else:
+                        p_score = min(float(domains[feature] * s_length) / float(domains[feature] * domains[feature]), 1.0)
+        scores.append((feature, p_score))
     if scale > 0:
         scale = 1.0 / float(scale)
     for score in scores:
@@ -314,7 +327,7 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
     return final_score, search_domains, scale, final_weight, common_feature
 
 
-def sf_ps_score(path, scale, protein, features, seed_proteome):
+def sf_ps_score(path, scale, protein, features, seed_proteome, option):
     """Calculates positional score
 
     :param path: Path to score
@@ -327,22 +340,38 @@ def sf_ps_score(path, scale, protein, features, seed_proteome):
     count = {}
     final_score = 0.0
     scores = {}
+    tools = option["input_linearized"] + option["input_normal"]
     for i in path:
         feature = features[i]
-        if feature[0] in seed_proteome[protein]:
-            best_match = 0.0
-            if not feature[0] in scores:
-                scores[feature[0]] = 0.0
-                count[feature[0]] = 0
-            for instance in seed_proteome[protein][feature[0]][2:]:
-                pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(seed_proteome[protein]["length"])
-                match = 1.0 - float(abs(feature[1]) - pos)
-                logging.debug(str(float(instance[1])) + " + " + str(float(instance[2])) + " / 2.0 / " + str(
-                    float(seed_proteome[protein]["length"])) + " = " + str(pos))
-                if best_match < match:
-                    best_match = match
-            scores[feature[0]] += best_match
-            count[feature[0]] += 1
+        for tool in tools:
+            if feature[0] in seed_proteome[protein][tool]:
+                e_feature = False
+                try:
+                    if seed_proteome[protein][tool][feature]["evalue"] <= option["eFeature"]:
+                        e_feature = True
+                except TypeError:
+                    e_eature = True
+                if e_feature:
+                    best_match = 0.0
+                    if not feature[0] in scores:
+                        scores[feature[0]] = 0.0
+                        count[feature[0]] = 0
+                    for instance in seed_proteome[protein][tool][feature[0]]["instance"]:
+                        e_instance = False
+                        try:
+                            if instance[2] <= option["eInstance"]:
+                                e_instance = True
+                        except TypeError:
+                            e_instance = True
+                        if e_instance:
+                            pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(seed_proteome[protein]["length"])
+                            match = 1.0 - float(abs(feature[1]) - pos)
+                            logging.debug(str(float(instance[1])) + " + " + str(float(instance[2])) + " / 2.0 / " + str(
+                                float(seed_proteome[protein]["length"])) + " = " + str(pos))
+                            if best_match < match:
+                                best_match = match
+                scores[feature[0]] += best_match
+                count[feature[0]] += 1
 
     for f_score in scores:
         final_score += scores[f_score] / count[f_score] * scale

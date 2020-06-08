@@ -32,11 +32,6 @@ if version_info.major == 3:
     from greedyFAS import greedyFAS
     from greedyFAS import annoModules
     from greedyFAS import fasInput
-elif version_info.major == 2:
-    import annoFAS
-    import greedyFAS
-    import annoModules
-    import fasInput
 
 
 def get_options():
@@ -46,71 +41,71 @@ def get_options():
     version = '1.1.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     parser.add_argument("-s", "--seed", default=None, type=str, required=True,
-                          help="path to seed protein fasta file")
+                        help="path to seed protein fasta file")
     parser.add_argument("-q", "--query", default=None, type=str, required=True,
-                          help="path to query protein fasta file")
+                        help="path to query protein fasta file")
     parser.add_argument("--annotation_dir", default=None, type=str, required=True,
-                          help='working directory, all annotations are be stored here')
+                        help='working directory, all annotations are be stored here')
     parser.add_argument("-o", "--out_dir", default=None, type=str, required=True,
-                          help="output directory, all outputfiles will be stored here")
+                        help="output directory, all outputfiles will be stored here")
     parser.add_argument("-n", "--out_name", default=None, type=str,
-                          help="name for outputfiles, if none is given the name will be created from the seed and "
-                               "query names")
+                        help="name for outputfiles, if none is given the name will be created from the seed and "
+                             "query names")
     parser.add_argument("-r", "--ref_proteome", default=None, type=str,
-                          help="Path to a reference proteome which can be used for the weighting of features, "
-                               "by default there is no reference proteome used, the weighting will be uniform")
+                        help="Path to a reference proteome which can be used for the weighting of features, "
+                             "by default there is no reference proteome used, the weighting will be uniform")
     parser.add_argument('--force', help='Force override annotations', action='store_true')
     parser.add_argument("--query_id", default=None, nargs='*', type=str,
-                          help="Choose specific proteins from the query input for calculation, by default this is off "
-                               "(all proteins are used for calculation)")
+                        help="Choose specific proteins from the query input for calculation, by default this is off "
+                             "(all proteins are used for calculation)")
     parser.add_argument("--seed_id", default=None, nargs='*', type=str,
-                          help="Choose specific proteins from the seed input for calculation, by default this is off "
-                               "(all proteins are used for calculation)")
+                        help="Choose specific proteins from the seed input for calculation, by default this is off "
+                             "(all proteins are used for calculation)")
     parser.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
-                          help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
-                               "sum should be 1.0, the default is 0.7, 0.0, 0.3")
+                        help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
+                             "sum should be 1.0, the default is 0.7, 0.0, 0.3")
     parser.add_argument("-t", "--priority_threshold", type=int, default=30,
-                          help="Change to define the feature number threshold for activating priority mode in the path "
-                               "evaluation.")
+                        help="Change to define the feature number threshold for activating priority mode in the path "
+                             "evaluation.")
     parser.add_argument("-m", "--max_cardinality", default=5000, type=int,
-                          help="Change to define the threshold for the maximal cardinality of feature paths in a graph."
-                               " If max. cardinality is exceeded the priority mode will be used to for the path "
-                               "evaluation.")
+                        help="Change to define the threshold for the maximal cardinality of feature paths in a graph."
+                             " If max. cardinality is exceeded the priority mode will be used to for the path "
+                             "evaluation.")
     parser.add_argument("-f", "--eFeature", default="0.001", type=float,
-                          help="eValue cutoff for PFAM/SMART domain")
+                        help="eValue cutoff for PFAM/SMART domain")
     parser.add_argument("-i", "--eInstance", default="0.01", type=float,
-                          help='eValue cutoff for PFAM/SMART instance')
+                        help='eValue cutoff for PFAM/SMART instances')
     parser.add_argument("-g", "--weight_correction", default="loge", type=str,
-                          help="Function applied to the frequency of feature types during weighting, options are "
-                               "linear(no function), loge(natural logarithm[Default]), log10(base-10 logarithm), "
-                               "root4(4th root) and root8(8th root).")
+                        help="Function applied to the frequency of feature types during weighting, options are "
+                             "linear(no function), loge(natural logarithm[Default]), log10(base-10 logarithm), "
+                             "root4(4th root) and root8(8th root).")
     parser.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
     parser.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
-                          choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
+                        choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
     parser.add_argument("-x", "--weight_constraints", default=None, type=str,
-                          help="Apply weight constraints via constraints file, by default there are no constraints.")
+                        help="Apply weight constraints via constraints file, by default there are no constraints.")
     parser.add_argument("-e", "--no_arch", action="store_false",
-                          help="deactivate creation of _architecture file")
+                        help="deactivate creation of _architecture file")
     parser.add_argument("--bidirectional", action="store_true",
-                          help="calculate both scoring directions (separate files), creates csv file with combined "
-                               "scores")
+                        help="calculate both scoring directions (separate files), creates csv file with combined "
+                             "scores")
     parser.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
-                          help="maximum size overlap allowed, default is 0 amino acids")
+                        help="maximum size overlap allowed, default is 0 amino acids")
     parser.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
-                          help="defines how much percent of a feature the overlap is allowed to cover, default "
-                               "is 0.4 (40%%)")
+                        help="defines how much percent of a feature the overlap is allowed to cover, default "
+                             "is 0.4 (40%%)")
     parser.add_argument("--ref_2", dest="ref_2", default=None, type=str,
-                          help="Give a second reference for bidirectional mode, does not do anything if bidirectional "
-                               "mode is not active or if no main reference was given")
+                        help="Give a second reference for bidirectional mode, does not do anything if bidirectional "
+                             "mode is not active or if no main reference was given")
     parser.add_argument("--extra_annotation", default=None, nargs='*', type=str,
-                          help="give naming conventions for extra annotation files, these files should be in the "
-                               "corresponding directory in the annotation_dir")
+                        help="give naming conventions for extra annotation files, these files should be in the "
+                             "corresponding directory in the annotation_dir")
     parser.add_argument('--cpus', help='number of cores', action='store', default=0)
     parser.add_argument("--pairwise", dest="pairwise", default=None, type=str,
-                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                               " compared (one pair per line tab seperated)")
+                        help="deactivate all against all comparison, needs a pairing file with the ids that should be"
+                             " compared (one pair per line tab seperated)")
     parser.add_argument("--toolPath", dest="toolPath", default=None, type=str, required=True,
-                          help="Path to Annotion tool directory created with prepareFAS")
+                        help="Path to Annotion tool directory created with prepareFAS")
     parser.add_argument("-d", "--featuretypes", default=None, type=str,
                         help="inputfile that contains the tools/databases used to predict features")
     parser.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
@@ -160,11 +155,11 @@ def fas(args):
     loglevel = "ERROR"
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
-                   "priority_mode": True, "priority_threshold": args.priority_threshold,
+                   "priority_mode": True, "priority_threshold": args.priority_threshold, "eFeature": args.eFeature,
                    "max_cardinality": args.max_cardinality, "cores": 1, "e_output": args.no_arch,
                     "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
                     "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": 0,
-                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None
+                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
                    }
     name = ''
     r2name = ''

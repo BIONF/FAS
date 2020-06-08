@@ -48,22 +48,7 @@ if version_info.major == 3:
     from greedyFAS.fasWeighting import w_count_add_domains
     from greedyFAS.fasPathing import pb_region_mapper
     from greedyFAS.fasPathing import pb_region_paths
-elif version_info.major == 2:
-    from fasInput import read_pairwise
-    from fasInput import constraints_in
-    from fasInput import featuretypes
-    from fasOutput import bidirectionout
-    from fasOutput import domain_out
-    from fasOutput import phyloprofile_out
-    from fasScoring import sf_calc_score
-    from fasScoring import sf_entire_calc_score
-    from fasWeighting import w_weight_const_rescale
-    from fasWeighting import w_weight_correction
-    from fasWeighting import w_weighting
-    from fasWeighting import w_weighting_constraints
-    from fasWeighting import w_count_add_domains
-    from fasPathing import pb_region_mapper
-    from fasPathing import pb_region_paths
+    from greedyFAS.annoModules import mergeNestedDic
 
 
 # important vars #             ###  var looks ###
@@ -96,8 +81,6 @@ def fc_start(option):
     :param option: dictionary that contains the main option variables of FAS
     """
     clan_dict = {}
-    seed_proteome = {}
-    query_proteome = {}
     domain_count = {}
 
     # MS_uni set to 0 when no weighting is conducted
@@ -105,14 +88,18 @@ def fc_start(option):
         domain_count = {}
         for path in option["ref_proteome"]:
             domain_count.update(read_json(path)["count"])
+    proteome_list = []
     for path in option["p_path"]:
         proteome = read_json(path)
+        proteome_list.append(proteome["feature"])
         clan_dict.update(proteome["clan"])
-        seed_proteome.update(proteome["feature"])
+    seed_proteome = mergeNestedDic(proteome_list)
+    proteome_list = []
     for path in option["s_path"]:
         proteome = read_json(path)
+        proteome_list.append(proteome["feature"])
         clan_dict.update(proteome["clan"])
-        query_proteome.update(proteome["feature"])
+    query_proteome = mergeNestedDic(proteome_list)
     if option["weight_correction"]:
         domain_count = w_weight_correction(option["weight_correction"], domain_count)
     for tool in option["input_linearized"]:
@@ -190,7 +177,8 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
         out.write("<?xml version=\"1.0\"?>\n")
         settings_out = {"priority": "off", "weighting": "uniform", "constraints": "none", "overlap":
                         str(option["max_overlap"]) + "/" + str(option["max_overlap_percentage"]), "lin": "",
-                        "norm": "", "ms": "classic"}
+                        "norm": "", "ms": "classic",
+                        "efilters": str(option["eFeature"]) + "/" + str(option["eInstance"])}
 
         if not option["classicMS"]:
             settings_out["ms"] = "new"
@@ -213,14 +201,14 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
         if option["priority_mode"]:
             settings_out["priority"] = str(option["priority_threshold"]) + "/" + str(option["max_cardinality"])
         if option["MS_uni"] == 0 and option["weight_correction"]:
-            settings_out["weighting"] = option["ref_proteome"].rstrip("/").split("/")[-1] + "/" + \
+            settings_out["weighting"] = option["ref_proteome"][0].split("/")[-1].split(".")[-2] + "/" + \
                                         option["weight_correction"]
         elif option["MS_uni"] == 0:
-            settings_out["weighting"] = option["ref_proteome"].rstrip("/").split("/")[-1] + "/none"
+            settings_out["weighting"] = option["ref_proteome"][0].split("/")[-1].split(".")[-2] + "/none"
         out.write("<out FAS_version=\"" + str(option["version"]) + "\" weighting=\"" + settings_out["weighting"] +
                   "\" constraints=\"" + settings_out["constraints"] + "\" MS=\"" + settings_out["ms"] + "\" priority=\""
                   + settings_out["priority"] + "\" overlap=\"" + settings_out["overlap"] + "\" efilters=\"" +
-                  "\" timelimit=\"" + settings_out["time"] + "\" scoreweights=\"" +
+                  settings_out["efilters"] + "\" timelimit=\"" + settings_out["time"] + "\" scoreweights=\"" +
                   str(option["score_weights"]) + "\" cores=\"" + str(option["cores"]) + "\" linearized=\"" +
                   settings_out["lin"] + "\" normal=\"" + settings_out["norm"] + "\">\n")
     if option['pairwise']:
@@ -275,7 +263,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                             a_out.write("\t\t\t<feature type=\"" + feature + "\">\n")
                         else:
                             a_out.write("\t\t\t<feature type=\"" + feature + "\">\n")
-                        for instance in seed_proteome[protein][tool][feature][2:]:
+                        for instance in seed_proteome[protein][tool][feature]["instance"]:
                             a_out.write("\t\t\t\t<start=\"" + str(
                                 instance[0]) + "\" end=\"" + str(instance[1]) + "\"/>\n")
                         a_out.write("\t\t\t</feature>\n")
@@ -288,7 +276,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                 for tool in tools:
                     for feature in query_proteome[query][tool]:
                         a_out.write("\t\t\t<feature type=\"" + feature + "\">\n")
-                        for instance in query_proteome[query][tool][feature]:
+                        for instance in query_proteome[query][tool][feature]["instance"]:
                             a_out.write("\t\t\t\t<start=\"" + str(
                                 instance[0]) + "\" end=\"" + str(instance[1]) + "\"/>\n")
 
@@ -337,7 +325,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
         if option["weight_const"]:
             weights, domain_count = w_weighting_constraints(protein, domain_count, seed_proteome, option)
         else:
-            weights, domain_count = w_weighting(protein, domain_count, seed_proteome)
+            weights, domain_count = w_weighting(protein, domain_count, seed_proteome, option)
     search_protein, search_features, a_s_f = su_search_protein(protein, seed_proteome, option)
     search_protein = tuple(search_protein)
     max_fixture = ([], (0.0, 0.0, 0.0, 0.0, 0, 0, False), [], protein)
@@ -638,35 +626,67 @@ def su_lin_query_protein(protein_id, query_proteome, clan_dict, option):
 
     for tool in option["input_linearized"]:
         for feature in query_proteome[protein_id][tool]:
-            if feature in clan_dict:
-                clan = clan_dict[feature]
+            e_feature = False
+            try:
+                if query_proteome[protein_id][tool][feature]["evalue"] <= option["eFeature"]:
+                    e_feature = True
+            except TypeError:
+                e_feature = True
+            if e_feature:
+                if feature in clan_dict:
+                    clan = clan_dict[feature]
+                    tmp_clan = 0
+                for instance in query_proteome[protein_id][tool][feature]["instance"]:
+                    e_instance = False
+                    try:
+                        if instance[2] <= option["eInstance"]:
+                            e_instance = True
+                    except TypeError:
+                        e_instance = True
+                    if e_instance:
+                        position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
+                            query_proteome[protein_id]["length"])
+                        position = round(position, 4)
+                        key = "F_" + str(i)
+                        query_features[key] = (feature, position, instance[0], instance[1])
+                        tmp.append((key, instance[1]))
+                        i += 1
+                        tmp_clan += 1
                 if clan in query_clans:
-                    query_clans[clan] += len(query_proteome[protein_id][tool][feature])
-                else:
-                    query_clans[clan] = len(query_proteome[protein_id][tool][feature])
-            for instance in query_proteome[protein_id][tool][feature]:
-                position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
-                    query_proteome[protein_id]["length"])
-                position = round(position, 4)
-                key = "F_" + str(i)
-                query_features[key] = (feature, position, instance[0], instance[1])
-                tmp.append((key, instance[1]))
-                i += 1
+                    query_clans[clan] += tmp_clan
+                elif tmp_clan > 0:
+                    query_clans[clan] = tmp_clan
     for tool in option["input_normal"]:
         for feature in query_proteome[protein_id][tool]:
-            if feature in clan_dict:
-                clan = clan_dict[feature]
+            e_feature = False
+            try:
+                if query_proteome[protein_id][tool][feature]["evalue"] <= option["eFeature"]:
+                    e_feature = True
+            except TypeError:
+                e_feature = True
+            if e_feature:
+                if feature in clan_dict:
+                    clan = clan_dict[feature]
+                    tmp_clan = 0
+                for instance in query_proteome[protein_id][tool][feature]["instance"]:
+                    e_instance = False
+                    try:
+                        if instance[2] <= option["eInstance"]:
+                            e_instance = True
+                    except TypeError:
+                        e_instance = True
+                    if e_instance:
+                        position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
+                            query_proteome[protein_id]["length"])
+                        position = round(position, 4)
+                        key = "O_" + str(i)
+                        a_q_f[key] = (feature, position, instance[0], instance[1])
+                        i += 1
+                        tmp_clan += 1
                 if clan in query_clans:
-                    query_clans[clan] += len(query_proteome[protein_id][tool][feature])
-                else:
-                    query_clans[clan] = len(query_proteome[protein_id][tool][feature])
-            for instance in query_proteome[protein_id][tool][feature]:
-                position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
-                    query_proteome[protein_id]["length"])
-                position = round(position, 4)
-                key = "O_" + str(i)
-                a_q_f[key] = (feature, position, instance[0], instance[1])
-                i += 1
+                    query_clans[clan] += tmp_clan
+                elif tmp_clan > 0:
+                    query_clans[clan] = tmp_clan
 
     # sort  instances
     tmp2 = sorted(tmp, key=itemgetter(1))
@@ -692,25 +712,51 @@ def su_search_protein(protein_id, seed_proteome, option):
 
     for tool in option["input_linearized"]:
         for feature in seed_proteome[protein_id][tool]:
-            if seed_proteome[protein_id][tool][feature][0]:
-                for instance in seed_proteome[protein_id][tool][feature]:
-                    position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
-                        seed_proteome[protein_id]["length"])
-                    position = round(position, 4)
-                    key = "F_" + str(i)
-                    search_features[key] = (feature, position, instance[0], instance[1])
-                    tmp.append((key, instance[1]))
-                    i += 1
+            e_feature = False
+            try:
+                if seed_proteome[protein_id][tool][feature]["evalue"] <= option["eFeature"]:
+                    e_feature = True
+            except TypeError:
+                e_feature = True
+            if e_feature:
+                for instance in seed_proteome[protein_id][tool][feature]["instance"]:
+                    e_instance = False
+                    try:
+                        if instance[2] <= option["eInstance"]:
+                            e_instance = True
+                    except TypeError:
+                        e_instance = True
+                    if e_instance:
+                        position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
+                            seed_proteome[protein_id]["length"])
+                        position = round(position, 4)
+                        key = "F_" + str(i)
+                        search_features[key] = (feature, position, instance[0], instance[1])
+                        tmp.append((key, instance[1]))
+                        i += 1
     for tool in option["input_normal"]:
         for feature in seed_proteome[protein_id][tool]:
-            for instance in seed_proteome[protein_id][tool][feature]:
-                position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
-                    seed_proteome[protein_id]["length"])
-                position = round(position, 4)
-                key = "O_" + str(i)
-                a_s_f[key] = (feature, position, instance[0], instance[1])
-                i += 1
-
+            e_feature = False
+            try:
+                if seed_proteome[protein_id][tool][feature]["evalue"] <= option["eFeature"]:
+                    e_feature = True
+            except TypeError:
+                e_feature = True
+            if e_feature:
+                for instance in seed_proteome[protein_id][tool][feature]["instance"]:
+                    e_instance = False
+                    try:
+                        if instance[2] <= option["eInstance"]:
+                            e_instance = True
+                    except TypeError:
+                        e_instance = True
+                    if e_instance:
+                        position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
+                            seed_proteome[protein_id]["length"])
+                        position = round(position, 4)
+                        key = "O_" + str(i)
+                        a_s_f[key] = (feature, position, instance[0], instance[1])
+                        i += 1
     # sort  instances
     tmp2 = sorted(tmp, key=itemgetter(1))
     for x in tmp2:
