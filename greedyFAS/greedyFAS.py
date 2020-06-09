@@ -130,9 +130,12 @@ def fc_start(option):
                 domain_count_2.update(read_json(path)["count"])
             if option["weight_correction"]:
                 domain_count_2 = w_weight_correction(option["weight_correction"], domain_count_2)
+            option['ref_proteome'] = option['ref_2']
         else:
             domain_count_2 = domain_count
-        option['ref_proteome'] = option['ref_2']
+        id_tmp = option["seed_id"]
+        option["seed_id"] = option["query_id"]
+        option["query_id"] = id_tmp
         fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option)
         if option["domain"]:
             domain_out(org_outpath, True, extmp)
@@ -576,8 +579,8 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
         out.write("\t\t\t<template_path>\n")
         for feature in path_tmp:
             if option["MS_uni"] == 0:
-                out.write("\t\t\t\t<feature type=\"" + feature + "\" corrected_weight=\"" + str(
-                    weights[feature] * scale) + "\">\n")
+                out.write("\t\t\t\t<feature type=\"" + feature + "\" corrected_weight=\"" + str(round(
+                    weights[feature] * scale, 4)) + "\">\n")
             else:
                 out.write("\t\t\t\t<feature type=\"" + feature + "\">\n")
             for tmp_inst in path_tmp[feature]:
@@ -633,9 +636,10 @@ def su_lin_query_protein(protein_id, query_proteome, clan_dict, option):
             except TypeError:
                 e_feature = True
             if e_feature:
+                clan = None
                 if feature in clan_dict:
                     clan = clan_dict[feature]
-                    tmp_clan = 0
+                tmp_clan = 0
                 for instance in query_proteome[protein_id][tool][feature]["instance"]:
                     e_instance = False
                     try:
@@ -665,9 +669,10 @@ def su_lin_query_protein(protein_id, query_proteome, clan_dict, option):
             except TypeError:
                 e_feature = True
             if e_feature:
+                clan = None
                 if feature in clan_dict:
                     clan = clan_dict[feature]
-                    tmp_clan = 0
+                tmp_clan = 0
                 for instance in query_proteome[protein_id][tool][feature]["instance"]:
                     e_instance = False
                     try:

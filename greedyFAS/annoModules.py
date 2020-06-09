@@ -158,7 +158,7 @@ def doSignalp(args):
                         annoOut[tmp[0]]['signalp'] = {}
                         annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = {}
                         annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['evalue'] = 'NA'
-                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['instance'] = [1, int(tmp[4])-1, 'NA']
+                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['instance'] = [[1, int(tmp[4])-1, 'NA']]
                     else:
                         annoOut[tmp[0]] = {}
                         annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])

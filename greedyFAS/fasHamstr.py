@@ -25,9 +25,10 @@ import multiprocessing
 from sys import version_info
 import xml.etree.ElementTree as ElTre
 import argparse
-if version_info.major == 3:
-    from greedyFAS import greedyFAS
-    from greedyFAS.fasInput import xmlreader
+
+from greedyFAS import greedyFAS
+from greedyFAS.fasInput import read_json
+from greedyFAS.fasWeighting import w_weight_correction
 
 
 def main():
@@ -35,7 +36,7 @@ def main():
     joblist = read_extended_fa(args.extended_fa)
     jobdict = create_pairs(joblist)
     features = [["pfam", "smart"], ["flps", "coils", "seg", "signalp", "tmhmm"]]
-    manage_jobpool(jobdict, args.seed_path, args.weight_dir, args.seed_spec, args.tmp_dir, args.cores, features,
+    manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir, args.cores, features,
                    args.bidirectional)
     write_phyloprofile(jobdict, args.tmp_dir, args.out_dir, args.bidirectional, args.groupname, args.seed_spec)
 
@@ -61,20 +62,23 @@ def create_pairs(joblist):
     return jobdict
 
 
-def manage_jobpool(jobdict, seed_path, weight_dir, seed_spec, tmp_path, cores, features, bidirectional):
-    tmp_data = get_data(weight_dir + "/" + seed_spec + "/" + seed_spec + ".json")
-    seed_weight = tmp_data["domain_count"]
+def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, features, bidirectional):
+    tmp_data = read_json(weight_dir + "/" + seed_spec + "/" + seed_spec + ".json")
+    seed_weight = w_weight_correction("loge", tmp_data["count"])
+    seed_proteome = tmp_data["feature"]
+    clan_dict = tmp_data["clan"]
     data = []
     for spec in jobdict:
         data.append([spec, jobdict[spec],
-                    {"weight_const": False, "version": '1.0.0', "seed_id": None, "query_id": None,
-                     "priority_mode": True, "priority_threshold": 50, "max_cardinality": 5000, "efilter": 0.001,
-                     "cores": 1, "inst_efilter": 0.01, "e_output": True, "feature_info": None,
+                    {"weight_const": False, "version": '1.0.0', "seed_id": [seed_name], "query_id": None,
+                     "priority_mode": True, "priority_threshold": 50, "max_cardinality": 5000, "eFeature": 0.001,
+                     "cores": 1, "eInstance": 0.01, "e_output": True, "feature_info": None,
                      "bidirectional": bidirectional,
                      "max_overlap": 0, "classicMS": False, "timelimit": 7200, "ref_2": None, "phyloprofile": None,
                      "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": False,
                      "pairwise": None, "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
-                     "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0, "ref_proteome": spec}, seed_path, seed_weight, weight_dir])
+                     "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0, "ref_proteome": spec},
+                     seed_proteome, seed_weight, weight_dir, clan_dict])
     jobpool = multiprocessing.Pool(processes=cores)
     jobpool.map_async(run_fas, data)
     jobpool.close()
@@ -82,32 +86,23 @@ def manage_jobpool(jobdict, seed_path, weight_dir, seed_spec, tmp_path, cores, f
 
 
 def run_fas(data):
-    tmp_data = get_data(data[5] + "/" + data[0] + "/" + data[0] + ".json")
+    tmp_data = read_json(data[5] + "/" + data[0] + "/" + data[0] + ".json")
     query_proteome = {}
     protein_lengths = {}
-    clan_dict = tmp_data["clan_dict"]
-    seed_proteome = {}
+    clan_dict = data[6]
+    clan_dict.update(tmp_data["clan_dict"])
+    seed_proteome = data[3]
+    weight = w_weight_correction("loge", tmp_data["count"])
     for i in data[1]:
-        query_proteome[i] = tmp_data["proteome"][i]
+        query_proteome[i] = tmp_data["feature"][i]
         protein_lengths["query_" + i] = tmp_data["protein_lengths"][i]
-    for ftype in data[2]["input_linearized"]:
-        seed_proteome, protein_lengths, clan_dict = xmlreader(data[3] + "/" + ftype + ".xml", 0, ftype, True,
-                                                              seed_proteome, protein_lengths, clan_dict, data[2])
-    for ftype in data[2]["input_normal"]:
-        seed_proteome, protein_lengths, clan_dict = xmlreader(data[3] + "/" + ftype + ".xml", 0, ftype, False,
-                                                              seed_proteome, protein_lengths, clan_dict, data[2])
-    greedyFAS.fc_main([], 0, tmp_data["domain_count"], seed_proteome, query_proteome, protein_lengths, clan_dict,
-                      data[2])
+    greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[2])
     if data[2]["bidirectional"]:
-        tmp = {}
-        for protein in protein_lengths:
-            if protein[0:4] == "seed":
-                tmp["query_" + protein[5:]] = protein_lengths[protein]
-            else:
-                tmp["seed_" + protein[6:]] = protein_lengths[protein]
         data[2]["e_output"] = False
         data[2]["outpath"] += "_reverse"
-        greedyFAS.fc_main([], 0, data[4], query_proteome, seed_proteome, tmp, clan_dict, data[2])
+        data[2]["query_id"] = data[2]["seed_id"]
+        data[2]["seed_id"] = None
+        greedyFAS.fc_main(data[4], query_proteome, seed_proteome, clan_dict, weight)
 
 
 def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, seed_spec):
@@ -295,7 +290,7 @@ def get_options():
                         help="Path to working directory")
     parser.add_argument("-o", "--out_dir", default=None, type=str,
                         help="path to out_dir")
-    parser.add_argument("-s", "--seed_path", default=None, type=str,
+    parser.add_argument("-s", "--seed_name", default=None, type=str,
                         help="path to seed annotation")
     parser.add_argument("-a", "--seed_spec", default=None, type=str,
                         help="name of the seed species (in weight dir)")
