@@ -30,6 +30,7 @@ import re
 import collections
 import json
 
+
 ### general functions
 def mergeNestedDic(dictList):
     out = collections.defaultdict(list)
@@ -41,8 +42,8 @@ def mergeNestedDic(dictList):
 
 
 def save2json(dict2save, outName, outDir):
-    Path(outDir).mkdir(parents = True, exist_ok = True)
-    jsonOut = json.dumps(dict2save, ensure_ascii = False)
+    Path(outDir).mkdir(parents=True, exist_ok=True)
+    jsonOut = json.dumps(dict2save, ensure_ascii=False)
     f = open(outDir+'/'+outName+'.json', 'w')
     f.write(jsonOut)
     f.close()
@@ -63,6 +64,7 @@ def checkFileEmpty(file):
     except OSError as e:
             flag = True
     return(flag)
+
 
 ### functions for doing annotation with single tool
 def doFlps(args):
