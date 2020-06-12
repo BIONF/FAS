@@ -31,7 +31,7 @@ import collections
 import json
 
 
-### general functions
+# general functions
 def mergeNestedDic(dictList):
     out = collections.defaultdict(list)
     out.update(dictList.pop(0))
@@ -62,15 +62,15 @@ def checkFileEmpty(file):
         if os.path.getsize(file) == 0:
             flag = True
     except OSError as e:
-            flag = True
-    return(flag)
+        flag = True
+    return flag
 
 
-### functions for doing annotation with single tool
+# functions for doing annotation with single tool
 def doFlps(args):
     (seqFile, toolPath, threshold) = args
     # load fasta seq
-    inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
+    inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do fLPS
     cmd = '%s/fLPS/fLPS -s -t %s %s' % (toolPath, threshold, seqFile)
     flpsOut = subprocess.run([cmd], shell=True, capture_output=True)
@@ -90,7 +90,8 @@ def doFlps(args):
                     annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]] = {}
                     annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['evalue'] = float(threshold)
                     annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'] = []
-                annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'].append((int(tmp[3]),int(tmp[4]),float(tmp[6])))
+                annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'].append((int(tmp[3]), int(tmp[4]),
+                                                                                             float(tmp[6])))
                 annotatedSeq[tmp[0]] = 1
 
     for id in inSeq:
@@ -98,7 +99,7 @@ def doFlps(args):
             annoOut[id] = {}
             annoOut[id]['length'] = len(inSeq[id])
             annoOut[id]['flps'] = {}
-    return(annoOut)
+    return annoOut
 
 
 def doTmhmm(args):
@@ -106,7 +107,8 @@ def doTmhmm(args):
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
     # do TMHMM
-    cmd = 'cat %s | %s/TMHMM/decodeanhmm -f %s/TMHMM//lib/TMHMM2.0.options -modelfile %s/TMHMM/lib/TMHMM2.0.model' % (seqFile, toolPath, toolPath, toolPath)
+    cmd = 'cat %s | %s/TMHMM/decodeanhmm -f %s/TMHMM//lib/TMHMM2.0.options -modelfile %s/TMHMM/lib/TMHMM2.0.model' % (
+        seqFile, toolPath, toolPath, toolPath)
     tmhmmOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = tmhmmOut.stdout.decode().split('\n')
     # save to dict
@@ -115,7 +117,7 @@ def doTmhmm(args):
     if len(lines) > 0:
         for line in lines:
             if line.startswith('>'):
-                id = line.replace('>','').strip()
+                id = line.replace('>', '').strip()
                 annoOut[id] = {}
                 annoOut[id]['length'] = len(inSeq[id])
                 annoOut[id]['tmhmm'] = {}
@@ -136,13 +138,13 @@ def doTmhmm(args):
             annoOut[id] = {}
             annoOut[id]['length'] = len(inSeq[id])
             annoOut[id]['tmhmm'] = {}
-    return(annoOut)
+    return annoOut
 
 
 def doSignalp(args):
     (seqFile, toolPath, org) = args
     # load fasta seq
-    inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
+    inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do signalp
     cmd = '%s/SignalP/signalp -t %s %s' % (toolPath, org, seqFile)
     signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
@@ -165,7 +167,7 @@ def doSignalp(args):
                         annoOut[tmp[0]] = {}
                         annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
                         annoOut[tmp[0]]['signalp'] = {}
-    return(annoOut)
+    return annoOut
 
 
 def doCoils(args):
@@ -206,7 +208,7 @@ def doCoils(args):
     for id in inSeq:
         if len(annoOut[id]['coils2']['coils_coiled_coil']['instance']) == 0:
             annoOut[id]['coils2'].pop('coils_coiled_coil', None)
-    return(annoOut)
+    return annoOut
 
 
 def doSeg(args):
@@ -234,7 +236,8 @@ def doSeg(args):
                     tmp = line.strip().split()
                     if (len(tmp) == 2) and ('-' in tmp[1]):
                         pos = tmp[1].split('-')
-                        annoOut[id]['seg']['seg_low_complexity_regions']['instance'].append((int(pos[0]), int(pos[1]), 'NA'))
+                        annoOut[id]['seg']['seg_low_complexity_regions']['instance'].append((int(pos[0]), int(pos[1]),
+                                                                                             'NA'))
     for id in inSeq:
         if len(annoOut[id]['seg']['seg_low_complexity_regions']['instance']) == 0:
             annoOut[id]['seg'].pop('seg_low_complexity_regions', None)
@@ -265,18 +268,21 @@ def checkDB(toolPath, toolName):
     if toolName == 'Pfam':
         ext = '-A.hmm'
     checkFileExist(dbDir + toolName + ext)
-    if not (os.path.exists(dbDir + toolName + ext + '.h3f') or os.path.exists(dbDir + toolName + ext + '.h3i') or os.path.exists(dbDir + toolName + ext + '.h3m') or os.path.exists(dbDir + toolName + ext + '.h3p')):
+    if not (os.path.exists(dbDir + toolName + ext + '.h3f') or os.path.exists(dbDir + toolName + ext + '.h3i') or
+            os.path.exists(dbDir + toolName + ext + '.h3m') or os.path.exists(dbDir + toolName + ext + '.h3p')):
         cmd = 'hmmpress -f %s/%s%s' % (dbDir, toolName, ext)
         try:
             subprocess.run([cmd], shell=True)
         except:
             print('Problem occurred while creating binary files for %s/%s%s' % (dbDir, toolName, ext))
 
+
 def hmmScan(seqFile, toolPath, toolName, cpus):
     ext = '.hmm'
     if toolName == 'Pfam':
         ext = '-A.hmm'
-    scanCmd = 'hmmscan -E 0.01 --domE 0.1 --noali --cpu %s %s/%s/%s-hmms/%s%s %s' % (cpus, toolPath, toolName, toolName, toolName, ext, seqFile)
+    scanCmd = 'hmmscan -E 0.01 --domE 0.1 --noali --cpu %s %s/%s/%s-hmms/%s%s %s' % (cpus, toolPath, toolName,
+                                                                                     toolName, toolName, ext, seqFile)
     flag = False
     try:
         FNULL = open(os.devnull, 'w')
@@ -286,6 +292,7 @@ def hmmScan(seqFile, toolPath, toolName, cpus):
         print('Error running hmmscan! %s' % (scanCmd))
         return(False)
 
+
 def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
     outDict = {}
     toolName = toolName.lower()
@@ -294,13 +301,13 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
         if len(result.split('\n')) > 3:
             if 'No hits detected that satisfy reporting thresholds' in result:
                 query = re.search(r'Query:(.)+', result).group().split()[1]
-                seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=','').replace(']','')
+                seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=', '').replace(']', '')
                 outDict[query] ={}
                 outDict[query]['length'] = int(seqLen)
                 outDict[query][toolName] = {}
             else:
                 query = re.search(r'Query:(.)+', result).group().split()[1]
-                seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=','').replace(']','')
+                seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=', '').replace(']', '')
                 outDict[query] ={}
                 outDict[query]['length'] = int(seqLen)
                 outDict[query][toolName] = {}
@@ -319,8 +326,11 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                         items = line.lstrip().split()
                         if toolName+'_'+dom in outDict[query][toolName]:
                             if float(items[4]) <= eInstance:
-                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]), int(items[13]), float(items[4])))
-    return(outDict)
+                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]),
+                                                                                               int(items[13]),
+                                                                                               float(items[4])))
+    return outDict
+
 
 def readClanFile(toolPath):
     datFile = '%s/Pfam/Pfam-hmms/Pfam-A.hmm.dat' % toolPath
@@ -335,25 +345,25 @@ def readClanFile(toolPath):
                     dom = re.search(r'#=GF ID(.)+', bl).group().split()[-1]
                     clan = re.search(r'#=GF CL(.)+', bl).group().split()[-1]
                     clanDict[dom] = clan
-            return(clanDict)
+            return clanDict
     except:
-        print('%s not found or not clans can be found' % datFile)
-        return()
+        print('%s not found or no clans can be found' % datFile)
+        return
 
 
-### functions for doing annotation for multiple tools
+# functions for doing annotation for multiple tools
 def getAnnoTools(toolPath):
     checkFileExist(toolPath+'/annoTools.txt')
     toolList = []
     with open(toolPath+'/annoTools.txt') as f:
         file =  f.readlines()
-        if not '#checked' in ''.join(file):
+        if '#checked' not in ''.join(file):
             sys.exit('Annotation tools not ready. Please run prepareFAS first!')
         else:
             for tool in file:
-                if (not '#' in tool) and (len(tool) > 1):
+                if ('#' not in tool) and (len(tool) > 1):
                     toolList.append(tool.strip().lower())
-    return(toolList)
+    return toolList
 
 
 def createAnnoJobs(args):
@@ -366,8 +376,9 @@ def createAnnoJobs(args):
         tmpFile = open(currentDir+'/tmp/'+outName+'_'+s.id+'.fa', 'w')
         tmpFile.write(str('>' + s.id + '\n' + s.seq))
         tmpFile.close()
-        annoJobs.append([currentDir+'/tmp/'+outName+'_'+s.id+'.fa', toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores])
-    return(annoJobs)
+        annoJobs.append([currentDir+'/tmp/'+outName+'_'+s.id+'.fa', toolPath, toolList, eFlps, signalpOrg, eFeature,
+                         eInstance, hmmCores])
+    return annoJobs
 
 
 def removeTmpFasta(outName):
@@ -403,9 +414,10 @@ def doAnno(args):
         annoList.append(anno)
 
     final['feature'] = mergeNestedDic(annoList)
-    return(final)
+    return final
 
-### function for posprocessing annotation dictionary
+
+# function for posprocessing annotation dictionary
 def countFeatures(annoDict):
     out = []
     for prot in list(annoDict.keys()):
@@ -415,7 +427,7 @@ def countFeatures(annoDict):
                     out.extend([feat] * len(value))
     out.sort()
     count = collections.Counter(out)
-    return(dict(count))
+    return dict(count)
 
 
 def getClans(toolPath, annoDict):
@@ -425,7 +437,7 @@ def getClans(toolPath, annoDict):
         for dom, value in annoDict[prot]['pfam'].items():
             if dom.replace('pfam_','') in clanDict:
                 outDict[dom] = clanDict[dom.replace('pfam_','')]
-    return(outDict)
+    return outDict
 
 
 def replaceAnno(oldAnnoFile, newAnnoDict, redo):
@@ -436,7 +448,7 @@ def replaceAnno(oldAnnoFile, newAnnoDict, redo):
             annoDict['feature'][prot][redo] = dict(newAnnoDict['feature'])[prot][redo]
         if 'clan' in newAnnoDict:
             annoDict['clan'] = newAnnoDict['clan']
-        return(annoDict)
+        return annoDict
 
 
 def extractAnno(seqFile, existingAnno):
@@ -450,4 +462,4 @@ def extractAnno(seqFile, existingAnno):
         for prot in list(inSeq.keys()):
             allPfam.extend(list(annoDict['feature'][prot]['pfam'].keys()))
         annoDict['clan'] = dict((pfam, existingDict['clan'][pfam]) for pfam in allPfam)
-        return(annoDict)
+        return annoDict

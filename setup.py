@@ -37,13 +37,11 @@ setup(
     package_data={'': ['*']},
     install_requires=[],
     entry_points={
-        'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
-                            "parseInterPro = greedyFAS.parserInterPro:main",
+        'console_scripts': ["annoParserFAS = greedyFAS.annoParserFAS:main",
                             "annoFAS = greedyFAS.annoFAS:main",
                             "prepareFAS = greedyFAS.prepareFAS:main",
                             "calcFAS = greedyFAS.calcFAS:main",
-                            "fasHamstr = greedyFAS.fasHamstr:main",
-                            "processAnnotation = greedyFAS.processAnnotation:main"],
+                            "hamstrFAS = greedyFAS.hamstrFAS:main"],
     },
     license="GPL-3.0",
     classifiers=[

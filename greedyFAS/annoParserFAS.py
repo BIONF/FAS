@@ -57,6 +57,9 @@ def read_infile_multiple(ignore_lines, feature_columns, tool_names, tool_column,
         start, stop = cells[feature_columns[3]], cells[feature_columns[4]]
         tool_name = cells[tool_column]
         f_id = tool_name + '_' + cells[feature_columns[2]]
+        if tool_name not in tool_names:
+            raise Exception('tsv file contains the tool: "' + tool_name + '", which was not given in '
+                                                                          '[-t] [--tool_names]')
         if p_id not in feature_dict:
             feature_dict[p_id] = {'length': length}
             for tool in tool_names:
@@ -92,9 +95,10 @@ def create_json(args):
         feature_dict = read_infile_multiple(args.ignore_lines, args.feature_columns, args.tool_names,
                                             args.tool_column, args.input)
     elif len(args.tool_names) > 1:
-        raise Exception("Multiple tool names given. Please select the column containing tool names with --tool_column")
+        raise Exception("Multiple tool names given. Please select the column containing tool names with "
+                        "[-c][--tool_column]")
     else:
-        feature_dict = read_infile_single(args.ignore_lines, args.feature_columns, args.tool_names, args.input)
+        feature_dict = read_infile_single(args.ignore_lines, args.feature_columns, args.tool_names[0], args.input)
     count = count_features(feature_dict)
     out_dict = {'feature': feature_dict, 'clan': {}, 'count': count}
     write_json(out_dict, args.output)
@@ -111,12 +115,12 @@ def main():
                         help="name of the annotation tool(s) in the tsv file, if multiple are given, the argument "
                              "--tool_name must point to the column containing the tool name and the tool names must be "
                              "identical to the ones in the tsv file")
-    parser.add_argument("-f", "--feature_columns", type=int, nargs='5', required=True,
+    parser.add_argument("-f", "--feature_columns", type=int, nargs=5, required=True,
                         help="needs 5 integer values that point to the columns that contain: "
                              "(1) the protein id, (2) the protein length, (3) the feature id, "
                              "(4) the start position of the feature, (5) the end position of the feature; the column "
                              "indices start at 0 so the first column has index 0, the second index 1, etc.")
-    parser.add_argument("c", "--tool_column", type=int, default=None,
+    parser.add_argument("-c", "--tool_column", type=int, default=None,
                         help="The index (integer) of column that contains the annotation tool name, only necessary if "
                              "the tsv file contains multiple annotation tools like the tsv output of InterPro")
     args = parser.parse_args()

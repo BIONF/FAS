@@ -32,13 +32,15 @@ import greedyFAS.annoModules as annoModules
 home = expanduser('~')
 
 def runAnnoFas(args):
-    (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName, cpus) = args
+    (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract,
+     oldName, cpus) = args
     # do annotation
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
             print('Doing annotation...')
-            annoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, annoModules.getAnnoTools(toolPath), eFlps, signalpOrg, eFeature, eInstance, hmmCores])
+            annoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, annoModules.getAnnoTools(toolPath),
+                                                   eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
             pool = mp.Pool(cpus)
             annoOut = pool.map(annoModules.doAnno, annoJobs)
@@ -61,7 +63,8 @@ def runAnnoFas(args):
     else:
         if not redo == '':
             print('Redoing annotation for %s...' % redo)
-            redoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, [redo], eFlps, signalpOrg, eFeature, eInstance, hmmCores])
+            redoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, [redo], eFlps, signalpOrg, eFeature,
+                                                   eInstance, hmmCores])
             # redo annotation
             pool = mp.Pool(mp.cpu_count()-1)
             annoOut = pool.map(annoModules.doAnno, redoJobs)
@@ -90,15 +93,21 @@ def main():
                           required=True)
     optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('-n', '--name', help='Name of annotation file', action='store', default='')
-    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.0001', action='store', default=0.001, type=float)
-    optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance. Default = 0.01', action='store', default=0.01, type=float)
-    optional.add_argument('--cpus', help='Number of CPUs used for annotation. Default = available cores - 1', action='store', default=0, type=int)
+    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.0001', action='store',
+                          default=0.001, type=float)
+    optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance. Default = 0.01', action='store',
+                          default=0.01, type=float)
+    optional.add_argument('--cpus', help='Number of CPUs used for annotation. Default = available cores - 1',
+                          action='store', default=0, type=int)
     optional.add_argument('--hmmCores', help='Number of CPUs used for hmm search', action='store', default=1, type=int)
-    optional.add_argument('--eFlps', help='eValue cutoff for fLPS. Default = 0.0000001', action='store', default=0.0000001, type=float)
-    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search. Default = "euk"', choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
+    optional.add_argument('--eFlps', help='eValue cutoff for fLPS. Default = 0.0000001', action='store',
+                          default=0.0000001, type=float)
+    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search. Default = "euk"',
+                          choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
     optional.add_argument('--redo', help='Re-annotation the sequence with flps|coils2|seg|pfam|signalp|smart|tmhmm. '
-                                         'Only one selection allowed!', choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
-                                         action='store', default='', type=str)
+                                         'Only one selection allowed!',
+                          choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
+                          action='store', default='', type=str)
     optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence',
                           action='store_true', default='')
 
@@ -122,7 +131,7 @@ def main():
     try:
         my_abs_path = Path(outPath).resolve(strict=True)
     except FileNotFoundError:
-        Path(outPath).mkdir(parents = True, exist_ok = True)
+        Path(outPath).mkdir(parents=True, exist_ok=True)
     if args.extract == '':
         oldName = ''
         outName = args.name
@@ -140,7 +149,8 @@ def main():
     # run annoFAS
     start = time.time()
     print('PID ' + str(os.getpid()))
-    runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract, oldName, cpus])
+    runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
+                extract, oldName, cpus])
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 

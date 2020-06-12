@@ -22,7 +22,6 @@
 
 
 from operator import itemgetter
-import logging
 import inspect
 import os
 import multiprocessing
@@ -31,24 +30,20 @@ import time
 from functools import partial
 from copy import deepcopy
 from sys import version_info
-if version_info.major == 3:
-    from greedyFAS.fasInput import read_pairwise
-    from greedyFAS.fasInput import constraints_in
-    from greedyFAS.fasInput import featuretypes
-    from greedyFAS.fasInput import read_json
-    from greedyFAS.fasOutput import bidirectionout
-    from greedyFAS.fasOutput import domain_out
-    from greedyFAS.fasOutput import phyloprofile_out
-    from greedyFAS.fasScoring import sf_calc_score
-    from greedyFAS.fasScoring import sf_entire_calc_score
-    from greedyFAS.fasWeighting import w_weight_const_rescale
-    from greedyFAS.fasWeighting import w_weight_correction
-    from greedyFAS.fasWeighting import w_weighting
-    from greedyFAS.fasWeighting import w_weighting_constraints
-    from greedyFAS.fasWeighting import w_count_add_domains
-    from greedyFAS.fasPathing import pb_region_mapper
-    from greedyFAS.fasPathing import pb_region_paths
-    from greedyFAS.annoModules import mergeNestedDic
+from greedyFAS.fasInput import read_json
+from greedyFAS.fasOutput import bidirectionout
+from greedyFAS.fasOutput import domain_out
+from greedyFAS.fasOutput import phyloprofile_out
+from greedyFAS.fasScoring import sf_calc_score
+from greedyFAS.fasScoring import sf_entire_calc_score
+from greedyFAS.fasWeighting import w_weight_const_rescale
+from greedyFAS.fasWeighting import w_weight_correction
+from greedyFAS.fasWeighting import w_weighting
+from greedyFAS.fasWeighting import w_weighting_constraints
+from greedyFAS.fasWeighting import w_count_add_domains
+from greedyFAS.fasPathing import pb_region_mapper
+from greedyFAS.fasPathing import pb_region_paths
+from greedyFAS.annoModules import mergeNestedDic
 
 
 # important vars #             ###  var looks ###
@@ -165,7 +160,6 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
     :param clan_dict: dictionary that maps features to clans
     :param option: dictionary that contains the main option variables of FAS
     """
-    logging.info("fc_main")
 
     tools = option["input_linearized"] + option["input_normal"]
     mode = {}
@@ -267,7 +261,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                         else:
                             a_out.write("\t\t\t<feature type=\"" + feature + "\">\n")
                         for instance in seed_proteome[protein][tool][feature]["instance"]:
-                            a_out.write("\t\t\t\t<start=\"" + str(
+                            a_out.write("\t\t\t\t<instance start=\"" + str(
                                 instance[0]) + "\" end=\"" + str(instance[1]) + "\"/>\n")
                         a_out.write("\t\t\t</feature>\n")
                 a_out.write("\t\t</architecture>\n")
@@ -280,7 +274,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                     for feature in query_proteome[query][tool]:
                         a_out.write("\t\t\t<feature type=\"" + feature + "\">\n")
                         for instance in query_proteome[query][tool][feature]["instance"]:
-                            a_out.write("\t\t\t\t<start=\"" + str(
+                            a_out.write("\t\t\t\t<instance start=\"" + str(
                                 instance[0]) + "\" end=\"" + str(instance[1]) + "\"/>\n")
 
                         a_out.write("\t\t\t</feature>\n")
@@ -338,11 +332,9 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
     # case M2.1: empty(query)
 
     if int(len(all_query_paths)) == 0 or int(len(query_features) == 0):
-        logging.warning("CASE M2.1: No paths (pfam or smart annotations) in query.")
         # case M2.1.1: empty(query)-empty(search)
         # should be the best fix independent from weight
         if int(len(search_features)) == 0:
-            logging.warning("CASE M2.1.1: empty vs empty.")
             path = list(a_s_f.keys())
             query_architecture = list(a_q_f.keys())
             score_w = sf_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
@@ -350,7 +342,6 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             mode[protein] = 2
         else:
             # case M2.1.2: empty(query)-graph(search)
-            logging.warning("CASE M2.1.2: empty vs graph.")
             tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, [], search_features, weights,
                                                       query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
                                                       query_clans, "OFF", option)
@@ -394,9 +385,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             # case M2.2.1: graph(query)-empty(search)
             if int(len(search_features)) == 0:
                 for jobpath in jobpaths:
-                    logging.warning("CASE M2.2: graph.")
                     pathcount += 1
-                    logging.warning("CASE M2.2.1: graph vs empty.")
                     # special case: protein with no pfam or smart domains
                     # get score for a_s_f and query_path directly
                     path = list(a_s_f.keys())
@@ -412,7 +401,6 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                 # case M2.2.2 graph(query)-graph(search)
                 # regular traversal of graph based on search_protein
                 jobpool = multiprocessing.Pool(processes=option["cores"])
-                logging.warning("CASE M2.2.2: graph vs graph.")
                 jobs = []
                 jobcount = (int(len(jobpaths) / option["cores"]), len(jobpaths) % option["cores"])
                 if jobcount[0] == 0:
@@ -453,17 +441,13 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                 pb_entire_graphtraversal_priority(tmp_query_graph, domain_type, protein, 1, search_features,
                                                   weights, query_features, seed_proteome, a_s_f, a_q_f,
                                                   clan_dict, query_clans, option))
-            logging.info("domain_type: " + str(domain_type))
-            logging.debug("all_query_paths: " + str(all_query_paths))
             # max fixture of (search_path, score, query_path)
     if option["priority_mode"] or go_priority_2:
         for query_path in all_query_paths:
-            logging.warning("CASE M2.2: graph.")
             pathcount += 1
 
             # case M2.2.1: graph(query)-empty(search)
             if int(len(search_features)) == 0:
-                logging.warning("CASE M2.2.1: graph vs empty.")
                 # special case: protein with no pfam or smart domains
                 # get score for a_s_f and query_path directly
                 path = list(a_s_f.keys())
@@ -473,7 +457,6 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             else:
                 # case M2.2.2 graph(query)-graph(search)
                 # regular traversal of graph based on search_protein
-                logging.warning("CASE M2.2.2: graph vs graph.")
                 if option["priority_mode"]:
                     tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path,
                                                               search_features, weights, query_features,
@@ -488,15 +471,11 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                 score_w = tmp_path_score[0][1]
                 query_path_ad = tmp_path_score[0][2]
                 mode[protein] = tmp_path_score[1]
-                logging.debug("tmp_path_score " + str(tmp_path_score))  # search path, score, mode
 
             # check for max scoring fixture of path and query_path
             if (score_w[4] >= max_fixture[1][4] and score_w[3] == max_fixture[1][3]) or \
                     score_w[3] >= max_fixture[1][3]:
                 max_fixture = (path, score_w, query_path_ad, protein)
-
-        logging.info("Found: " + str(pathcount) + " path(s) for query.")
-        logging.debug("Path fixture: " + str(max_fixture))
 
     timecheck = time.time()
     score = max_fixture[1]
@@ -527,8 +506,6 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
 
     for feature in max_fixture[0]:
         if feature in search_features:
-            logging.debug(str(search_features[feature][0]) + " " + str(search_features[feature][1]) + " " + str(
-                search_features[feature][2]) + " " + str(search_features[feature][3]))
             best_template_path.append((search_features[feature][0], search_features[feature][1],
                                        search_features[feature][2], search_features[feature][3]))
         else:
@@ -567,7 +544,6 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                 path_tmp_query[feature[0]].append((feature[2], feature[3]))
             else:
                 path_tmp_query[feature[0]] = [(feature[2], feature[3])]
-        logging.debug("path_tmp: " + str(path_tmp))
 
         # unweighted case
         if option["MS_uni"] == 0:
@@ -618,7 +594,6 @@ def su_lin_query_protein(protein_id, query_proteome, clan_dict, option):
     :param clan_dict: dictionary that maps features to clans
     :return:lin_query_protein, query_features, a_q_f(additional[not linearized] query features), query_clans, clan_dict
     """
-    logging.info("su_lin_query_protein")
 
     lin_query_protein = []
     query_clans = {}
@@ -842,7 +817,6 @@ def pb_graph_traversal_sub(search_protein, protein, search_features, weights, qu
         # case M2.2.1: graph(query)-empty(search)
         timecheck = time.time()
         if int(len(search_features)) == 0:
-            logging.warning("CASE M2.2.1: graph vs empty.")
             # special case: protein with no pfam or smart domains
             # get score for a_s_f and query_path directly
             path = list(a_s_f.keys())
@@ -852,7 +826,6 @@ def pb_graph_traversal_sub(search_protein, protein, search_features, weights, qu
         else:
             # case M2.2.2 graph(query)-graph(search)
             # regular traversal of graph based on search_protein
-            logging.warning("CASE M2.2.2: graph vs graph.")
             if option["timelimit"] >= 1:
                 tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path, search_features,
                                                           weights, query_features, seed_proteome, a_s_f, a_q_f,
@@ -865,7 +838,6 @@ def pb_graph_traversal_sub(search_protein, protein, search_features, weights, qu
             path = tmp_path_score[0][0]
             score_w = tmp_path_score[0][1]
             query_path_ad = tmp_path_score[0][2]
-            logging.debug("tmp_path_score " + str(tmp_path_score))  # search path, score, mode
 
         # check for max scoring fixture of path and query_path
         if ((not max_fixture[1][5]) and (score_w[4] >= max_fixture[1][4]) and score_w[3] <= max_fixture[1][3]) or \
@@ -906,7 +878,6 @@ def pb_calc_sub(search_protein, protein, search_features, weights, query_feature
         path = tmp_path_score[0][0]
         score_w = tmp_path_score[0][1]
         query_path_ad = tmp_path_score[0][2]
-        logging.debug("tmp_path_score " + str(tmp_path_score))  # search path, score, mode
         if ((not max_fixture[1][5]) and (score_w[4] >= max_fixture[1][4]) and score_w[3] <= max_fixture[1][3]) or \
                 score_w[3] >= max_fixture[1][3]:
             max_fixture = (path, score_w, query_path_ad, protein)
@@ -938,7 +909,6 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
     :param option: dictionary that contains the main option variables of FAS
     :return: path_score, mode[priority or extensive]
     """
-    logging.info("pb_entire_main_nongreedy")
     path_score = 0
     mode = 0
     priority_check = False
@@ -946,8 +916,6 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
     region = pb_region_mapper(list(search_protein), search_features, option["max_overlap"],
                               option["max_overlap_percentage"])
     search_graph, path_number = pb_region_paths(region)
-    logging.debug(region)
-    logging.debug(search_graph)
 
     if (int(len(search_features)) >= int(option["priority_threshold"]) and option["priority_mode"]) \
             or tmp_timelimit == "OVER":
@@ -960,7 +928,6 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
     elif option["priority_mode"]:
         # PRIORITY CHECK "2": for every protein in seed_proteome
         tmp_path_set_size = len(pb_graphtraversal(search_graph, [], [], option))
-        logging.debug("cardinality of tmp graph: " + str(tmp_path_set_size))
         if int(tmp_path_set_size) > int(option["max_cardinality"]):
             mode = 1
             priority_check = True
@@ -993,7 +960,6 @@ def pb_entire_priority_mode(protein, query_path, search_graph, search_features, 
     :param option: dictionary that contains the main option variables of FAS
     :return: best_path
     """
-    logging.info("pb_entire_priority_mode")
 
     # best_path (Path, (MS_score(float), PS_score(float), CS_score(float), final_score(float), path_weight(float),
     # common_feature(bool)), QPath)
@@ -1033,8 +999,6 @@ def pb_entire_graphtraversal(search_graph, query_path, search_features, weights,
     :param timelimit: timelimit for exhaustive mode
     :return: best_path
     """
-    logging.info("pb_entire_graphtraversal")
-    logging.debug("search graph: " + str(search_graph))
 
     calcstart = time.time()
     v_stack = ["START"]
@@ -1060,13 +1024,9 @@ def pb_entire_graphtraversal(search_graph, query_path, search_features, weights,
                     query_path_ad = query_path + list(a_q_f.keys())
                     score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
-                    logging.info("search path " + str(path_ad) + " in pb_entire_graphtraversal")
-                    logging.debug("Score info: " + str(score_w) + " for query_path " + str(
-                        query_path_ad) + " in pb_entire_graphtraversal")
                     if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
                        score_w[3] >= best_path[1][3]:
                         best_path = (path_ad, score_w, query_path_ad)
-                        logging.debug("new best_path by weight: " + str(best_path))
                     first = 0
                 else:
                     v_stack.append(next_vertex)
@@ -1085,18 +1045,13 @@ def pb_entire_graphtraversal(search_graph, query_path, search_features, weights,
                     query_path_ad = query_path + list(a_q_f.keys())
                     score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
-                    logging.info("search path " + str(path_ad) + " in pb_entire_graphtraversal")
-                    logging.debug("Score info: " + str(score_w) + " for query_path " + str(
-                        query_path_ad) + " in pb_entire_graphtraversal")
                     if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
                        score_w[3] >= best_path[1][3]:
                         best_path = (path_ad, score_w, query_path_ad)
-                        logging.debug("new best_path by weight: " + str(best_path))
                     first = 0
                 else:
                     v_stack.append(next_vertex)
                     p_stack.append(path + [next_vertex])
-    logging.info("return: " + str(best_path))
     return best_path
 
 
@@ -1110,7 +1065,6 @@ def pb_graphtraversal(graph, v_stack, p_stack, option):
     :param p_stack: path stack
     :return: paths
     """
-    logging.debug(graph)
     paths = []
     if v_stack == [1]:
         v_stack = ["START"]
@@ -1132,7 +1086,6 @@ def pb_graphtraversal(graph, v_stack, p_stack, option):
             if next_vertex == "END":
                 if mode == 0:
                     paths.append(path)
-                    logging.info("cardinality: " + str(len(paths)))
                     if len(paths) > option["max_cardinality"]:
                         return paths
                 else:
@@ -1140,8 +1093,6 @@ def pb_graphtraversal(graph, v_stack, p_stack, option):
             else:
                 v_stack.append(next_vertex)
                 p_stack.append(path + [next_vertex])
-    logging.debug("returning paths: " + str(paths))
-    logging.info("cardinality: " + str(len(paths)))
     return paths
 
 
@@ -1165,10 +1116,7 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
     :param option: dictionary that contains the main option variables of FAS
     :return: paths or best_path
     """
-    logging.info("pb_entire_graphtraversal_priority")
-    logging.debug(
-        "search_features: " + str(search_features) + "\nsearch_graph: " + str(search_graph) + "\tpriority: " + str(
-            priority) + "\ta_s_f: " + str(a_s_f) + "\tquery_path: " + str(query_path) + "\ta_q_f: " + str(a_q_f))
+
     v_stack = ["START"]
     p_stack = []
     protein = None
@@ -1195,9 +1143,6 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 else:
                     path_ad = path + list(a_s_f.keys())
                     query_path_ad = query_path + list(a_q_f.keys())
-                    logging.debug("path_ad: " + str(path_ad))
-                    logging.debug("query_path_ad: " + str(query_path_ad))
-
                     score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
                     if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
@@ -1267,9 +1212,6 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 v_stack.append(best_partial_path[0])
                 p_stack.append(path + [best_partial_path[0]])
     if mode == 1:
-        logging.debug("returning: " + str(paths))
-        logging.debug("cardinality: " + str(len(paths)))
         return paths
     elif mode == 0:
-        logging.debug(best_path)
         return best_path
