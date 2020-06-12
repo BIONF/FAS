@@ -281,21 +281,21 @@ def get_options():
     parser.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
                         help="path to extended.fa file")
     parser.add_argument("-n", "--groupname", default=None, type=str, required=True,
-                        help="groupname")
+                        help="name of the ortholog group")
     parser.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
                         help="path to weight_dir of Hamstr")
     parser.add_argument("-t", "--tmp_dir", default=None, type=str,
                         help="Path to working directory")
     parser.add_argument("-o", "--out_dir", default=None, type=str,
-                        help="path to out_dir")
+                        help="path to out directory")
     parser.add_argument("-s", "--seed_name", default=None, type=str,
-                        help="path to seed annotation")
+                        help="name of the seed protein as it appears in the species fasta and species json")
     parser.add_argument("-a", "--seed_spec", default=None, type=str,
-                        help="name of the seed species (in weight dir)")
+                        help="name of the seed species in genome dir and weight dir")
     parser.add_argument("--bidirectional", action="store_true",
                         help="calculate both scoring directions")
     parser.add_argument('--cores', action='store', type=int, default=1,
-                        help='number of cores')
+                        help='number of cores used for parallel calculation')
     arguments = parser.parse_args()
     return arguments
 
