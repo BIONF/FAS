@@ -65,9 +65,15 @@ def create_jobdict(joblist):
 
 
 def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, features, bidirectional):
-    tmp_data = read_json(weight_dir + "/" + seed_spec + "/" + seed_spec + ".json")
+    try:
+        tmp_data = read_json(weight_dir + "/" + seed_spec + "/" + seed_spec + ".json")
+    except FileNotFoundError:
+        raise Exception('Taxon: "' + seed_spec + '" is missing in the weight_dir')
     seed_weight = w_weight_correction("loge", tmp_data["count"])
     seed_proteome = tmp_data["feature"]
+    if seed_name not in seed_proteome:
+        raise Exception('The protein: "' + seed_name + '" is missing in taxon: "' + seed_spec + '". The annotations ' +
+                        'in weight_dir should contain all proteins from the genome_dir.')
     clan_dict = tmp_data["clan"]
     data = []
     for spec in jobdict:
@@ -89,14 +95,21 @@ def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, f
 
 
 def run_fas(data):
-    tmp_data = read_json(data[5] + "/" + data[0] + "/" + data[0] + ".json")
+    try:
+        tmp_data = read_json(data[5] + "/" + data[0] + "/" + data[0] + ".json")
+    except FileNotFoundError:
+        raise Exception('Taxon: "' + data[0] + '" is missing in the weight_dir')
     query_proteome = {}
     clan_dict = data[6]
     clan_dict.update(tmp_data["clan"])
     seed_proteome = data[3]
     weight = w_weight_correction("loge", tmp_data["count"])
     for i in data[1]:
-        query_proteome[i] = tmp_data["feature"][i]
+        try:
+            query_proteome[i] = tmp_data["feature"][i]
+        except KeyError:
+            raise Exception('The protein: "' + i + '" is missing in taxon: "' + data[0] + '". The annotations ' +
+                            'in weight_dir should contain all proteins from the genome_dir.')
 
     greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[2])
     if data[2]["bidirectional"]:
