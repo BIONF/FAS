@@ -209,7 +209,6 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                                 namedict[query_id][3] + "\t" + spec + "|" + query_id + "|" +
                                                 namedict[query_id][3] + "\t" + query_length + "\t" + feature + "\t" +
                                                 inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-            os.remove(tmp_path + "/" + spec + ".xml")
         if bidirectional:
             reversetree = ElTre.parse(tmp_path + "/" + spec + "_reverse.xml")
             reverseroot = reversetree.getroot()
@@ -286,6 +285,7 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
                                                     "\tNA\tN\n")
             os.remove(tmp_path + "/" + spec + "_reverse.xml")
         os.remove(tmp_path + "/" + spec + "_architecture.xml")
+        os.remove(tmp_path + "/" + spec + ".xml")
         for pair in outdict:
             out.write(groupname + "\tncbi" + ncbi + "\t" + spec + "|" + pair[1] + "|" + namedict[pair[1]][3] + "\t" +
                       outdict[pair][0] + "\t" + outdict[pair][1] + "\n")
