@@ -128,10 +128,10 @@ def main():
 
     # option for saving json file
     outPath = os.path.abspath(args.outPath)
-    try:
-        my_abs_path = Path(outPath).resolve(strict=True)
-    except FileNotFoundError:
-        Path(outPath).mkdir(parents=True, exist_ok=True)
+    # try:
+    #     my_abs_path = Path(outPath).resolve(strict=True)
+    # except FileNotFoundError:
+    Path(outPath).mkdir(parents=True, exist_ok=True)
     if args.extract == '':
         oldName = ''
         outName = args.name

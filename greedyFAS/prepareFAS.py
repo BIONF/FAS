@@ -35,13 +35,6 @@ from os.path import expanduser
 
 home = expanduser('~')
 
-def checkFileExist(file):
-    try:
-        my_abs_path = Path(file).resolve(strict=True)
-    except FileNotFoundError:
-        sys.exit('%s not found' % file)
-
-
 def complete(text, state):
     return(glob.glob(os.path.expanduser(text)+'*')+[None])[state]
 
@@ -160,8 +153,8 @@ def prepare_annoTool(options):
     dtuPathIn = options['dtuPath']
     force = options['force']
 
-    file = 'annotation_FAS2020c.tar.gz'
-    checksum = '2026191233 1108979287 ' + file
+    file = 'annotation_FAS2020d.tar.gz'
+    checksum = '1818703744 1108970315 ' + file
 
     current_dir = os.getcwd()
     if check_status(anno_path, force, file) == 1:
