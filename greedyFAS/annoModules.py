@@ -50,9 +50,10 @@ def save2json(dict2save, outName, outDir):
 
 
 def checkFileExist(file):
-    try:
-        my_abs_path = Path(file).resolve(strict=True)
-    except FileNotFoundError:
+    if not os.path.exists(os.path.abspath(file)):
+    # try:
+    #     my_abs_path = Path(file).resolve(strict=True)
+    # except FileNotFoundError:
         sys.exit('%s not found' % file)
 
 
