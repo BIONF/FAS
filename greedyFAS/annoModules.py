@@ -51,9 +51,6 @@ def save2json(dict2save, outName, outDir):
 
 def checkFileExist(file):
     if not os.path.exists(os.path.abspath(file)):
-    # try:
-    #     my_abs_path = Path(file).resolve(strict=True)
-    # except FileNotFoundError:
         sys.exit('%s not found' % file)
 
 
@@ -133,12 +130,14 @@ def doTmhmm(args):
                         annoOut[id]['tmhmm']['tmhmm_transmembrane']['instance'].append((int(pos[1]), int(pos[2]), 'NA'))
                 annotatedSeq[id] = 1
     for id in inSeq:
-        if len(annoOut[id]['tmhmm']['tmhmm_transmembrane']['instance']) == 0:
-            annoOut[id]['tmhmm'].pop('tmhmm_transmembrane', None)
+        id = id
         if not id in annotatedSeq:
             annoOut[id] = {}
             annoOut[id]['length'] = len(inSeq[id])
             annoOut[id]['tmhmm'] = {}
+        else:
+            if len(annoOut[id]['tmhmm']['tmhmm_transmembrane']['instance']) == 0:
+                annoOut[id]['tmhmm'].pop('tmhmm_transmembrane', None)
     return annoOut
 
 

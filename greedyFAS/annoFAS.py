@@ -38,7 +38,7 @@ def runAnnoFas(args):
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
-            print('Doing annotation...')
+            print('Doing annotation for %s...' % seqFile)
             annoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, annoModules.getAnnoTools(toolPath),
                                                    eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
@@ -128,9 +128,6 @@ def main():
 
     # option for saving json file
     outPath = os.path.abspath(args.outPath)
-    # try:
-    #     my_abs_path = Path(outPath).resolve(strict=True)
-    # except FileNotFoundError:
     Path(outPath).mkdir(parents=True, exist_ok=True)
     if args.extract == '':
         oldName = ''

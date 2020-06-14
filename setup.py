@@ -28,6 +28,7 @@ with open("README.md", "r") as input:
 setup(
     name="greedyFAS",
     version="1.1.0",
+    python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
     author="Julian Dosch",
@@ -35,7 +36,9 @@ setup(
     url="https://github.com/BIONF/FAS",
     packages=find_packages(),
     package_data={'': ['*']},
-    install_requires=[],
+    install_requires=[
+        'biopython'
+    ],
     entry_points={
         'console_scripts': ["annoParserFAS = greedyFAS.annoParserFAS:main",
                             "annoFAS = greedyFAS.annoFAS:main",
