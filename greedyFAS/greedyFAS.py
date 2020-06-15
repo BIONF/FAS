@@ -60,9 +60,7 @@ from greedyFAS.annoModules import mergeNestedDic
 # weights = {}                 #{("domain_name", "weight")}
 # domain_count = {}            #{("domain", "COUNT")}
 
-# hidden options
-# tab separated table as output file #
-taciturn = 1
+
 
 # Flow Control <fc>
 # flow control functions
@@ -136,7 +134,7 @@ def fc_start(option):
             domain_out(org_outpath, True, extmp)
         if option["phyloprofile"]:
             phyloprofile_out(org_outpath, True, option["phyloprofile"])
-        else:
+        elif not option['output']:
             bidirectionout(org_outpath)
     else:
         fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option)
@@ -153,7 +151,6 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                     pb_entire_graphtraversal_priority(),
                     sf_entire_calc_score(), pb_entire_main_nongreedy(), w_weight_const_rescale()
 
-    :param prot_count: integer that stores the number of proteins in the reference
     :param domain_count: dictionary that contains the (adjusted) counts of each feature in the reference proteome
     :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
     :param query_proteome: dictionary that contains the feature architecture of all query proteins
@@ -165,7 +162,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
     mode = {}
     out = None
     a_out = None
-    if option["output"] == 0 or option["output"] == 2:
+    if not option["output"]:
         if option["e_output"]:
             a_out = open(option["outpath"] + "_architecture.xml", "w+")
             a_out.write("<?xml version=\"1.0\"?>\n")
@@ -212,11 +209,9 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
         for pair in option['pairwise']:
             query = pair[1]
             protein = pair[0]
-            if option["output"] == 0 or option["output"] == 2:
+            if not option["output"]:
                 out.write(
                     "\t<query id=\"" + query + "\" length=\"" + str(query_proteome[query]["length"]) + "\">\n")
-            elif taciturn == 1:
-                out = open(option["outpath"], "w+")
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
             query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
             go_priority, domain_count = tmp_query[7:9]
@@ -230,10 +225,8 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
         else:
             querylist = list(query_proteome.keys())
         for query in querylist:
-            if option["output"] == 0 or option["output"] == 2:
+            if not option["output"]:
                 out.write("\t<query id=\"" + query + "\" length=\"" + str(query_proteome[query]["length"]) + "\">\n")
-            elif taciturn == 1:
-                out = open(option["outpath"], "w+")
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
             query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
             go_priority, domain_count = tmp_query[7:9]
@@ -244,9 +237,9 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
             for protein in seedlist:
                 fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features, out,
                             go_priority, a_q_f, clan_dict, mode, query_graph, query_proteome, query, query_clans)
-            if option["output"] == 0 or option["output"] == 2:
+            if not option["output"]:
                 out.write("\t</query>\n")
-    if option["output"] == 0 or option["output"] == 2:
+    if not option["output"]:
         out.write("</out>")
         out.close()
         if option["e_output"]:
@@ -479,7 +472,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
 
     timecheck = time.time()
     score = max_fixture[1]
-    if option["output"] == 0 or option["output"] == 2:
+    if not option["output"]:
         try:
             if mode[protein] == 2:
                 mode_out = "greedy"
@@ -518,7 +511,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                                     query_features[feature][2], query_features[feature][3]))
         else:
             best_query_path.append((a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
-    if option["output"] == 0 or option["output"] == 2:
+    if not option["output"]:
         path_tmp = {}
         path_tmp_query = {}
         scale = 0
@@ -576,11 +569,9 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
         if option["weight_const"] == 1:
             for adj_feature in adjusted_weights:
                 weights[adj_feature] = weight_tmp[adj_feature]
-    if option["output"] == 1 or option["output"] == 2:
-        print(score[3])
-        # hidden
-        if taciturn == 1 and option["output"] != 2:
-            out.write(protein + "\t" + str(score[3]) + "\n")
+    if option["output"]:
+        print(protein + ' -> ' + query + '\t' + str(score[3]))
+
 
 # Start Up Functions <su>
 

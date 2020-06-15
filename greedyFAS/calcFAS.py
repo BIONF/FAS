@@ -112,6 +112,8 @@ def get_options():
                              "only, will run with more but output won't work without editing")
     optional.add_argument("--domain", dest="domain", action="store_true",
                         help="activate domain tabular output")
+    optional.add_argument("--raw", dest="raw", action="store_true",
+                        help="print FAS score to terminal instead of creating outputfile")
     args = parser.parse_args()
     return args
 
@@ -119,7 +121,7 @@ def get_options():
 def anno(annojobs, args):
     toolpath = args.toolPath
     if toolpath == '':
-        pathconfigFile = os.path.realpath(__file__).replace('calcFAS.py','pathconfig.txt')
+        pathconfigFile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
         with open(pathconfigFile) as f:
             toolpath = f.readline().strip()
     else:
@@ -163,7 +165,7 @@ def fas(args):
                    "priority_mode": True, "priority_threshold": args.priority_threshold, "eFeature": args.eFeature,
                    "max_cardinality": args.max_cardinality, "cores": 1, "e_output": args.no_arch,
                     "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
-                    "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": 0,
+                    "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.raw,
                     "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
                    }
     name = ''
@@ -182,6 +184,10 @@ def fas(args):
         option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
     else:
         option_dict["ref_2"] = None
+    if args.phyloprofile and args.raw:
+        raise Exception('Cannot use --phyloprofile and --raw together')
+    if args.domain and args.raw:
+        raise Exception('Cannot use --domain and --raw together')
     if args.extra_annotation:
         for i in args.extra_annotation:
             option_dict["p_path"].append(args.annotation_dir + '/' + i + '.json')

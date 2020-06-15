@@ -32,13 +32,22 @@ from greedyFAS.fasWeighting import w_weight_correction
 
 def main():
     args = get_options()
+    print('calculating FAS scores for ' + args.groupname + '...')
     joblist = read_extended_fa(args.extended_fa)
     jobdict, namedict = create_jobdict(joblist)
     features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
     manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir, args.cores, features,
                    args.bidirectional)
+    print('writing phyloprofile output...')
     write_phyloprofile(jobdict, args.tmp_dir, args.out_dir, args.bidirectional, args.groupname, args.seed_spec,
                        namedict)
+    print('hamstrFAS finished!')
+    if args.bidirectional:
+        print('Output files: ' + args.groupname + '.phyloprofile, ' + args.groupname + '_forward.domains, ' +
+              args.groupname + '_reverse.domains in ' + args.out_dir)
+    else:
+        print('Output files: ' + args.groupname + '.phyloprofile, ' + args.groupname + '_forward.domains in' +
+              args.out_dir)
 
 
 def read_extended_fa(path):
@@ -301,13 +310,13 @@ def get_options():
                         help="name of the ortholog group")
     parser.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
                         help="path to weight_dir of Hamstr")
-    parser.add_argument("-t", "--tmp_dir", default=None, type=str,
+    parser.add_argument("-t", "--tmp_dir", default=None, type=str, required=True,
                         help="Path to working directory")
-    parser.add_argument("-o", "--out_dir", default=None, type=str,
+    parser.add_argument("-o", "--out_dir", default=None, type=str, required=True,
                         help="path to out directory")
-    parser.add_argument("-s", "--seed_name", default=None, type=str,
+    parser.add_argument("-s", "--seed_name", default=None, type=str, required=True,
                         help="name of the seed protein as it appears in the species fasta and species json")
-    parser.add_argument("-a", "--seed_spec", default=None, type=str,
+    parser.add_argument("-a", "--seed_spec", default=None, type=str, required=True,
                         help="name of the seed species in genome dir and weight dir")
     parser.add_argument("--bidirectional", action="store_true",
                         help="calculate both scoring directions")
