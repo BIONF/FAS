@@ -28,6 +28,7 @@ import os
 from greedyFAS import greedyFAS
 from greedyFAS.fasInput import read_json
 from greedyFAS.fasWeighting import w_weight_correction
+from pathlib import Path
 
 
 def main():
@@ -36,11 +37,14 @@ def main():
     joblist = read_extended_fa(args.extended_fa)
     jobdict, namedict = create_jobdict(joblist)
     features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
-    manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir, args.cores, features,
-                   args.bidirectional)
+    if not args.groupname:
+        args.groupname = args.extended_fa.split('/')[-1].split('.')[0]
+    Path(args.tmp_path + '/' + args.groupname).mkdir(parents=True, exist_ok=True)
+    manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_path + '/' + args.groupname,
+                   args.cores, features, args.bidirectional)
     print('writing phyloprofile output...')
-    write_phyloprofile(jobdict, args.tmp_dir, args.out_dir, args.bidirectional, args.groupname, args.seed_spec,
-                       namedict)
+    write_phyloprofile(jobdict, args.tmp_path + '/' + args.groupname, args.out_dir, args.bidirectional, args.groupname,
+                       args.seed_spec, namedict)
     print('hamstrFAS finished!')
     if args.bidirectional:
         print('Output files: ' + args.groupname + '.phyloprofile, ' + args.groupname + '_forward.domains, ' +
@@ -305,11 +309,11 @@ def get_options():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
                         help="path to extended.fa file")
-    parser.add_argument("-n", "--groupname", default=None, type=str, required=True,
+    parser.add_argument("-n", "--groupname", default=None, type=str,
                         help="name of the ortholog group")
     parser.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
                         help="path to weight_dir of Hamstr")
-    parser.add_argument("-t", "--tmp_dir", default=None, type=str, required=True,
+    parser.add_argument("-t", "--tmp_dir", type=str, default='tmp/',
                         help="Path to working directory")
     parser.add_argument("-o", "--out_dir", default=None, type=str, required=True,
                         help="path to out directory")
