@@ -40,7 +40,7 @@ def main():
         groupname = args.extended_fa.split('/')[-1].split('.')[0]
     else:
         groupname = args.groupname
-    int('calculating FAS scores for ' + groupname + '...')
+    print('calculating FAS scores for ' + groupname + '...')
     Path(args.tmp_dir + '/' + groupname).mkdir(parents=True, exist_ok=True)
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
     manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir + '/' + groupname,
