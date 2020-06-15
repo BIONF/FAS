@@ -106,22 +106,24 @@ def create_json(args):
 
 def main():
     parser = argparse.ArgumentParser(description="Parses .tsv formatted files into the json format used by FAS")
-    parser.add_argument("-i", "--input", type=str, default=None, required=True,
-                        help="Path to input file, needs to be in tsv format")
-    parser.add_argument("-o", "--output", type=str, default=None, required=True,
-                        help="Path to output file, should be a .json file")
-    parser.add_argument("--ignore_lines", type=int, help="skip the first n lines (for example headers)", default=0)
-    parser.add_argument("-t", "--tool_names", type=str, nargs='+', required=True,
-                        help="name of the annotation tool(s) in the tsv file, if multiple are given, the argument "
-                             "--tool_name must point to the column containing the tool name and the tool names must be "
-                             "identical to the ones in the tsv file")
-    parser.add_argument("-f", "--feature_columns", type=int, nargs=5, required=True,
-                        help="needs 5 integer values that point to the columns that contain: "
-                             "(1) the protein id, (2) the protein length, (3) the feature id, "
-                             "(4) the start position of the feature, (5) the end position of the feature; the column "
-                             "indices start at 0 so the first column has index 0, the second index 1, etc.")
-    parser.add_argument("-c", "--tool_column", type=int, default=None,
-                        help="The index (integer) of column that contains the annotation tool name, only necessary if "
-                             "the tsv file contains multiple annotation tools like the tsv output of InterPro")
+    required = parser.add_argument_group('required arguments')
+    optional = parser.add_argument_group('optional arguments')
+    required.add_argument("-i", "--input", type=str, default=None, required=True,
+                          help="Path to input file, needs to be in tsv format")
+    required.add_argument("-o", "--output", type=str, default=None, required=True,
+                          help="Path to output file, should be a .json file")
+    optional.add_argument("--ignore_lines", type=int, help="skip the first n lines (for example headers)", default=0)
+    required.add_argument("-t", "--tool_names", type=str, nargs='+', required=True,
+                          help="name of the annotation tool(s) in the tsv file, if multiple are given, the argument "
+                               "--tool_name must point to the column containing the tool name and the tool names must "
+                               "be identical to the ones in the tsv file")
+    required.add_argument("-f", "--feature_columns", type=int, nargs=5, required=True,
+                          help="needs 5 integer values that point to the columns that contain: "
+                               "(1) the protein id, (2) the protein length, (3) the feature id, "
+                               "(4) the start position of the feature, (5) the end position of the feature; the column "
+                               "indices start at 0 so the first column has index 0, the second index 1, etc.")
+    optional.add_argument("-c", "--tool_column", type=int, default=None,
+                          help="The index (integer) of column that contains the annotation tool name, only necessary "
+                               "if the tsv file contains multiple annotation tools like the tsv output of InterPro")
     args = parser.parse_args()
     create_json(args)
