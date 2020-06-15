@@ -70,7 +70,7 @@ def doFlps(args):
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do fLPS
-    cmd = '%s/fLPS/fLPS -s -t %s %s' % (toolPath, threshold, seqFile)
+    cmd = '%s/fLPS/fLPS -s -t %s "%s"' % (toolPath, threshold, seqFile)
     flpsOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = flpsOut.stdout.decode().split('\n')
     # save to dict
@@ -105,7 +105,7 @@ def doTmhmm(args):
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
     # do TMHMM
-    cmd = 'cat %s | %s/TMHMM/decodeanhmm -f %s/TMHMM//lib/TMHMM2.0.options -modelfile %s/TMHMM/lib/TMHMM2.0.model' % (
+    cmd = 'cat "%s" | %s/TMHMM/decodeanhmm -f %s/TMHMM//lib/TMHMM2.0.options -modelfile %s/TMHMM/lib/TMHMM2.0.model' % (
         seqFile, toolPath, toolPath, toolPath)
     tmhmmOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = tmhmmOut.stdout.decode().split('\n')
@@ -146,7 +146,7 @@ def doSignalp(args):
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do signalp
-    cmd = '%s/SignalP/signalp -t %s %s' % (toolPath, org, seqFile)
+    cmd = '%s/SignalP/signalp -t %s "%s"' % (toolPath, org, seqFile)
     signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
     lines = signalpOut.stdout.decode().split('\n')
     # save to dict
@@ -176,7 +176,7 @@ def doCoils(args):
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
     # do COILS2
-    cmd = '%s/COILS2/COILS2 -f < %s' % (toolPath, os.path.abspath(seqFile))
+    cmd = '%s/COILS2/COILS2 -f < "%s"' % (toolPath, os.path.abspath(seqFile))
     os.chdir(toolPath + '/COILS2')
     coilsOut = subprocess.run([cmd], shell=True, capture_output=True)
     results = coilsOut.stdout.decode().split('>')
@@ -216,7 +216,7 @@ def doSeg(args):
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
     # do signalp
-    cmd = '%s/SEG/seg %s -l -n -p ' % (toolPath, seqFile)
+    cmd = '%s/SEG/seg "%s" -l -n -p ' % (toolPath, seqFile)
     signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
     results = signalpOut.stdout.decode().split('>')
     # save to dict
@@ -281,7 +281,7 @@ def hmmScan(seqFile, toolPath, toolName, cpus):
     ext = '.hmm'
     if toolName == 'Pfam':
         ext = '-A.hmm'
-    scanCmd = 'hmmscan -E 0.01 --domE 0.1 --noali --cpu %s %s/%s/%s-hmms/%s%s %s' % (cpus, toolPath, toolName,
+    scanCmd = 'hmmscan -E 0.01 --domE 0.1 --noali --cpu %s %s/%s/%s-hmms/%s%s "%s"' % (cpus, toolPath, toolName,
                                                                                      toolName, toolName, ext, seqFile)
     flag = False
     try:

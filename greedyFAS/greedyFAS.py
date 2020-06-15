@@ -565,7 +565,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             for adj_feature in adjusted_weights:
                 weights[adj_feature] = weight_tmp[adj_feature]
     if option["output"]:
-        print(protein + ' -> ' + query + '\t' + str(score[3]))
+        print('#' + '\t' + protein + '\t' + query + '\t' + str(score[3]))
 
 
 # Start Up Functions <su>
