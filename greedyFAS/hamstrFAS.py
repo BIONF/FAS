@@ -310,24 +310,26 @@ def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, se
 
 def get_options():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
-                        help="path to extended.fa file")
-    parser.add_argument("-n", "--groupname", default=None, type=str,
-                        help="name of the ortholog group")
-    parser.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
-                        help="path to weight_dir of Hamstr")
-    parser.add_argument("-t", "--tmp_dir", type=str, default='tmp/',
-                        help="Path to working directory")
-    parser.add_argument("-o", "--out_dir", type=str, default='out/',
-                        help="path to out directory")
-    parser.add_argument("-s", "--seed_name", default=None, type=str, required=True,
-                        help="name of the seed protein as it appears in the species fasta and species json")
-    parser.add_argument("-a", "--seed_spec", default=None, type=str, required=True,
-                        help="name of the seed species in genome dir and weight dir")
-    parser.add_argument("--bidirectional", action="store_true",
-                        help="calculate both scoring directions")
-    parser.add_argument('--cores', action='store', type=int, default=1,
-                        help='number of cores used for parallel calculation')
+    required = parser.add_argument_group('required arguments')
+    optional = parser.add_argument_group('optional arguments')
+    required.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
+                          help="path to extended.fa file")
+    optional.add_argument("-n", "--groupname", default=None, type=str,
+                          help="name of the ortholog group")
+    required.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
+                          help="path to weight_dir of Hamstr")
+    optional.add_argument("-t", "--tmp_dir", type=str, default='tmp/',
+                          help="Path to working directory")
+    optional.add_argument("-o", "--out_dir", type=str, default='out/',
+                          help="path to out directory")
+    required.add_argument("-s", "--seed_name", default=None, type=str, required=True,
+                          help="name of the seed protein as it appears in the species fasta and species json")
+    required.add_argument("-a", "--seed_spec", default=None, type=str, required=True,
+                          help="name of the seed species in genome dir and weight dir")
+    optional.add_argument("--bidirectional", action="store_true",
+                          help="calculate both scoring directions")
+    optional.add_argument('--cores', action='store', type=int, default=1,
+                          help='number of cores used for parallel calculation')
     arguments = parser.parse_args()
     return arguments
 
