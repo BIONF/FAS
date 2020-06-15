@@ -33,25 +33,27 @@ from pathlib import Path
 
 def main():
     args = get_options()
-    print('calculating FAS scores for ' + args.groupname + '...')
     joblist = read_extended_fa(args.extended_fa)
     jobdict, namedict = create_jobdict(joblist)
     features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
     if not args.groupname:
-        args.groupname = args.extended_fa.split('/')[-1].split('.')[0]
-    Path(args.tmp_path + '/' + args.groupname).mkdir(parents=True, exist_ok=True)
+        groupname = args.extended_fa.split('/')[-1].split('.')[0]
+    else:
+        groupname = args.groupname
+    int('calculating FAS scores for ' + groupname + '...')
+    Path(args.tmp_dir + '/' + groupname).mkdir(parents=True, exist_ok=True)
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
-    manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_path + '/' + args.groupname,
+    manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir + '/' + groupname,
                    args.cores, features, args.bidirectional)
     print('writing phyloprofile output...')
-    write_phyloprofile(jobdict, args.tmp_path + '/' + args.groupname, args.out_dir, args.bidirectional, args.groupname,
+    write_phyloprofile(jobdict, args.tmp_dir + '/' + groupname, args.out_dir, args.bidirectional, groupname,
                        args.seed_spec, namedict)
     print('hamstrFAS finished!')
     if args.bidirectional:
-        print('Output files: ' + args.groupname + '.phyloprofile, ' + args.groupname + '_forward.domains, ' +
-              args.groupname + '_reverse.domains in ' + args.out_dir)
+        print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains, ' +
+              groupname + '_reverse.domains in ' + args.out_dir)
     else:
-        print('Output files: ' + args.groupname + '.phyloprofile, ' + args.groupname + '_forward.domains in' +
+        print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains in' +
               args.out_dir)
 
 
