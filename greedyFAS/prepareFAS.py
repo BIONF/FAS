@@ -343,7 +343,7 @@ def checkExcutable(anno_path):
 
 
 def main():
-    version = '1.1.0'
+    version = '1.2.0'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
@@ -363,6 +363,7 @@ def main():
 
     anno_path = prepare_annoTool(options)
     allRun = checkExcutable(anno_path)
+    greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
 
     if allRun:
         with open(anno_path+'/annoTools.txt') as f:
@@ -371,6 +372,9 @@ def main():
                     file.write('#checked')
                     file.close()
         f.close()
+        with open(greedyFasPath+'/pathconfig.txt','w') as config:
+            config.write(os.path.abspath(args.toolPath))
+            config.close()
         sys.exit('Done! Annotation tools can be found in %s' % anno_path)
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)

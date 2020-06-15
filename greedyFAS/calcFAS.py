@@ -35,90 +35,95 @@ if version_info.major == 3:
 
 
 def get_options():
-    parser = argparse.ArgumentParser()
-    required = parser.add_argument_group('required arguments')
-    optional = parser.add_argument_group('optional arguments')
     version = '1.1.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
-    parser.add_argument("-s", "--seed", default=None, type=str, required=True,
+    required = parser.add_argument_group('required arguments')
+    optional = parser.add_argument_group('optional arguments')
+    required.add_argument("-s", "--seed", default=None, type=str, required=True,
                         help="path to seed protein fasta file")
-    parser.add_argument("-q", "--query", default=None, type=str, required=True,
+    required.add_argument("-q", "--query", default=None, type=str, required=True,
                         help="path to query protein fasta file")
-    parser.add_argument("--annotation_dir", default=None, type=str, required=True,
+    required.add_argument("-a", "--annotation_dir", default=None, type=str, required=True,
                         help='working directory, all annotations are be stored here')
-    parser.add_argument("-o", "--out_dir", default=None, type=str, required=True,
+    required.add_argument("-o", "--out_dir", default=None, type=str, required=True,
                         help="output directory, all outputfiles will be stored here")
-    parser.add_argument("-n", "--out_name", default=None, type=str,
+    optional.add_argument("-n", "--out_name", default=None, type=str,
                         help="name for outputfiles, if none is given the name will be created from the seed and "
                              "query names")
-    parser.add_argument("-r", "--ref_proteome", default=None, type=str,
+    optional.add_argument("-r", "--ref_proteome", default=None, type=str,
                         help="Path to a reference proteome which can be used for the weighting of features, "
                              "by default there is no reference proteome used, the weighting will be uniform")
-    parser.add_argument('--force', help='Force override annotations', action='store_true')
-    parser.add_argument("--query_id", default=None, nargs='*', type=str,
+    optional.add_argument('--force', help='Force override annotations', action='store_true')
+    optional.add_argument("--query_id", default=None, nargs='*', type=str,
                         help="Choose specific proteins from the query input for calculation, by default this is off "
                              "(all proteins are used for calculation)")
-    parser.add_argument("--seed_id", default=None, nargs='*', type=str,
+    optional.add_argument("--seed_id", default=None, nargs='*', type=str,
                         help="Choose specific proteins from the seed input for calculation, by default this is off "
                              "(all proteins are used for calculation)")
-    parser.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
+    optional.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
                         help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
                              "sum should be 1.0, the default is 0.7, 0.0, 0.3")
-    parser.add_argument("-t", "--priority_threshold", type=int, default=30,
+    optional.add_argument("-t", "--priority_threshold", type=int, default=30,
                         help="Change to define the feature number threshold for activating priority mode in the path "
                              "evaluation.")
-    parser.add_argument("-m", "--max_cardinality", default=5000, type=int,
+    optional.add_argument("-m", "--max_cardinality", default=5000, type=int,
                         help="Change to define the threshold for the maximal cardinality of feature paths in a graph."
                              " If max. cardinality is exceeded the priority mode will be used to for the path "
                              "evaluation.")
-    parser.add_argument("-f", "--eFeature", default="0.001", type=float,
+    optional.add_argument("-f", "--eFeature", default="0.001", type=float,
                         help="eValue cutoff for PFAM/SMART domain")
-    parser.add_argument("-i", "--eInstance", default="0.01", type=float,
+    optional.add_argument("-i", "--eInstance", default="0.01", type=float,
                         help='eValue cutoff for PFAM/SMART instances')
-    parser.add_argument("-g", "--weight_correction", default="loge", type=str,
+    optional.add_argument("-g", "--weight_correction", default="loge", type=str,
                         help="Function applied to the frequency of feature types during weighting, options are "
                              "linear(no function), loge(natural logarithm[Default]), log10(base-10 logarithm), "
                              "root4(4th root) and root8(8th root).")
-    parser.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
-    parser.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
+    optional.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
+    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
                         choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
-    parser.add_argument("-x", "--weight_constraints", default=None, type=str,
+    optional.add_argument("-x", "--weight_constraints", default=None, type=str,
                         help="Apply weight constraints via constraints file, by default there are no constraints.")
-    parser.add_argument("-e", "--no_arch", action="store_false",
+    optional.add_argument("-e", "--no_arch", action="store_false",
                         help="deactivate creation of _architecture file")
-    parser.add_argument("--bidirectional", action="store_true",
+    optional.add_argument("--bidirectional", action="store_true",
                         help="calculate both scoring directions (separate files), creates csv file with combined "
                              "scores")
-    parser.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
+    optional.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
                         help="maximum size overlap allowed, default is 0 amino acids")
-    parser.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
+    optional.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
                         help="defines how much percent of a feature the overlap is allowed to cover, default "
                              "is 0.4 (40%%)")
-    parser.add_argument("--ref_2", dest="ref_2", default=None, type=str,
+    optional.add_argument("--ref_2", dest="ref_2", default=None, type=str,
                         help="Give a second reference for bidirectional mode, does not do anything if bidirectional "
                              "mode is not active or if no main reference was given")
-    parser.add_argument("--extra_annotation", default=None, nargs='*', type=str,
+    optional.add_argument("--extra_annotation", default=None, nargs='*', type=str,
                         help="give naming conventions for extra annotation files, these files should be in the "
                              "corresponding directory in the annotation_dir")
-    parser.add_argument('--cpus', help='number of cores', action='store', default=0)
-    parser.add_argument("--pairwise", dest="pairwise", default=None, type=str,
+    optional.add_argument('--cpus', help='number of cores', action='store', default=0)
+    optional.add_argument("--pairwise", dest="pairwise", default=None, type=str,
                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                              " compared (one pair per line tab seperated)")
-    parser.add_argument("--toolPath", dest="toolPath", default=None, type=str, required=True,
+    optional.add_argument("--toolPath", dest="toolPath", default='', type=str,
                         help="Path to Annotion tool directory created with prepareFAS")
-    parser.add_argument("-d", "--featuretypes", default=None, type=str,
+    optional.add_argument("-d", "--featuretypes", default=None, type=str,
                         help="inputfile that contains the tools/databases used to predict features")
-    parser.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
+    optional.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
                         help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
                              "only, will run with more but output won't work without editing")
-    parser.add_argument("--domain", dest="domain", action="store_true",
+    optional.add_argument("--domain", dest="domain", action="store_true",
                         help="activate domain tabular output")
     args = parser.parse_args()
     return args
 
 
 def anno(annojobs, args):
-    toolpath = os.path.abspath(args.toolPath)
+    toolpath = args.toolPath
+    if toolpath == '':
+        pathconfigFile = os.path.realpath(__file__).replace('calcFAS.py','pathconfig.txt')
+        with open(pathconfigFile) as f:
+            toolpath = f.readline().strip()
+    else:
+        toolpath = os.path.abspath(args.toolPath)
     eflps = args.eFlps
     signalporg = args.org
     efeature = args.eFeature
@@ -130,10 +135,10 @@ def anno(annojobs, args):
 
     for annojob in annojobs:
         name = ''.join(annojob.split('/')[-1].split('.')[:-1])
-        outpath = os.path.abspath(args.annotation_dir + '/' + name)
+        outpath = os.path.abspath(args.annotation_dir)
         annotate = True
         seqfile = annojob
-        if os.path.isdir(args.annotation_dir + '/' + name + '/' + name + '.json'):
+        if os.path.isdir(args.annotation_dir + '/' + name + '.json'):
             print('Annotation for "' + name + '" already exists.')
             if args.force:
                 print('Overwriting...')
@@ -143,7 +148,7 @@ def anno(annojobs, args):
                 annotate = False
         else:
             annoModules.checkFileExist(seqfile)
-            print('Annotating "' + name + '"...')
+            print('Check annotation for "' + name + '"...')
         if annotate:
             annoFAS.runAnnoFas(
                 [seqfile, outpath, toolpath, args.force, name, eflps, signalporg, efeature, einstance, hmmcores, '',
@@ -164,27 +169,27 @@ def fas(args):
     name = ''
     r2name = ''
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
-    option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '/' + seedname + '.json']
+    option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
     queryname = ''.join(args.query.split('/')[-1].split('.')[:-1])
-    option_dict["s_path"] = [args.annotation_dir + '/' + queryname + '/' + queryname + '.json']
+    option_dict["s_path"] = [args.annotation_dir + '/' + queryname + '.json']
     if args.ref_proteome:
         name = ''.join(args.ref_proteome.split('/')[-1].split('.')[:-1])
-        option_dict["ref_proteome"] = [args.annotation_dir + '/' + name + '/' + name + '.json']
+        option_dict["ref_proteome"] = [args.annotation_dir + '/' + name + '.json']
     else:
         option_dict["ref_proteome"] = None
     if args.ref_2:
         r2name = ''.join(args.ref_2.split('/')[-1].split('.')[:-1])
-        option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '/' + r2name + '.json']
+        option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
     else:
         option_dict["ref_2"] = None
     if args.extra_annotation:
         for i in args.extra_annotation:
-            option_dict["p_path"].append(args.annotation_dir + '/' + seedname + '/' + i + '.json')
-            option_dict["s_path"].append(args.annotation_dir + '/' + queryname + '/' + i + '.json')
+            option_dict["p_path"].append(args.annotation_dir + '/' + i + '.json')
+            option_dict["s_path"].append(args.annotation_dir + '/' + i + '.json')
             if args.ref_proteome:
-                option_dict["ref_proteome"].append(args.annotation_dir + '/' + name + '/' + i + '.json')
+                option_dict["ref_proteome"].append(args.annotation_dir + '/' + i + '.json')
             if args.ref_2:
-                option_dict["ref_2"].append(args.annotation_dir + '/' + r2name + '/' + i + '.json')
+                option_dict["ref_2"].append(args.annotation_dir + '/' + i + '.json')
     if not option_dict["ref_proteome"]:
         option_dict["MS_uni"] = 1
         option_dict["weight_correction"] = None

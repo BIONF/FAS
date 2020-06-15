@@ -82,17 +82,16 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.1.0'
+    version = '1.2.0'
     parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-i', '--fasta', help='Input sequence(s) in fasta format', action='store', default='',
                           required=True)
     required.add_argument('-o', '--outPath', help='Output directory', action='store', default='', required=True)
-    required.add_argument('-t', '--toolPath', help='Path to annotation tools', action='store', default='',
-                          required=True)
     optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('-n', '--name', help='Name of annotation file', action='store', default='')
+    optional.add_argument('-t', '--toolPath', help='Path to annotation tools', action='store', default='')
     optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.0001', action='store',
                           default=0.001, type=float)
     optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance. Default = 0.01', action='store',
@@ -108,7 +107,7 @@ def main():
                                          'Only one selection allowed!',
                           choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
                           action='store', default='', type=str)
-    optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence',
+    optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). --name required for specifying existing annotation file!',
                           action='store_true', default='')
 
     args = parser.parse_args()
@@ -116,7 +115,13 @@ def main():
     # options for doing annotation
     seqFile = os.path.abspath(args.fasta)
     annoModules.checkFileExist(seqFile)
-    toolPath = os.path.abspath(args.toolPath)
+    toolPath = args.toolPath
+    if toolPath == '':
+        pathconfigFile = os.path.realpath(__file__).replace('annoFAS.py','pathconfig.txt')
+        with open(pathconfigFile) as f:
+            toolPath = f.readline().strip()
+    else:
+        toolPath = os.path.abspath(args.toolPath)
     eFlps = args.eFlps
     signalpOrg = args.org
     eFeature = args.eFeature

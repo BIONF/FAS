@@ -65,8 +65,9 @@ def create_jobdict(joblist):
 
 
 def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, features, bidirectional):
+    print(weight_dir+"/"+seed_spec+".json")
     try:
-        tmp_data = read_json(weight_dir + "/" + seed_spec + "/" + seed_spec + ".json")
+        tmp_data = read_json(weight_dir + "/" + seed_spec + ".json")
     except FileNotFoundError:
         raise Exception('Taxon: "' + seed_spec + '" is missing in the weight_dir')
     seed_weight = w_weight_correction("loge", tmp_data["count"])
@@ -96,7 +97,7 @@ def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, f
 
 def run_fas(data):
     try:
-        tmp_data = read_json(data[5] + "/" + data[0] + "/" + data[0] + ".json")
+        tmp_data = read_json(data[5] + "/" + data[0] + ".json")
     except FileNotFoundError:
         raise Exception('Taxon: "' + data[0] + '" is missing in the weight_dir')
     query_proteome = {}
