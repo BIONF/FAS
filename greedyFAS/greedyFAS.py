@@ -22,14 +22,11 @@
 
 
 from operator import itemgetter
-import inspect
 import os
 import multiprocessing
-import argparse
 import time
 from functools import partial
 from copy import deepcopy
-from sys import version_info
 from greedyFAS.fasInput import read_json
 from greedyFAS.fasOutput import bidirectionout
 from greedyFAS.fasOutput import domain_out
@@ -61,8 +58,6 @@ from greedyFAS.annoModules import mergeNestedDic
 # domain_count = {}            #{("domain", "COUNT")}
 
 
-
-# Flow Control <fc>
 # flow control functions
 
 
