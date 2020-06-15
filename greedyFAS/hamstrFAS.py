@@ -40,6 +40,7 @@ def main():
     if not args.groupname:
         args.groupname = args.extended_fa.split('/')[-1].split('.')[0]
     Path(args.tmp_path + '/' + args.groupname).mkdir(parents=True, exist_ok=True)
+    Path(args.out_dir).mkdir(parents=True, exist_ok=True)
     manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_path + '/' + args.groupname,
                    args.cores, features, args.bidirectional)
     print('writing phyloprofile output...')
@@ -315,7 +316,7 @@ def get_options():
                         help="path to weight_dir of Hamstr")
     parser.add_argument("-t", "--tmp_dir", type=str, default='tmp/',
                         help="Path to working directory")
-    parser.add_argument("-o", "--out_dir", default=None, type=str, required=True,
+    parser.add_argument("-o", "--out_dir", type=str, default='out/',
                         help="path to out directory")
     parser.add_argument("-s", "--seed_name", default=None, type=str, required=True,
                         help="name of the seed protein as it appears in the species fasta and species json")
