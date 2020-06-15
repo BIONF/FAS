@@ -74,7 +74,6 @@ def create_jobdict(joblist):
 
 
 def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, features, bidirectional):
-    print(weight_dir+"/"+seed_spec+".json")
     try:
         tmp_data = read_json(weight_dir + "/" + seed_spec + ".json")
     except FileNotFoundError:
