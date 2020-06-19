@@ -24,7 +24,6 @@
 import os
 import argparse
 import logging
-import inspect
 from sys import version_info
 import multiprocessing as mp
 if version_info.major == 3:
@@ -127,8 +126,8 @@ def get_options():
 def anno(annojobs, args):
     toolpath = args.toolPath
     if toolpath == '':
-        pathconfigFile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
-        with open(pathconfigFile) as f:
+        pathconfigfile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
+        with open(pathconfigfile) as f:
             toolpath = f.readline().strip()
     else:
         toolpath = os.path.abspath(args.toolPath)
@@ -170,12 +169,10 @@ def fas(args):
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": True, "priority_threshold": args.priority_threshold, "eFeature": args.eFeature,
                    "max_cardinality": args.max_cardinality, "cores": 1, "e_output": args.no_arch,
-                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
-                    "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.raw,
-                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
+                   "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
+                   "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.raw,
+                   "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
                    }
-    name = ''
-    r2name = ''
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
     queryname = ''.join(args.query.split('/')[-1].split('.')[:-1])
@@ -251,7 +248,7 @@ def fas(args):
         option_dict["input_normal"] = ["flps", "coils2", "seg", "signalp", "tmhmm"]
 
     if args.pairwise:
-        option_dict["pairwise"] = greedyFAS.read_pairwise(args.pairwise)
+        option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
     else:
         option_dict["pairwise"] = None
 
