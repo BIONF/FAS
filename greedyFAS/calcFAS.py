@@ -38,82 +38,88 @@ def get_options():
     version = '1.1.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
-    optional = parser.add_argument_group('optional arguments')
+    general = parser.add_argument_group('general arguments')
+    inout = parser.add_argument_group('input/output arguments')
+    annotation = parser.add_argument_group('annotation arguments')
+    weighting = parser.add_argument_group('weighting arguments')
+    thresholds = parser.add_argument_group('threshold arguments')
     required.add_argument("-s", "--seed", default=None, type=str, required=True,
-                        help="path to seed protein fasta file")
+                          help="path to seed protein fasta file")
     required.add_argument("-q", "--query", default=None, type=str, required=True,
-                        help="path to query protein fasta file")
+                          help="path to query protein fasta file")
     required.add_argument("-a", "--annotation_dir", default=None, type=str, required=True,
-                        help='working directory, all annotations are be stored here')
+                          help='working directory, all annotations are be stored here')
     required.add_argument("-o", "--out_dir", default=None, type=str, required=True,
-                        help="output directory, all outputfiles will be stored here")
-    optional.add_argument("-n", "--out_name", default=None, type=str,
-                        help="name for outputfiles, if none is given the name will be created from the seed and "
-                             "query names")
-    optional.add_argument("-r", "--ref_proteome", default=None, type=str,
-                        help="Path to a reference proteome which can be used for the weighting of features, "
-                             "by default there is no reference proteome used, the weighting will be uniform")
-    optional.add_argument('--force', help='Force override annotations', action='store_true')
-    optional.add_argument("--query_id", default=None, nargs='*', type=str,
-                        help="Choose specific proteins from the query input for calculation, by default this is off "
-                             "(all proteins are used for calculation)")
-    optional.add_argument("--seed_id", default=None, nargs='*', type=str,
-                        help="Choose specific proteins from the seed input for calculation, by default this is off "
-                             "(all proteins are used for calculation)")
-    optional.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
-                        help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
-                             "sum should be 1.0, the default is 0.7, 0.0, 0.3")
-    optional.add_argument("-t", "--priority_threshold", type=int, default=30,
-                        help="Change to define the feature number threshold for activating priority mode in the path "
-                             "evaluation.")
-    optional.add_argument("-m", "--max_cardinality", default=5000, type=int,
-                        help="Change to define the threshold for the maximal cardinality of feature paths in a graph."
-                             " If max. cardinality is exceeded the priority mode will be used to for the path "
-                             "evaluation.")
-    optional.add_argument("-f", "--eFeature", default="0.001", type=float,
-                        help="eValue cutoff for PFAM/SMART domain")
-    optional.add_argument("-i", "--eInstance", default="0.01", type=float,
-                        help='eValue cutoff for PFAM/SMART instances')
-    optional.add_argument("-g", "--weight_correction", default="loge", type=str,
-                        help="Function applied to the frequency of feature types during weighting, options are "
-                             "linear(no function), loge(natural logarithm[Default]), log10(base-10 logarithm), "
-                             "root4(4th root) and root8(8th root).")
-    optional.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
-    optional.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
-                        choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
-    optional.add_argument("-x", "--weight_constraints", default=None, type=str,
-                        help="Apply weight constraints via constraints file, by default there are no constraints.")
-    optional.add_argument("-e", "--no_arch", action="store_false",
-                        help="deactivate creation of _architecture file")
-    optional.add_argument("--bidirectional", action="store_true",
-                        help="calculate both scoring directions (separate files), creates csv file with combined "
-                             "scores")
-    optional.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
-                        help="maximum size overlap allowed, default is 0 amino acids")
-    optional.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
-                        help="defines how much percent of a feature the overlap is allowed to cover, default "
-                             "is 0.4 (40%%)")
-    optional.add_argument("--ref_2", dest="ref_2", default=None, type=str,
-                        help="Give a second reference for bidirectional mode, does not do anything if bidirectional "
-                             "mode is not active or if no main reference was given")
-    optional.add_argument("--extra_annotation", default=None, nargs='*', type=str,
-                        help="give naming conventions for extra annotation files, these files should be in the "
-                             "corresponding directory in the annotation_dir")
-    optional.add_argument('--cpus', help='number of cores', action='store', default=0)
-    optional.add_argument("--pairwise", dest="pairwise", default=None, type=str,
-                        help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                             " compared (one pair per line tab seperated)")
-    optional.add_argument("--toolPath", dest="toolPath", default='', type=str,
-                        help="Path to Annotion tool directory created with prepareFAS")
-    optional.add_argument("-d", "--featuretypes", default=None, type=str,
-                        help="inputfile that contains the tools/databases used to predict features")
-    optional.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
-                        help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
-                             "only, will run with more but output won't work without editing")
-    optional.add_argument("--domain", dest="domain", action="store_true",
-                        help="activate domain tabular output")
-    optional.add_argument("--raw", dest="raw", action="store_true",
-                        help="print FAS score to terminal instead of creating outputfile")
+                          help="output directory, all outputfiles will be stored here")
+    general.add_argument("--bidirectional", action="store_true",
+                         help="calculate both scoring directions (separate files), creates csv file with combined "
+                              "scores")
+    general.add_argument('--cpus', help='number of cores', action='store', default=0)
+    general.add_argument("--pairwise", dest="pairwise", default=None, type=str,
+                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
+                              " compared (one pair per line tab seperated)")
+    general.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
+                         help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
+                              "sum should be 1.0, the default is 0.7, 0.0, 0.3")
+    annotation.add_argument('--force', help='Force override annotations', action='store_true')
+    annotation.add_argument("-f", "--eFeature", default="0.001", type=float,
+                            help="eValue cutoff for PFAM/SMART domain, applied during annotation but also during "
+                                 "calculation")
+    annotation.add_argument("-i", "--eInstance", default="0.01", type=float,
+                            help="eValue cutoff for PFAM/SMART instances, applied during annotation but also during "
+                                 "calculation")
+    annotation.add_argument('--eFlps', help='eValue cutoff for fLPS', action='store', default=0.0000001, type=float)
+    annotation.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
+                            choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
+    annotation.add_argument("--toolPath", dest="toolPath", default='', type=str,
+                            help="Path to Annotion tool directory created with prepareFAS")
+    weighting.add_argument("-r", "--ref_proteome", default=None, type=str,
+                           help="Path to a reference proteome which can be used for the weighting of features, "
+                                "by default there is no reference proteome used, the weighting will be uniform")
+    weighting.add_argument("--ref_2", dest="ref_2", default=None, type=str,
+                           help="Give a second reference for bidirectional mode, does not do anything if bidirectional "
+                                "mode is not active or if no main reference was given")
+    weighting.add_argument("-g", "--weight_correction", default="loge", type=str,
+                           help="Function applied to the frequency of feature types during weighting, options are "
+                                "linear(no function), loge(natural logarithm[Default]), log10(base-10 logarithm), "
+                                "root4(4th root) and root8(8th root).")
+    weighting.add_argument("-x", "--weight_constraints", default=None, type=str,
+                           help="Apply weight constraints via constraints file, by default there are no constraints.")
+    inout.add_argument("-n", "--out_name", default=None, type=str,
+                       help="name for outputfiles, if none is given the name will be created from the seed and "
+                            "query names")
+    inout.add_argument("--query_id", default=None, nargs='*', type=str,
+                       help="Choose specific proteins from the query input for calculation, by default this is off "
+                            "(all proteins are used for calculation)")
+    inout.add_argument("--seed_id", default=None, nargs='*', type=str,
+                       help="Choose specific proteins from the seed input for calculation, by default this is off "
+                            "(all proteins are used for calculation)")
+    inout.add_argument("-e", "--no_arch", action="store_false",
+                       help="deactivate creation of _architecture file")
+    inout.add_argument("--raw", dest="raw", action="store_true",
+                       help="print FAS score to terminal instead of creating outputfile")
+    inout.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
+                       help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
+                            "only, will run with more but output won't work without editing")
+    inout.add_argument("--domain", dest="domain", action="store_true",
+                       help="activate domain tabular output")
+    inout.add_argument("-d", "--featuretypes", default=None, type=str,
+                       help="inputfile that contains the tools/databases used to predict features")
+    inout.add_argument("--extra_annotation", default=None, nargs='*', type=str,
+                       help="give naming conventions for extra annotation files, these files should be in the "
+                            "corresponding directory in the annotation_dir")
+    thresholds.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
+                            help="maximum size overlap allowed, default is 0 amino acids")
+    thresholds.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
+                            help="defines how much percent of a feature the overlap is allowed to cover, default "
+                                 "is 0.4 (40%%)")
+    thresholds.add_argument("-t", "--priority_threshold", type=int, default=30,
+                            help="Change to define the feature number threshold for activating priority mode in the "
+                                 "path evaluation.")
+    thresholds.add_argument("-m", "--max_cardinality", default=5000, type=int,
+                            help="Change to define the threshold for the maximal cardinality of feature paths in a "
+                                 "graph. If max. cardinality is exceeded the priority mode will be used to for the "
+                                 "path evaluation.")
     args = parser.parse_args()
     return args
 
