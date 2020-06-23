@@ -92,7 +92,7 @@ def main():
     optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('-n', '--name', help='Name of annotation file', action='store', default='')
     optional.add_argument('-t', '--toolPath', help='Path to annotation tools', action='store', default='')
-    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.0001', action='store',
+    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.001', action='store',
                           default=0.001, type=float)
     optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance. Default = 0.01', action='store',
                           default=0.01, type=float)
