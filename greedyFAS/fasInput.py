@@ -164,6 +164,8 @@ def featuretypes(path, option):
             mode = "lin"
         elif tmp == "#normal":
             mode = "nor"
+        elif tmp == "#checked":
+            mode = "ignore"
         elif mode == "NULL":
             raise Exception(path + " is not a valid input file")
         elif mode == "lin":

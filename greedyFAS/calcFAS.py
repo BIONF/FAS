@@ -123,14 +123,7 @@ def get_options():
     return args
 
 
-def anno(annojobs, args):
-    toolpath = args.toolPath
-    if toolpath == '':
-        pathconfigfile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
-        with open(pathconfigfile) as f:
-            toolpath = f.readline().strip()
-    else:
-        toolpath = os.path.abspath(args.toolPath)
+def anno(annojobs, args, toolpath):
     eflps = args.eFlps
     signalporg = args.org
     efeature = args.eFeature
@@ -139,7 +132,6 @@ def anno(annojobs, args):
     cpus = args.cpus
     if cpus == 0:
         cpus = mp.cpu_count()-1
-
     for annojob in annojobs:
         name = ''.join(annojob.split('/')[-1].split('.')[:-1])
         outpath = os.path.abspath(args.annotation_dir)
@@ -162,7 +154,7 @@ def anno(annojobs, args):
                  '', '', cpus])
 
 
-def fas(args):
+def fas(args, toolpath):
     version = "1.1.0"
     loglevel = "ERROR"
     option_dict = {
@@ -244,8 +236,7 @@ def fas(args):
     if args.featuretypes is not None:
         option_dict = fasInput.featuretypes(args.featuretypes, option_dict)
     else:
-        option_dict["input_linearized"] = ["pfam", "smart"]
-        option_dict["input_normal"] = ["flps", "coils2", "seg", "signalp", "tmhmm"]
+        option_dict = fasInput.featuretypes(toolpath + '/' + 'annoTools.txt', option_dict)
 
     if args.pairwise:
         option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
@@ -267,6 +258,13 @@ def fas(args):
 
 def main():
     args = get_options()
+    toolpath = args.toolPath
+    if toolpath == '':
+        pathconfigfile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
+        with open(pathconfigfile) as f:
+            toolpath = f.readline().strip()
+    else:
+        toolpath = os.path.abspath(args.toolPath)
     if not os.path.isdir(args.annotation_dir):
         os.mkdir(args.annotation_dir)
     if not os.path.isdir(args.out_dir):
@@ -278,8 +276,8 @@ def main():
         annojobs.append(args.ref_proteome)
     if args.ref_2 and args.ref_2 not in annojobs:
         annojobs.append(args.ref_2)
-    anno(annojobs, args)
-    fas(args)
+    anno(annojobs, args, toolpath)
+    fas(args, toolpath)
 
 
 if __name__ == '__main__':
