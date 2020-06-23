@@ -458,8 +458,4 @@ def extractAnno(seqFile, existingAnno):
         f.close()
         annoDict = {}
         annoDict['feature'] = dict((prot, existingDict['feature'][prot]) for prot in list(inSeq.keys()))
-        allPfam = []
-        for prot in list(inSeq.keys()):
-            allPfam.extend(list(annoDict['feature'][prot]['pfam'].keys()))
-        annoDict['clan'] = dict((pfam, existingDict['clan'][pfam]) for pfam in allPfam)
         return annoDict
