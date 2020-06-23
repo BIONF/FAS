@@ -159,7 +159,7 @@ def featuretypes(path, option):
     lines = ifile.readlines()
     mode = "NULL"
     for line in lines:
-        tmp = line.rstrip("\n")
+        tmp = line.rstrip("\n").lower()
         if tmp == "#linearized":
             mode = "lin"
         elif tmp == "#normal":
