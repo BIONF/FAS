@@ -96,7 +96,9 @@ def get_options():
     inout.add_argument("-e", "--no_arch", action="store_false",
                        help="deactivate creation of _architecture file")
     inout.add_argument("--raw", dest="raw", action="store_true",
-                       help="print FAS score to terminal instead of creating outputfile")
+                       help="print FAS score to terminal in addition to creating outputfile")
+    inout.add_argument("--no_outfile", dest="silent", action="store_true",
+                       help="deactivates creation of output files, automatically enables --raw")
     inout.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
                        help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
                             "only, will run with more but output won't work without editing")
@@ -160,9 +162,9 @@ def fas(args, toolpath):
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": True, "priority_threshold": args.priority_threshold, "eFeature": args.eFeature,
-                   "max_cardinality": args.max_cardinality, "cores": 1, "e_output": args.no_arch,
+                   "max_cardinality": args.max_cardinality, "cores": 1, "e_output": args.no_arch, "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
-                   "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.raw,
+                   "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
                    }
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
@@ -179,10 +181,13 @@ def fas(args, toolpath):
         option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
     else:
         option_dict["ref_2"] = None
-    if args.phyloprofile and args.raw:
-        raise Exception('Cannot use --phyloprofile and --raw together')
-    if args.domain and args.raw:
-        raise Exception('Cannot use --domain and --raw together')
+    if args.phyloprofile and args.silent:
+        raise Exception('Cannot use --phyloprofile and --silent together')
+    if args.domain and args.silent:
+        raise Exception('Cannot use --domain and --silent together')
+    if args.silent:
+        option_dict["e_output"] = args.silent
+        option_dict["raw"] = args.silent
     if args.extra_annotation:
         for i in args.extra_annotation:
             option_dict["p_path"].append(args.annotation_dir + '/' + i + '.json')
