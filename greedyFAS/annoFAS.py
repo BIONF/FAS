@@ -33,7 +33,7 @@ home = expanduser('~')
 
 def runAnnoFas(args):
     (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract,
-     oldName, cpus) = args
+     annoFile, cpus) = args
     # do annotation
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
@@ -52,11 +52,11 @@ def runAnnoFas(args):
             annoModules.removeTmpFasta(outName)
             pool.close()
         else:
-            if oldName == '':
-                print('No reference annotaion given! Use --name <name of annotation file>')
+            if annoFile == '':
+                print('No reference annotaion given! Please specify with --annoFile <path to exising annotation file>')
             else:
                 print('Extracting annotations...')
-                annoDict = annoModules.extractAnno(seqFile, outPath+'/'+oldName+'.json')
+                annoDict = annoModules.extractAnno(seqFile, annoFile)
                 annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
                 annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
                 annoModules.save2json(annoDict, outName, outPath)
@@ -92,7 +92,7 @@ def main():
     optional.add_argument('--force', help='Force override annotations', action='store_true')
     optional.add_argument('-n', '--name', help='Name of annotation file', action='store', default='')
     optional.add_argument('-t', '--toolPath', help='Path to annotation tools', action='store', default='')
-    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.0001', action='store',
+    optional.add_argument('--eFeature', help='eValue cutoff for PFAM/SMART domain. Default = 0.001', action='store',
                           default=0.001, type=float)
     optional.add_argument('--eInstance', help='eValue cutoff for PFAM/SMART instance. Default = 0.01', action='store',
                           default=0.01, type=float)
@@ -107,8 +107,10 @@ def main():
                                          'Only one selection allowed!',
                           choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
                           action='store', default='', type=str)
-    optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). --name required for specifying existing annotation file!',
+    optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). --annoFile required for specifying existing annotation file!',
                           action='store_true', default='')
+    optional.add_argument('-a', '--annoFile', help='Path to existing annotation JSON file',
+                          action='store', default='')
 
     args = parser.parse_args()
 
@@ -134,25 +136,25 @@ def main():
     # option for saving json file
     outPath = os.path.abspath(args.outPath)
     Path(outPath).mkdir(parents=True, exist_ok=True)
-    if args.extract == '':
-        oldName = ''
-        outName = args.name
-        if len(outName) == 0:
-            outName = seqFile.split('/')[-1].split('.')[0]
-    else:
-        oldName = args.name
+    outName = args.name
+    if len(outName) == 0:
         outName = seqFile.split('/')[-1].split('.')[0]
 
     # other options
     force = args.force
     redo = args.redo
     extract = args.extract
+    annoFile = args.annoFile
+    if extract:
+        annoModules.checkFileExist(annoFile)
+        if annoFile == '':
+            sys.exit('No existing annotation file given for extraction! Please specify it using --annoFile')
 
     # run annoFAS
     start = time.time()
     print('PID ' + str(os.getpid()))
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
-                extract, oldName, cpus])
+                extract, annoFile, cpus])
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 

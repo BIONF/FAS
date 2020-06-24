@@ -351,6 +351,7 @@ def main():
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store', default='')
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
+    optional.add_argument('-s', '--savePath', help='Save annotation tool path to config file for FAS', action='store_true')
 
     args = parser.parse_args()
 
@@ -361,10 +362,23 @@ def main():
         'keep': args.keep
     }
 
-    anno_path = prepare_annoTool(options)
-    allRun = checkExcutable(anno_path)
     greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
 
+    if args.savePath:
+        if not os.path.exists(os.path.abspath(args.toolPath+'/annoTools.txt')):
+            sys.exit('%s not found' % (args.toolPath+'/annoTools.txt'))
+        else:
+            with open(args.toolPath+'/annoTools.txt') as f:
+                if not '#checked' in f.read():
+                    sys.exit('Some errors occur with annotation tools. Please run this script without --savePath option')
+                else:
+                    with open(greedyFasPath+'/pathconfig.txt','w') as config:
+                        config.write(os.path.abspath(args.toolPath))
+                        config.close()
+                    sys.exit('Done! Annotation tools can be found in %s' % args.toolPath)
+
+    anno_path = prepare_annoTool(options)
+    allRun = checkExcutable(anno_path)
     if allRun:
         with open(anno_path+'/annoTools.txt') as f:
             if not '#checked' in f.read():
