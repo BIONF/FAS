@@ -35,7 +35,9 @@ if version_info.major == 3:
 
 def get_options():
     version = '1.1.0'
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+                                     epilog="For more information on certain options, please refer to the wiki pages "
+                                            "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
     general = parser.add_argument_group('general arguments')
     inout = parser.add_argument_group('input/output arguments')
@@ -56,7 +58,8 @@ def get_options():
     general.add_argument('--cpus', help='number of cores', action='store', default=0)
     general.add_argument("--pairwise", dest="pairwise", default=None, type=str,
                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                              " compared (one pair per line tab seperated)")
+                              " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
+                              "templates")
     general.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
                          help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
                               "sum should be 1.0, the default is 0.7, 0.0, 0.3")
@@ -83,7 +86,8 @@ def get_options():
                                 "linear(no function), loge(natural logarithm[Default]), log10(base-10 logarithm), "
                                 "root4(4th root) and root8(8th root).")
     weighting.add_argument("-x", "--weight_constraints", default=None, type=str,
-                           help="Apply weight constraints via constraints file, by default there are no constraints.")
+                           help="Apply weight constraints via constraints file, by default there are no constraints. "
+                                "Please look at the FAS wiki pages for templates for the constraints file")
     inout.add_argument("-n", "--out_name", default=None, type=str,
                        help="name for outputfiles, if none is given the name will be created from the seed and "
                             "query names")
@@ -105,10 +109,13 @@ def get_options():
     inout.add_argument("--domain", dest="domain", action="store_true",
                        help="activate domain tabular output")
     inout.add_argument("-d", "--featuretypes", default=None, type=str,
-                       help="inputfile that contains the tools/databases used to predict features")
+                       help="inputfile that contains the tools/databases used to predict features. Please look at the "
+                            "FAS wiki pages for templates of the the featuretypes input file")
     inout.add_argument("--extra_annotation", default=None, nargs='*', type=str,
-                       help="give naming conventions for extra annotation files, these files should be in the "
-                            "corresponding directory in the annotation_dir")
+                       help="give naming conventions for extra annotation files, eg. if the file name for the seed is "
+                            "someseed.json than the extra annotation files should be named "
+                            "someseed_[EXTRA_ANNOTATION].json, these extra files need to exist for seed, query and the "
+                            "references (if given)")
     thresholds.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
                             help="maximum size overlap allowed, default is 0 amino acids")
     thresholds.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
