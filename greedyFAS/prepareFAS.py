@@ -341,6 +341,13 @@ def checkExcutable(anno_path):
             sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
     return(True)
 
+def checkAnnoToolsFile(toolPath):
+    if not os.path.exists(os.path.abspath(toolPath+'/annoTools.txt')):
+        sys.exit('ERROR: %s not found' % (toolPath+'/annoTools.txt'))
+    else:
+        with open(toolPath+'/annoTools.txt') as f:
+            if not '#checked' in f.read():
+                sys.exit('ERROR: Some errors occur with annotation tools. Please install them again!')
 
 def main():
     version = '1.2.0'
@@ -352,7 +359,7 @@ def main():
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
     optional.add_argument('-s', '--savePath', help='Save annotation tool path to config file for FAS', action='store_true')
-    optional.add_argument('-c', '--check', help='Check if FAS ready to run', action='store_true')
+    optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!', action='store_true')
 
     args = parser.parse_args()
 
@@ -365,24 +372,21 @@ def main():
 
     greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
 
-    if args.savePath or args.check:
-        if not os.path.exists(os.path.abspath(args.toolPath+'/annoTools.txt')):
-            sys.exit('ERROR: %s not found' % (args.toolPath+'/annoTools.txt'))
+    if args.check:
+        if not os.path.exists(os.path.abspath(greedyFasPath+'/pathconfig.txt')):
+            sys.exit('ERROR: %s not found' % (greedyFasPath+'/pathconfig.txt'))
         else:
-            with open(args.toolPath+'/annoTools.txt') as f:
-                if not '#checked' in f.read():
-                    sys.exit('ERROR: Some errors occur with annotation tools. Please run this script without --savePath option')
-                else:
-                    if args.savePath:
-                        with open(greedyFasPath+'/pathconfig.txt','w') as config:
-                            config.write(os.path.abspath(args.toolPath))
-                            config.close()
-                        sys.exit('Done! Annotation tools can be found in %s' % args.toolPath)
-                    elif args.check:
-                        if not os.path.exists(os.path.abspath(greedyFasPath+'/pathconfig.txt')):
-                            sys.exit('ERROR: %s not found' % (greedyFasPath+'/pathconfig.txt'))
-                        else:
-                            sys.exit('FAS is ready to run!')
+            with open(greedyFasPath+'/pathconfig.txt', 'r') as file:
+                savedPath = file.read().strip()
+                checkAnnoToolsFile(savedPath)
+                sys.exit('Annotation tools can be found at %s. FAS is ready to run!' % savedPath)
+
+    if args.savePath:
+        checkAnnoToolsFile(args.toolPath)
+        with open(greedyFasPath+'/pathconfig.txt','w') as config:
+            config.write(os.path.abspath(args.toolPath))
+            config.close()
+        sys.exit('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
 
     anno_path = prepare_annoTool(options)
     allRun = checkExcutable(anno_path)
