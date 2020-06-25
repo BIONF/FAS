@@ -97,7 +97,7 @@ def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, f
                     {"weight_const": False, "version": '1.0.0', "seed_id": [seed_name], "query_id": None,
                      "priority_mode": True, "priority_threshold": 50, "max_cardinality": 5000, "eFeature": 0.001,
                      "cores": 1, "eInstance": 0.01, "e_output": True, "feature_info": None,
-                     "bidirectional": bidirectional,
+                     "bidirectional": bidirectional, "raw": False, "silent": False,
                      "max_overlap": 0, "classicMS": False, "timelimit": 7200, "ref_2": None, "phyloprofile": None,
                      "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": False,
                      "pairwise": None, "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
