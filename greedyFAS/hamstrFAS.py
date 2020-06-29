@@ -43,11 +43,12 @@ def main():
     print('calculating FAS scores for ' + groupname + '...')
     Path(args.tmp_dir + '/' + groupname).mkdir(parents=True, exist_ok=True)
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
-    manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir + '/' + groupname,
+    results = manage_jobpool(jobdict, args.seed_name, args.weight_dir, args.seed_spec, args.tmp_dir + '/' + groupname,
                    args.cores, features, args.bidirectional)
     print('writing phyloprofile output...')
-    write_phyloprofile(jobdict, args.tmp_dir + '/' + groupname, args.out_dir, args.bidirectional, groupname,
-                       args.seed_spec, namedict)
+    write_phyloprofile(results, args.out_dir, groupname, namedict)
+    join_domain_out(jobdict, args.tmp_dir + "/" + groupname, args.out_dir, args.bidirectional, groupname,
+                    args.seed_spec, namedict)
     print('hamstrFAS finished!')
     if args.bidirectional:
         print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains, ' +
@@ -97,17 +98,18 @@ def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, f
                     {"weight_const": False, "version": '1.0.0', "seed_id": [seed_name], "query_id": None,
                      "priority_mode": True, "priority_threshold": 50, "max_cardinality": 5000, "eFeature": 0.001,
                      "cores": 1, "eInstance": 0.01, "e_output": True, "feature_info": None,
-                     "bidirectional": bidirectional, "raw": False, "silent": False,
+                     "bidirectional": bidirectional, "raw": False, "silent": False, "reverse": False,
                      "max_overlap": 0, "classicMS": False, "timelimit": 7200, "ref_2": None, "phyloprofile": None,
-                     "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": False,
+                     "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": True,
                      "pairwise": None, "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
                      "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0,
                      "ref_proteome": [spec + '.json']},
                      seed_proteome, seed_weight, weight_dir, clan_dict])
     jobpool = multiprocessing.Pool(processes=cores)
-    jobpool.map(run_fas, data)
+    results = jobpool.map(run_fas, data)
     jobpool.close()
     jobpool.join()
+    return results
 
 
 def run_fas(data):
@@ -127,184 +129,65 @@ def run_fas(data):
             raise Exception('The protein: "' + i + '" is missing in taxon: "' + data[0] + '". The annotations ' +
                             'in weight_dir should contain all proteins from the genome_dir.')
 
-    greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[2])
+    f_results = greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[2])
+    outdata = {}
+    for result in f_results:
+        outdata[result[1]] = (result[2][0], 0.0)
     if data[2]["bidirectional"]:
-        data[2]["e_output"] = False
-        data[2]["outpath"] += "_reverse"
+        data[2]["reverse"] = True
         data[2]["query_id"] = data[2]["seed_id"]
         data[2]["seed_id"] = None
-        greedyFAS.fc_main(data[4], query_proteome, seed_proteome, clan_dict, data[2])
+        r_results = greedyFAS.fc_main(data[4], query_proteome, seed_proteome, clan_dict, data[2])
+        for result in r_results:
+            outdata[result[0]] = (outdata[result[0]][0], result[2][0])
+    return outdata, data[0]
 
 
-def write_phyloprofile(jobdict, tmp_path, out_path, bidirectional, groupname, seed_spec, namedict):
-    out = open(out_path + "/" + groupname + ".phyloprofile", "w")
-    out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
+def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_spec, namedict):
     out_f = open(out_path + "/" + groupname + "_forward.domains", "w")
-    out_b = None
+    out_r = None
     if bidirectional:
-        out_b = open(out_path + "/" + groupname + "_reverse.domains", "w")
+        out_r = open(out_path + "/" + groupname + "_reverse.domains", "w")
     for spec in jobdict:
-        outdict = {}
-        arc = {}
-        ncbi = spec.split("@")[1]
-        arctree = ElTre.parse(tmp_path + "/" + spec + "_architecture.xml")
-        arcroot = arctree.getroot()
-        for architecture in arcroot:
-            pid = architecture.attrib["id"]
-            arc[pid] = {}
-            for feature in architecture[0]:
-                f_type = feature.attrib["type"]
-                arc[pid][f_type] = []
-                for inst in feature:
-                    arc[pid][f_type].append((inst.attrib["start"], inst.attrib["end"]))
-        forwardtree = ElTre.parse(tmp_path + "/" + spec + ".xml")
-        forwardroot = forwardtree.getroot()
-        for query in forwardroot:
-            query_id, query_length = query.attrib["id"], query.attrib["length"]
-            for seed in query:
-                seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
-                outdict[(seed_id, query_id)] = (forward_score, "0.0")
-                weights = {}
-                forward_s_path = {}
-                forward_q_path = {}
-                for path in seed:
-                    if path.tag == "template_path":
-                        for feature in path:
-                            weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
-                            forward_s_path[feature.attrib["type"]] = []
-                            for instance in feature:
-                                forward_s_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                               instance.attrib["end"]))
-                        for feature in arc[seed_id]:
-                            if feature in forward_s_path:
-                                for inst in arc[seed_id][feature]:
-                                    out_f.write(
-                                        groupname + "#" + spec + "|" + query_id + "|" + namedict[query_id][3] + "\t" +
-                                        seed_spec + "|" + seed_id + "\t" + seed_length + "\t" + feature + "\t" +
-                                        inst[0] + "\t" + inst[1] + "\t" + weights[feature])
-                                    if inst in forward_s_path[feature]:
-                                        out_f.write("\tY\n")
-                                    else:
-                                        out_f.write("\tN\n")
-                            else:
-                                for inst in arc[seed_id][feature]:
-                                    out_f.write(groupname + "#" + spec + "|" + query_id + "|" + namedict[query_id][3] +
-                                                "\t" + seed_spec + "|" + seed_id + "\t" + seed_length + "\t" +
-                                                feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-
-                    if path.tag == "query_path":
-                        for feature in path:
-                            forward_q_path[feature.attrib["type"]] = []
-                            for instance in feature:
-                                forward_q_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                               instance.attrib["end"]))
-                        for feature in arc[query_id]:
-                            if feature in forward_q_path and feature in forward_s_path:
-                                for inst in arc[query_id][feature]:
-                                    out_f.write(
-                                        groupname + "#" + spec + "|" + query_id + "|" + namedict[query_id][3] + "\t" +
-                                        spec + "|" + query_id + "|" + namedict[query_id][3] + "\t" + query_length +
-                                        "\t" + feature + "\t" + inst[0] + "t" + inst[1] + "\t" + weights[feature])
-                                    if inst in forward_q_path[feature]:
-                                        out_f.write("\tY\n")
-                                    else:
-                                        out_f.write("\tN\n")
-                            elif feature in forward_q_path:
-                                for inst in arc[query_id][feature]:
-                                    out_f.write(
-                                        groupname + "#" + spec + "|" + query_id + "|" + namedict[query_id][3] + "\t" +
-                                        spec + "|" + query_id + "|" + namedict[query_id][3] + "\t" + query_length +
-                                        "\t" + feature + "\t" + inst[0] + "\t" + inst[1])
-                                    if inst in forward_q_path[feature]:
-                                        out_f.write("\tNA\tY\n")
-                                    else:
-                                        out_f.write("\tNA\tN\n")
-                            else:
-                                for inst in arc[query_id][feature]:
-                                    out_f.write(groupname + "#" + groupname + "|" + spec + "|" + query_id + "|" +
-                                                namedict[query_id][3] + "\t" + spec + "|" + query_id + "|" +
-                                                namedict[query_id][3] + "\t" + query_length + "\t" + feature + "\t" +
-                                                inst[0] + "\t" + inst[1] + "\tNA\tN\n")
+        with open(tmp_path + "/" + spec + "_forward.domains", "r") as infile:
+            for line in infile.readlines():
+                cells = line.split("\t")
+                q_id = cells[0].split("#")[1].split("|")[1]
+                tmp = cells[1].split("|")
+                if tmp[0] == "SEED":
+                    p_id = seed_spec + "|" + tmp[1]
+                else:
+                    p_id = spec + "|" + tmp[1] + "|" + namedict[q_id][3]
+                out_f.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" + p_id + "\t" +
+                            "\t".join(cells[2:]))
+        os.remove(tmp_path + "/" + spec + "_forward.domains")
         if bidirectional:
-            reversetree = ElTre.parse(tmp_path + "/" + spec + "_reverse.xml")
-            reverseroot = reversetree.getroot()
-            for seed in reverseroot:
-                seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
-                for query in seed:
-                    query_id, reverse_score, query_length = query.attrib["id"], query.attrib["score"], \
-                                                            query.attrib["length"]
-                    outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
-                    weights = {}
-                    reverse_q_path = {}
-                    reverse_s_path = {}
-                    for path in query:
-                        if path.tag == "template_path":
-                            for feature in path:
-                                weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
-                                reverse_q_path[feature.attrib["type"]] = []
-                                for instance in feature:
-                                    reverse_q_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                                   instance.attrib["end"]))
-                            for feature in arc[query_id]:
-                                if feature in reverse_q_path:
-                                    for inst in arc[query_id][feature]:
-                                        out_b.write(
-                                            groupname + "#" + spec + "|" + query_id + "|" + namedict[query_id][3] +
-                                            "\t" + spec + "|" + query_id + "|" + namedict[query_id][3] + "\t" +
-                                            query_length + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                            weights[feature])
-                                        if inst in reverse_q_path[feature]:
-                                            out_b.write("\tY\n")
-                                        else:
-                                            out_b.write("\tN\n")
-                                else:
-                                    for inst in arc[query_id][feature]:
-                                        out_b.write(groupname + "#" + spec + "|" + query_id + "|" +
-                                                    namedict[query_id][3] + "\t" + spec + "|" + query_id + "|" +
-                                                    namedict[query_id][3] + "\t" + query_length + "\t" +
-                                                    feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
+            with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
+                for line in infile.readlines():
+                    cells = line.split("\t")
+                    q_id = cells[0].split("#")[1].split("|")[1]
+                    tmp = cells[1].split("|")
+                    if tmp[0] == "SEED":
+                        p_id = seed_spec + "|" + tmp[1]
+                    else:
+                        p_id = spec + "|" + tmp[1] + "|" + namedict[q_id][3]
+                    out_r.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" + p_id + "\t" +
+                                "\t".join(cells[2:]))
+            os.remove(tmp_path + "/" + spec + "_reverse.domains")
+    out_f.close()
+    if bidirectional:
+        out_r.close()
 
-                        if path.tag == "query_path":
-                            for feature in path:
-                                reverse_s_path[feature.attrib["type"]] = []
-                                for instance in feature:
-                                    reverse_s_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                                   instance.attrib["end"]))
-                            for feature in arc[seed_id]:
-                                if feature in reverse_s_path and feature in reverse_q_path:
-                                    for inst in arc[seed_id][feature]:
-                                        if inst in reverse_s_path[feature]:
-                                            out_b.write(
-                                                groupname + "#" + spec + "|" + query_id + "|" +
-                                                namedict[query_id][3] + "\t" + seed_spec + "|" +
-                                                seed_id + "\t" + seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                inst[1] + "\t" + weights[feature])
-                                            if inst in reverse_s_path[feature]:
-                                                out_b.write("\tY\n")
-                                            else:
-                                                out_b.write("\tN\n")
-                                elif feature in reverse_s_path:
-                                    for inst in arc[seed_id][feature]:
-                                        out_b.write(
-                                            groupname + "#" + spec + "|" + query_id + "|" + namedict[query_id][3] +
-                                            "\t" + seed_spec + "|" + seed_id + "\t" + query_length + "\t" + feature +
-                                            "\t" + inst[0] + "\t" + inst[1])
-                                        if inst in reverse_s_path[feature]:
-                                            out_b.write("\tNA\tY\n")
-                                        else:
-                                            out_b.write("\tNA\tN\n")
-                                else:
-                                    for inst in arc[seed_id][feature]:
-                                        out_b.write(groupname + "#" + spec + "|" + query_id + "|" +
-                                                    namedict[query_id][3] + "\t" + seed_spec + "|" + seed_id + "\t" +
-                                                    query_length + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] +
-                                                    "\tNA\tN\n")
-            os.remove(tmp_path + "/" + spec + "_reverse.xml")
-        os.remove(tmp_path + "/" + spec + "_architecture.xml")
-        os.remove(tmp_path + "/" + spec + ".xml")
-        for pair in outdict:
-            out.write(groupname + "\tncbi" + ncbi + "\t" + spec + "|" + pair[1] + "|" + namedict[pair[1]][3] + "\t" +
-                      outdict[pair][0] + "\t" + outdict[pair][1] + "\n")
+
+def write_phyloprofile(results, out_path, groupname, namedict):
+    out = open(out_path + "/" + groupname + ".phyloprofile", "w+")
+    out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
+    for result in results:
+        spec = result[1]
+        ncbi = spec.split("@")[1]
+        for q_id in result[0]:
+            out.write(groupname + "\tncbi" + ncbi + "\t" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" +
+                      str(result[0][q_id][0]) + "\t" + str(result[0][q_id][1]) + "\n")
     out.close()
 
 

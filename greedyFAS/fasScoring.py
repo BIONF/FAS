@@ -136,7 +136,7 @@ def sf_cs_score(path, clan_dict, query_clans, features):
                 path_clans[clan]) + "," + str(query_clans[clan]) + ") * max(" + str(path_clans[clan]) + "," + str(
                 query_clans[clan]) + ")")
     if counter == 0:
-        score = 0
+        score = 0.0
     else:
         score = score / counter
     return score
@@ -183,7 +183,7 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
             score += float(s_clans[clan] * q_clans[clan]) / float(
                 max(s_clans[clan], q_clans[clan]) * max(s_clans[clan], q_clans[clan]))
     if counter == 0:
-        score = 0
+        score = 0.0
     else:
         score = score / counter
     return score
@@ -202,7 +202,7 @@ def sf_ms_score(path, protein, proteome, features, option):
     domains = {}
     scale = 0
     scores = []
-    final_score = 0
+    final_score = 0.0
     tools = option["input_linearized"] + option["input_normal"]
     for i in path:
         feature = features[i]
@@ -260,8 +260,8 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
     query_domains = {}
     scale = 0
     scores = []
-    final_score = 0
-    final_weight = 0
+    final_score = 0.0
+    final_weight = 0.0
     main_features_s = {}
     main_features_q = []
     common_feature = False
@@ -398,7 +398,7 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
     scores = {}
     ls_scores = {}
     local_query_protein = {}
-    ls = 0
+    ls = 0.0
     # get current features from query path
     for i in query_path:
         if i in query_features:

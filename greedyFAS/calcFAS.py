@@ -97,17 +97,15 @@ def get_options():
     inout.add_argument("--seed_id", default=None, nargs='*', type=str,
                        help="Choose specific proteins from the seed input for calculation, by default this is off "
                             "(all proteins are used for calculation)")
-    inout.add_argument("-e", "--no_arch", action="store_false",
-                       help="deactivate creation of _architecture file")
     inout.add_argument("--raw", dest="raw", action="store_true",
-                       help="print FAS score to terminal in addition to creating outputfile")
-    inout.add_argument("--no_outfile", dest="silent", action="store_true",
-                       help="deactivates creation of output files, automatically enables --raw")
+                       help="print FAS scores to terminal")
+    inout.add_argument("--tsv", dest="silent", action="store_true",
+                       help="deactivates creation of the tsv output, automatically enables --raw")
     inout.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
                        help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
                             "only, will run with more but output won't work without editing")
-    inout.add_argument("--domain", dest="domain", action="store_true",
-                       help="activate domain tabular output")
+    inout.add_argument("--domain", dest="domain", action="store_false",
+                       help="deactivate .domains output")
     inout.add_argument("-d", "--featuretypes", default=None, type=str,
                        help="inputfile that contains the tools/databases used to predict features. Please look at the "
                             "FAS wiki pages for templates of the the featuretypes input file")
@@ -169,7 +167,7 @@ def fas(args, toolpath):
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": True, "priority_threshold": args.priority_threshold, "eFeature": args.eFeature,
-                   "max_cardinality": args.max_cardinality, "cores": 1, "e_output": args.no_arch, "raw": args.raw,
+                   "max_cardinality": args.max_cardinality, "cores": 1, "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
                    "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
@@ -188,12 +186,7 @@ def fas(args, toolpath):
         option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
     else:
         option_dict["ref_2"] = None
-    if args.phyloprofile and args.silent:
-        raise Exception('Cannot use --phyloprofile and --silent together')
-    if args.domain and args.silent:
-        raise Exception('Cannot use --domain and --silent together')
     if args.silent:
-        option_dict["e_output"] = args.silent
         option_dict["raw"] = args.silent
     if args.extra_annotation:
         for i in args.extra_annotation:

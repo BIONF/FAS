@@ -24,273 +24,115 @@
 import xml.etree.ElementTree as ElTre
 
 
-def bidirectionout(outpath):
-    """Output function for bidirectional mode: This function summarizes the scores of the both scoring directions into a
-    table (csv format).
-
-    :param outpath: path to the out directory
-    :return: no returns
-    """
+def write_tsv_out(outpath, bidirectional, results):
+    out = open(outpath + ".tsv", "w")
     outdict = {}
-    forwardtree = ElTre.parse(outpath + ".xml")
-    reversetree = ElTre.parse(outpath + "_reverse.xml")
-    forwardroot = forwardtree.getroot()
-    reverseroot = reversetree.getroot()
-    for query in forwardroot:
-        query_id = query.attrib["id"]
-        for seed in query:
-            seed_id, forward_score, seed_mode = seed.attrib["id"], seed.attrib["score"], seed.attrib["mode"]
-            forward_s_path = {}
-            forward_q_path = {}
-            for path in seed:
-                if path.tag == "template_path":
-                    for feature in path:
-                        forward_s_path[feature.attrib["type"]] = []
-                        for instance in feature:
-                            forward_s_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                           instance.attrib["end"]))
-                if path.tag == "query_path":
-                    for feature in path:
-                        forward_q_path[feature.attrib["type"]] = []
-                        for instance in feature:
-                            forward_q_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                           instance.attrib["end"]))
-            for node in reverseroot:
-                if node.attrib["id"] == seed_id:
-                    for child in node:
-                        if child.attrib["id"] == query_id:
-                            reverse_score, query_mode = child.attrib["score"], child.attrib["mode"]
-                            reverse_s_path = {}
-                            reverse_q_path = {}
-                            for path in child:
-                                if path.tag == "query_path":
-                                    for feature in path:
-                                        reverse_s_path[feature.attrib["type"]] = []
-                                        for instance in feature:
-                                            reverse_s_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                                           instance.attrib["end"]))
-                                if path.tag == "template_path":
-                                    for feature in path:
-                                        reverse_q_path[feature.attrib["type"]] = []
-                                        for instance in feature:
-                                            reverse_q_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                                           instance.attrib["end"]))
-                            consistence = "yes"
-                            for feature in forward_q_path:
-                                if feature in reverse_q_path:
-                                    for instance in forward_q_path[feature]:
-                                        if instance not in reverse_q_path[feature]:
-                                            consistence = "no"
-                                else:
-                                    consistence = "no"
-                            for feature in forward_s_path:
-                                if feature in reverse_s_path:
-                                    for instance in forward_s_path[feature]:
-                                        if instance not in reverse_s_path[feature]:
-                                            consistence = "no"
-                                else:
-                                    consistence = "no"
-                            outdict[(seed_id, query_id)] = (forward_score, reverse_score, consistence,
-                                                            seed_mode + "/" + query_mode)
-    out = open(outpath + "_table.csv", "w")
-    out.write("seedID,queryID,forward,reverse,Path_consistency,linearization_mode\n")
+    out.write("Seed\tQuery\tScore(Forward/Reverse)\tMS(Forward/Reverse)\tPS(Forward/Reverse)\tCS(Forward/Reverse)"
+              "\tPS(Forward/Reverse)\tMethod\n")
+    for result in results[0]:
+        outdict[result[0], result[1]] = (result[2], ("NA", "NA", "NA", "NA", "NA"), result[3])
+    if bidirectional:
+        for result in results[1]:
+            outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2], outdict[result[1],
+                                                                                                  result[0]][2])
     for pair in outdict:
-        out.write(pair[0] + "," + pair[1] + "," + outdict[pair][0] + "," + outdict[pair][1] + "," +
-                  outdict[pair][2] + "," + outdict[pair][3] + "\n")
+        out.write(pair[0] + "\t" + pair[1] + "\t" + f"{outdict[pair][0][0]:.4}" + "/" + f"{outdict[pair][1][0]:.4}" +
+                  "\t" + f"{outdict[pair][0][1]:.4}" + "/" + f"{outdict[pair][1][1]:.4}" + "\t" +
+                  f"{outdict[pair][0][2]:.4}" + "/" + f"{outdict[pair][1][2]:.4}" + "\t" + f"{outdict[pair][0][3]:.4}" +
+                  "/" + f"{outdict[pair][1][3]:.4}" + "\t" + f"{outdict[pair][0][4]:.4}" + "/" +
+                  f"{outdict[pair][1][4]:.4}" + "\t" + outdict[pair][2] + "\n")
     out.close()
 
 
-def domain_out(outpath, bidirectional, extendedout):
-    arc = {}
-    groupname = outpath.split("/")[-1]
-    if extendedout:
-        arctree = ElTre.parse(outpath + "_architecture.xml")
-        arcroot = arctree.getroot()
-        for architecture in arcroot:
-            pid = architecture.attrib["id"]
-            arc[pid] = {}
-            for feature in architecture[0]:
-                type = feature.attrib["type"]
-                arc[pid][type] = []
-                for inst in feature:
-                    arc[pid][type].append((inst.attrib["start"], inst.attrib["end"]))
-    # outdict = {}
-    # groupname = outpath.split("/")[-1]
-    d0_out = open(outpath + "_forward.domains", "w")
-    forwardtree = ElTre.parse(outpath + ".xml")
-    forwardroot = forwardtree.getroot()
-
-    for query in forwardroot:
-        query_id, query_length = query.attrib["id"], query.attrib["length"]
-        for seed in query:
-            seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
-            # outdict[(seed_id, query_id)] = (forward_score, "0.0")
-            if extendedout:
-                # weights = {}
-                forward_s_path = {}
-                forward_q_path = {}
-                for path in seed:
-                    if path.tag == "template_path":
-                        for feature in path:
-                            # if noref:
-                            #     weights[feature.attrib["type"]] = str(1.0 / len(path))
-                            # else:
-                            #     weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
-                            forward_s_path[feature.attrib["type"]] = []
-                            for instance in feature:
-                                forward_s_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                               instance.attrib["end"]))
-                        for feature in arc[seed_id]:
-                            if feature in forward_s_path:
-                                for inst in arc[seed_id][feature]:
-                                    if inst in forward_s_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     "NA\tY\n")  # weights[feature] + "\tY\n")
-                                    else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t" +
-                                                     "NA\tN\n")  # weights[feature] + "\tN\n")
-                            else:
-                                for inst in arc[seed_id][feature]:
-                                    d0_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
-                                                 "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-
-                    if path.tag == "query_path":
-                        for feature in path:
-                            forward_q_path[feature.attrib["type"]] = []
-                            for instance in feature:
-                                forward_q_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                               instance.attrib["end"]))
-                        for feature in arc[query_id]:
-                            if feature in forward_q_path and feature in forward_s_path:
-                                for inst in arc[query_id][feature]:
-                                    if inst in forward_q_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
-                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
-                                                     + "NA\tY\n")  # weights[feature] + "\tY\n")
-                                    else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
-                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\t"
-                                                     + "NA\tN\n")  # weights[feature] + "\tN\n")
-                            elif feature in forward_q_path:
-                                for inst in arc[query_id][feature]:
-                                    if inst in forward_q_path[feature]:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
-                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tY\n")
-                                    else:
-                                        d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
-                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-                            else:
-                                for inst in arc[query_id][feature]:
-                                    d0_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length +
-                                                 "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-    if extendedout:
-        d0_out.close()
-    if bidirectional:
-        reversetree = ElTre.parse(outpath + "_reverse.xml")
-        reverseroot = reversetree.getroot()
-        d1_out = open(outpath + "_reverse.domains", "w")
-        for seed in reverseroot:
-            seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
-            for query in seed:
-                query_id, reverse_score, query_length = query.attrib["id"], query.attrib["score"], \
-                                                        query.attrib["length"]
-                # outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
-                if extendedout:
-                    # weights = {}
-                    reverse_q_path = {}
-                    reverse_s_path = {}
-                    for path in query:
-                        if path.tag == "template_path":
-                            for feature in path:
-                                # weights[feature.attrib["type"]] = feature.attrib["corrected_weight"]
-                                reverse_q_path[feature.attrib["type"]] = []
-                                for instance in feature:
-                                    reverse_q_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                                   instance.attrib["end"]))
-                            for feature in arc[query_id]:
-                                if feature in reverse_q_path:
-                                    for inst in arc[query_id][feature]:
-                                        if inst in reverse_q_path[feature]:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" +
-                                                         query_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tY\n")
-                                        else:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" +
-                                                         query_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tN\n")
-                                else:
-                                    for inst in arc[query_id][feature]:
-                                        d1_out.write(groupname + "#" + query_id + "\t" + query_id + "\t" + query_length
-                                                     + "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-
-                        if path.tag == "query_path":
-                            for feature in path:
-                                reverse_s_path[feature.attrib["type"]] = []
-                                for instance in feature:
-                                    reverse_s_path[feature.attrib["type"]].append((instance.attrib["start"],
-                                                                                   instance.attrib["end"]))
-                            for feature in arc[seed_id]:
-                                if feature in reverse_s_path and feature in reverse_q_path:
-                                    for inst in arc[seed_id][feature]:
-                                        if inst in reverse_s_path[feature]:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
-                                                         seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tY\n")
-                                        else:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
-                                                         seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\t" + "NA\tY\n")  # weights[feature] + "\tN\n")
-                                elif feature in reverse_s_path:
-                                    for inst in arc[seed_id][feature]:
-                                        if inst in reverse_s_path[feature]:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
-                                                         seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\tNA\tY\n")
-                                        else:
-                                            d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" +
-                                                         seed_length + "\t" + feature + "\t" + inst[0] + "\t" +
-                                                         inst[1] + "\tNA\tN\n")
-                                else:
-                                    for inst in arc[seed_id][feature]:
-                                        d1_out.write(groupname + "#" + query_id + "\t" + seed_id + "\t" + seed_length +
-                                                     "\t" + feature + "\t" + inst[0] + "\t" + inst[1] + "\tNA\tN\n")
-        if extendedout:
-            d1_out.close()
+def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale, seedpath, querypath, out, option):
+    tools = option["input_linearized"] + option["input_normal"]
+    uni_weight = None
+    groupname = option["outpath"].split("/")[-1]
+    if option["MS_uni"]:
+        uni_weight = round(1.0 / len(seedpath), 4)
+    for tool in tools:
+        for feature in seed_proteome[seed][tool]:
+            if feature in seedpath:
+                if option["MS_uni"]:
+                    weight = uni_weight
+                else:
+                    weight = round(weights[feature] * scale, 4)
+                for instance in seed_proteome[seed][tool][feature]["instance"]:
+                    if (instance[0], instance[1]) in seedpath[feature]:
+                        inpath = "Y"
+                    else:
+                        inpath = "N"
+                    if option["reverse"]:
+                        out.write(groupname + "#QUERY|" + seed + "\tQUERY|" + seed + "\t" + str(seed_proteome[seed]["length"])
+                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\t" +
+                                  str(weight) + "\t" + inpath + "\n")
+                    else:
+                        out.write(groupname + "#QUERY|" + query + "\tSEED|" + seed + "\t" + str(seed_proteome[seed]["length"])
+                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\t" +
+                                  str(weight) + "\t" + inpath + "\n")
+            else:
+                for instance in seed_proteome[seed][tool][feature]["instance"]:
+                    if option["reverse"]:
+                        out.write(groupname + "#QUERY|" + seed + "\tQUERY|" + seed + "\t" + str(seed_proteome[seed]["length"])
+                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tN\n")
+                    else:
+                        out.write(groupname + "#QUERY|" + query + "\tSEED|" + seed + "\t" + str(seed_proteome[seed]["length"])
+                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tN\n")
+    for tool in tools:
+        for feature in query_proteome[query][tool]:
+            if feature in seedpath:
+                if option["MS_uni"]:
+                    weight = uni_weight
+                else:
+                    weight = round(weights[feature] * scale, 4)
+            else:
+                weight = "NA"
+            if feature in querypath:
+                for instance in query_proteome[query][tool][feature]["instance"]:
+                    if (instance[0], instance[1]) in querypath[feature]:
+                        inpath = "Y"
+                    else:
+                        inpath = "N"
+                    if option["reverse"]:
+                        out.write(groupname + "#QUERY|" + seed + "\tSEED|" + query + "\t" +
+                                  str(query_proteome[query]["length"]) + "\t" + feature + "\t" + str(instance[0]) +
+                                  "\t" + str(instance[1]) + "\t" + str(weight) + "\t" + inpath + "\n")
+                    else:
+                        out.write(groupname + "#QUERY|" + query + "\tQUERY|" + query + "\t" +
+                                  str(query_proteome[query]["length"]) + "\t" + feature + "\t" + str(instance[0]) +
+                                  "\t" + str(instance[1]) + "\t" + str(weight) + "\t" + inpath + "\n")
+            else:
+                for instance in query_proteome[query][tool][feature]["instance"]:
+                    if option["reverse"]:
+                        out.write(groupname + "#QUERY|" + seed + "\tSEED|" + query + "\t" +
+                                  str(query_proteome[query]["length"]) + "\t" + feature + "\t" + str(instance[0]) +
+                                  "\t" + str(instance[1]) + "\t" + str(weight) + "\tN\n")
+                    else:
+                        out.write(groupname + "#QUERY|" + query + "\tQUERY|" + query + "\t" +
+                                  str(query_proteome[query]["length"]) + "\t" + feature + "\t" + str(instance[0]) +
+                                  "\t" + str(instance[1]) + "\t" + str(weight) + "\tN\n")
 
 
-def phyloprofile_out(outpath, bidirectional, mapping_file):
+def phyloprofile_out(outpath, bidirectional, mapping_file, results):
     with open(mapping_file) as infile:
         map = {}
         for line in infile.readlines():
             cells = line.rstrip("\n").split("\t")
             map[cells[0]] = cells[1]
-    outdict = {}
     groupname = outpath.split("/")[-1]
-    forwardtree = ElTre.parse(outpath + ".xml")
-    forwardroot = forwardtree.getroot()
-    for query in forwardroot:
-        query_id, query_length = query.attrib["id"], query.attrib["length"]
-        for seed in query:
-            seed_id, forward_score, seed_length = seed.attrib["id"], seed.attrib["score"], seed.attrib["length"]
-            outdict[(seed_id, query_id)] = (forward_score, "0.0")
-    if bidirectional:
-        reversetree = ElTre.parse(outpath + "_reverse.xml")
-        reverseroot = reversetree.getroot()
-        for seed in reverseroot:
-            seed_id, seed_length = seed.attrib["id"], seed.attrib["length"]
-            for query in seed:
-                query_id, reverse_score, query_length = query.attrib["id"], query.attrib["score"], \
-                                                        query.attrib["length"]
-                outdict[(seed_id, query_id)] = (outdict[(seed_id, query_id)][0], reverse_score)
-
     out = open(outpath + ".phyloprofile", "w")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
+    outdict = {}
+
+    for result in results[0]:
+        outdict[result[0], result[1]] = (result[2][0], 0.0)
+    if bidirectional:
+        for result in results[1]:
+            outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2][0])
     for pair in outdict:
         try:
-            out.write(groupname + "\t" + map[pair[1]] + "\t" + pair[1] + "\t" + outdict[pair][0] + "\t" +
-                      outdict[pair][1] + "\n")
+            out.write(groupname + "\t" + map[pair[1]] + "\tQUERY|" + pair[1] + "\t" + str(outdict[pair][0]) + "\t" +
+                      str(outdict[pair][1]) + "\n")
         except KeyError:
             raise Exception(pair[1] + " not in mapping file")
     out.close()
