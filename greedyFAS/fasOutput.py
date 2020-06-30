@@ -28,7 +28,7 @@ def write_tsv_out(outpath, bidirectional, results):
     out = open(outpath + ".tsv", "w")
     outdict = {}
     out.write("Seed\tQuery\tScore(Forward/Reverse)\tMS(Forward/Reverse)\tPS(Forward/Reverse)\tCS(Forward/Reverse)"
-              "\tPS(Forward/Reverse)\tMethod\n")
+              "\tLS(Forward/Reverse)\tMethod\n")
     for result in results[0]:
         outdict[result[0], result[1]] = (result[2], ("NA", "NA", "NA", "NA", "NA"), result[3])
     if bidirectional:
@@ -63,21 +63,23 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
                     else:
                         inpath = "N"
                     if option["reverse"]:
-                        out.write(groupname + "#QUERY|" + seed + "\tQUERY|" + seed + "\t" + str(seed_proteome[seed]["length"])
-                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\t" +
-                                  str(weight) + "\t" + inpath + "\n")
+                        out.write(groupname + "#QUERY|" + seed + "\tQUERY|" + seed + "\t" +
+                                  str(seed_proteome[seed]["length"]) + "\t" + feature + "\t" + str(instance[0]) + "\t" +
+                                  str(instance[1]) + "\t" + str(weight) + "\t" + inpath + "\n")
                     else:
-                        out.write(groupname + "#QUERY|" + query + "\tSEED|" + seed + "\t" + str(seed_proteome[seed]["length"])
-                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\t" +
-                                  str(weight) + "\t" + inpath + "\n")
+                        out.write(groupname + "#QUERY|" + query + "\tSEED|" + seed + "\t" +
+                                  str(seed_proteome[seed]["length"]) + "\t" + feature + "\t" + str(instance[0]) + "\t" +
+                                  str(instance[1]) + "\t" + str(weight) + "\t" + inpath + "\n")
             else:
                 for instance in seed_proteome[seed][tool][feature]["instance"]:
                     if option["reverse"]:
-                        out.write(groupname + "#QUERY|" + seed + "\tQUERY|" + seed + "\t" + str(seed_proteome[seed]["length"])
-                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tN\n")
+                        out.write(groupname + "#QUERY|" + seed + "\tQUERY|" + seed + "\t" +
+                                  str(seed_proteome[seed]["length"]) + "\t" + feature + "\t" + str(instance[0]) + "\t" +
+                                  str(instance[1]) + "\tNA\tN\n")
                     else:
-                        out.write(groupname + "#QUERY|" + query + "\tSEED|" + seed + "\t" + str(seed_proteome[seed]["length"])
-                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tN\n")
+                        out.write(groupname + "#QUERY|" + query + "\tSEED|" + seed + "\t" +
+                                  str(seed_proteome[seed]["length"]) + "\t" + feature + "\t" + str(instance[0]) + "\t" +
+                                  str(instance[1]) + "\tNA\tN\n")
     for tool in tools:
         for feature in query_proteome[query][tool]:
             if feature in seedpath:
