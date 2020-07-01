@@ -49,12 +49,16 @@ def main():
     join_domain_out(jobdict, args.tmp_dir + "/" + groupname, args.out_dir, args.bidirectional, groupname,
                     args.seed_spec, namedict)
     print('hamstrFAS finished!')
+    if args.out_dir[0] == '/':
+        out_dir = args.out_dir
+    else:
+        out_dir = os.getcwd() + '/' + args.out_dir
     if args.bidirectional:
         print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains, ' +
-              groupname + '_reverse.domains in ' + os.getcwd() + '/' + args.out_dir)
+              groupname + '_reverse.domains in ' + out_dir)
     else:
         print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains in' +
-              os.getcwd() + '/' + args.out_dir)
+              out_dir)
 
 
 def read_extended_fa(path):
