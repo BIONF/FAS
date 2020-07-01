@@ -152,7 +152,7 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
         with open(tmp_path + "/" + spec + "_forward.domains", "r") as infile:
             for line in infile.readlines():
                 cells = line.split("\t")
-                q_id = cells[0].split("#")[1].split("|")[1]
+                q_id = cells[0].split("#")[1]
                 if not cells[1] == q_id:
                     p_id = seed_spec + "|" + cells[1]
                 else:
@@ -164,7 +164,7 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
             with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
                 for line in infile.readlines():
                     cells = line.split("\t")
-                    q_id = cells[0].split("#")[1].split("|")[1]
+                    q_id = cells[0].split("#")[1]
                     if not cells[1] == q_id:
                         p_id = seed_spec + "|" + cells[1]
                     else:
