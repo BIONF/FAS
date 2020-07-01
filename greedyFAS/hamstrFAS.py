@@ -153,11 +153,10 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
             for line in infile.readlines():
                 cells = line.split("\t")
                 q_id = cells[0].split("#")[1].split("|")[1]
-                tmp = cells[1].split("|")
-                if tmp[0] == "SEED":
-                    p_id = seed_spec + "|" + tmp[1]
+                if not cells[1] == q_id:
+                    p_id = seed_spec + "|" + cells[1]
                 else:
-                    p_id = spec + "|" + tmp[1] + "|" + namedict[q_id][3]
+                    p_id = spec + "|" + cells[1] + "|" + namedict[q_id][3]
                 out_f.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" + p_id + "\t" +
                             "\t".join(cells[2:]))
         os.remove(tmp_path + "/" + spec + "_forward.domains")
@@ -166,11 +165,10 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
                 for line in infile.readlines():
                     cells = line.split("\t")
                     q_id = cells[0].split("#")[1].split("|")[1]
-                    tmp = cells[1].split("|")
-                    if tmp[0] == "SEED":
-                        p_id = seed_spec + "|" + tmp[1]
+                    if not cells[1] == q_id:
+                        p_id = seed_spec + "|" + cells[1]
                     else:
-                        p_id = spec + "|" + tmp[1] + "|" + namedict[q_id][3]
+                        p_id = spec + "|" + cells[1] + "|" + namedict[q_id][3]
                     out_r.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" + p_id + "\t" +
                                 "\t".join(cells[2:]))
             os.remove(tmp_path + "/" + spec + "_reverse.domains")
