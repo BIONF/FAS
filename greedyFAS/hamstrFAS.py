@@ -22,7 +22,6 @@
 
 
 import multiprocessing
-import xml.etree.ElementTree as ElTre
 import argparse
 import os
 from greedyFAS import greedyFAS
@@ -52,10 +51,10 @@ def main():
     print('hamstrFAS finished!')
     if args.bidirectional:
         print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains, ' +
-              groupname + '_reverse.domains in ' + args.out_dir)
+              groupname + '_reverse.domains in ' + os.getcwd() + '/' + args.out_dir)
     else:
         print('Output files: ' + groupname + '.phyloprofile, ' + groupname + '_forward.domains in' +
-              args.out_dir)
+              os.getcwd() + '/' + args.out_dir)
 
 
 def read_extended_fa(path):
