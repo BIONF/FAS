@@ -21,9 +21,6 @@
 #######################################################################
 
 
-import xml.etree.ElementTree as ElTre
-
-
 def write_tsv_out(outpath, bidirectional, results):
     out = open(outpath + ".tsv", "w")
     outdict = {}
