@@ -47,7 +47,10 @@ def write_tsv_out(outpath, bidirectional, results):
 def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale, seedpath, querypath, out, option):
     tools = option["input_linearized"] + option["input_normal"]
     uni_weight = None
-    groupname = option["outpath"].split("/")[-1]
+    if option['reverse']:
+        groupname = query
+    else:
+        groupname = seed
     if option["MS_uni"]:
         uni_weight = round(1.0 / len(seedpath), 4)
     for tool in tools:
@@ -120,7 +123,6 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, results):
         for line in infile.readlines():
             cells = line.rstrip("\n").split("\t")
             map[cells[0]] = cells[1]
-    groupname = outpath.split("/")[-1]
     out = open(outpath + ".phyloprofile", "w")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
     outdict = {}
@@ -132,7 +134,7 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, results):
             outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2][0])
     for pair in outdict:
         try:
-            out.write(groupname + "\t" + map[pair[1]] + "\t" + pair[1] + "\t" + str(outdict[pair][0]) + "\t" +
+            out.write(pair[0] + "\t" + map[pair[1]] + "\t" + pair[1] + "\t" + str(outdict[pair][0]) + "\t" +
                       str(outdict[pair][1]) + "\n")
         except KeyError:
             raise Exception(pair[1] + " not in mapping file")
