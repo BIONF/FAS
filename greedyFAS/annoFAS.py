@@ -39,7 +39,7 @@ def runAnnoFas(args):
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
             print('Doing annotation for %s...' % seqFile)
-            annoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, annoModules.getAnnoTools(toolPath),
+            annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, annoModules.getAnnoTools(toolPath),
                                                    eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
             pool = mp.Pool(cpus)
@@ -48,8 +48,6 @@ def runAnnoFas(args):
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
             annoModules.save2json(annoDict, outName, outPath)
-            # remove tmp sequence files
-            annoModules.removeTmpFasta(outName)
             pool.close()
         else:
             if annoFile == '':
@@ -63,7 +61,7 @@ def runAnnoFas(args):
     else:
         if not redo == '':
             print('Redoing annotation for %s...' % redo)
-            redoJobs = annoModules.createAnnoJobs([outName, seqFile, toolPath, [redo], eFlps, signalpOrg, eFeature,
+            redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg, eFeature,
                                                    eInstance, hmmCores])
             # redo annotation
             pool = mp.Pool(mp.cpu_count()-1)
@@ -74,15 +72,13 @@ def runAnnoFas(args):
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
             annoModules.save2json(annoDict, outName, outPath)
-            # remove tmp sequence files
-            annoModules.removeTmpFasta(outName)
             pool.close()
         else:
             print(outFile + ' already exists!')
 
 
 def main():
-    version = '1.2.0'
+    version = '1.3.0'
     parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')

@@ -30,7 +30,6 @@ import re
 import collections
 import json
 
-
 # general functions
 def mergeNestedDic(dictList):
     out = collections.defaultdict(list)
@@ -367,28 +366,22 @@ def getAnnoTools(toolPath):
 
 
 def createAnnoJobs(args):
-    (outName, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
-    currentDir = os.path.abspath(os.getcwd())
+    (outName, outPath, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
     annoJobs = []
-    # create tmp sequence files for running parallely
-    Path(currentDir+'/tmp').mkdir(parents = True, exist_ok = True)
     for s in SeqIO.parse(seqFile, 'fasta'):
-        tmpFile = open(currentDir+'/tmp/'+outName+'_'+s.id+'.fa', 'w')
-        tmpFile.write(str('>' + s.id + '\n' + s.seq))
-        tmpFile.close()
-        annoJobs.append([currentDir+'/tmp/'+outName+'_'+s.id+'.fa', toolPath, toolList, eFlps, signalpOrg, eFeature,
+        annoJobs.append([s.id, s.seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature,
                          eInstance, hmmCores])
     return annoJobs
 
-
-def removeTmpFasta(outName):
-    currentDir = os.path.abspath(os.getcwd())
-    rmCmd = 'rm %s/tmp/%s_*.fa' % (currentDir, outName)
-    subprocess.run([rmCmd], shell=True)
-
-
 def doAnno(args):
-    (seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
+    (seqId, seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
+    # create temp fasta file
+    Path(outPath+'/tmp').mkdir(parents = True, exist_ok = True)
+    tmpFile = open(outPath+'/tmp/'+outName+'_'+seqId+'.fa', 'w')
+    tmpFile.write(str('>' + seqId + '\n' + seq))
+    tmpFile.close()
+    seqFile = outPath+'/tmp/'+outName+'_'+seqId+'.fa'
+    # run annotation
     annoList = []
     final = {}
     if 'flps' in toolList:
@@ -412,10 +405,11 @@ def doAnno(args):
     if 'pfam' in toolList:
         anno = doPfam([seqFile, toolPath, hmmCores, eFeature, eInstance])
         annoList.append(anno)
-
     final['feature'] = mergeNestedDic(annoList)
+    # remove tmp fasta file
+    rmCmd = 'rm %s' % (seqFile)
+    subprocess.run([rmCmd], shell=True)
     return final
-
 
 # function for posprocessing annotation dictionary
 def countFeatures(annoDict):
