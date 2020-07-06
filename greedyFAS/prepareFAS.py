@@ -162,12 +162,6 @@ def prepare_annoTool(options):
         anno_path = os.path.abspath(anno_path)
         os.chdir(anno_path)
 
-        # if force:
-        #     backupCmd = 'mv %s/%s ../' % (anno_path, file)
-        #     rm_annotools = 'rm -rf %s/*' % (anno_path)
-        #     mvCmd = 'mv ../%s %s/' % (file, anno_path)
-        #     subprocess_cmd([backupCmd, rm_annotools, mvCmd])
-
         print('Annotation tools will be installed in ')
         print(os.getcwd())
         print('----------------------------------')
@@ -363,7 +357,7 @@ def checkAnnoToolsFile(toolPath):
                 sys.exit('ERROR: Some errors occur with annotation tools. Please install them again!')
 
 def main():
-    version = '1.2.1'
+    version = '1.2.2'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
