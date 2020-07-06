@@ -156,6 +156,15 @@ def prepare_annoTool(options):
     file = 'annotation_FAS2020d.tar.gz'
     checksum = '1818703744 1108970315 ' + file
 
+    if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
+        with open(anno_path+'/annoTools.txt') as file:
+            if '#checked' in file.read():
+                print('Annotation tools already found at %s' % anno_path)
+                if not os.path.exists(os.path.abspath(options['greedyFasPath']+'/pathconfig.txt')):
+                    print('If you want to add %s to config file of FAS, please rerun this function with --savePath!' % anno_path)
+                print('If you want to re-install them, rerun this function with --force!')
+                sys.exit()
+
     current_dir = os.getcwd()
     if check_status(anno_path, force, file) == 1:
         Path(anno_path).mkdir(parents = True, exist_ok = True)
@@ -369,15 +378,16 @@ def main():
     optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!', action='store_true')
 
     args = parser.parse_args()
-
+    greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
     options = {
         'toolPath': args.toolPath,
         'dtuPath': args.dtuPath,
         'force': args.force,
-        'keep': args.keep
+        'keep': args.keep,
+        'greedyFasPath': greedyFasPath
     }
 
-    greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
+
 
     if args.check:
         if not os.path.exists(os.path.abspath(greedyFasPath+'/pathconfig.txt')):
