@@ -162,11 +162,11 @@ def prepare_annoTool(options):
         anno_path = os.path.abspath(anno_path)
         os.chdir(anno_path)
 
-        if force:
-            backupCmd = 'mv %s/%s ../' % (anno_path, file)
-            rm_annotools = 'rm -rf %s/*' % (anno_path)
-            mvCmd = 'mv ../%s %s/' % (file, anno_path)
-            subprocess_cmd([backupCmd, rm_annotools, mvCmd])
+        # if force:
+        #     backupCmd = 'mv %s/%s ../' % (anno_path, file)
+        #     rm_annotools = 'rm -rf %s/*' % (anno_path)
+        #     mvCmd = 'mv ../%s %s/' % (file, anno_path)
+        #     subprocess_cmd([backupCmd, rm_annotools, mvCmd])
 
         print('Annotation tools will be installed in ')
         print(os.getcwd())
@@ -258,21 +258,26 @@ def prepare_annoTool(options):
             else:
                 source = source + '/linux/fLPS'
                 subprocess.call(['ln', '-fs', source, target])
-            # re-compile COILS2 for mac OS
+            # re-compile COILS2
+            coils_path = anno_path + '/COILS2'
+            os.chdir(coils_path)
+            subprocess.call(['tar', 'xf', 'ncoils.tar.gz'])
+            coils_bin = coils_path + '/coils'
+            os.chdir(coils_bin)
+            compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm'
             if platform == 'darwin':
-                coils_path = anno_path + '/COILS2'
-                os.chdir(coils_path)
-                subprocess.call(['tar', 'xf', 'ncoils.tar.gz'])
-                coils_bin = coils_path + '/coils'
-                os.chdir(coils_bin)
-                compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm'
                 COILSDIR = 'echo \'export COILSDIR=%s\' >> ~/.bash_profile' % coils_bin
-                subprocess_cmd((compile_cmd, COILSDIR))
-                os.chdir(coils_path)
-                makelink_cmd = 'ln -s -f coils/ncoils-osf ./COILS2'
+            else:
+                COILSDIR = 'echo \'export COILSDIR=%s\' >> ~/.bashrc' % coils_bin
+            subprocess_cmd((compile_cmd, COILSDIR))
+            os.chdir(coils_path)
+            makelink_cmd = 'ln -s -f coils/ncoils-osf ./COILS2'
+            if platform == 'darwin':
                 source_cmd = 'source ~/.bash_profile'
-                subprocess_cmd((makelink_cmd, source_cmd))
-                os.chdir(anno_path)
+            else:
+                source_cmd = 'source ~/.bashrc'
+            subprocess_cmd((makelink_cmd, source_cmd))
+            os.chdir(anno_path)
 
             # remove temp files
             subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
@@ -320,8 +325,11 @@ def checkExcutable(anno_path):
         try:
             p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output3, err3 = p3.communicate()
-            if not ('0 sequences' in err3.decode('UTF-8').strip()) or (err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat'):
-                sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
+            if err3.decode('UTF-8').strip() == 'error: environment variable COILSDIR must be set':
+                print('NOTE: THE TERMINAL MUST BE RESTARTED BEFORE USING FAS!!!')
+            else:
+                if not ('0 sequences' in err3.decode('UTF-8').strip()) or (err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat'):
+                    sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
         except:
             sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
     # test tmhmm
