@@ -173,7 +173,10 @@ def prepare_annoTool(options):
         print('----------------------------------')
         tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
         with open('annoTools.txt', mode = 'wt') as tool_file:
-            tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n')
+            if platform == 'darwin':
+                tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\n')
+            else:
+                tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n')
 
         # get DTU tools path
         (dtu_path, dtu_tool) = get_dtu_path(dtuPathIn)
@@ -200,9 +203,11 @@ def prepare_annoTool(options):
                 subprocess.call([rm_tmhmm], shell=True)
             os.chdir(anno_path)
 
-            dtu_tool_list = ['TMHMM', 'SignalP']
             with open('annoTools.txt', mode = 'a') as tool_file:
-                tool_file.write('TMHMM\nSignalP\n')
+                if platform == 'darwin':
+                    tool_file.write('SignalP\n')
+                else:
+                    tool_file.write('TMHMM\nSignalP\n')
         tool_file.close()
 
         # create folders for other annotation tools
@@ -315,7 +320,7 @@ def checkExcutable(anno_path):
         try:
             p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output3, err3 = p3.communicate()
-            if not err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
+            if not ('0 sequences' in err3.decode('UTF-8').strip()) or (err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat'):
                 sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
         except:
             sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
@@ -350,7 +355,7 @@ def checkAnnoToolsFile(toolPath):
                 sys.exit('ERROR: Some errors occur with annotation tools. Please install them again!')
 
 def main():
-    version = '1.2.0'
+    version = '1.2.1'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
