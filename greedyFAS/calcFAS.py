@@ -53,8 +53,7 @@ def get_options():
     required.add_argument("-o", "--out_dir", default=None, type=str, required=True,
                           help="output directory, all outputfiles will be stored here")
     general.add_argument("--bidirectional", action="store_true",
-                         help="calculate both scoring directions (separate files), creates csv file with combined "
-                              "scores")
+                         help="calculate both scoring directions")
     general.add_argument('--cpus', help='number of cores', action='store', default=0)
     general.add_argument("--pairwise", dest="pairwise", default=None, type=str,
                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
