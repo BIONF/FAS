@@ -196,7 +196,7 @@ def sf_ms_score(path, protein, proteome, features, option):
     :param protein : protein id
     :param proteome : seed_proteome is a dictionary that contains the feature architecture of all seed proteins
     :param features : features (seed or query) [dict]
-    :param option : specifies the behavior of the MS calculation. Can be switched between classicMS and the new version.
+    :param option : specifies the behavior of the MS calculation
     :return: final_score (MS), search_domains, scale
     """
     domains = {}
@@ -230,11 +230,7 @@ def sf_ms_score(path, protein, proteome, features, option):
                                 s_length += 1
                         except TypeError:
                             s_length += 1
-                    if option["classicMS"]:
-                        p_score = float(domains[feature] * s_length) / \
-                                  float(max(domains[feature], s_length) * max(domains[feature], s_length))
-                    else:
-                        p_score = min(float(domains[feature] * s_length) / float(domains[feature] * domains[feature]), 1.0)
+                    p_score = min(float(domains[feature] * s_length) / float(domains[feature] * domains[feature]), 1.0)
         scores.append((feature, p_score))
     if scale > 0:
         scale = 1.0 / float(scale)
@@ -304,12 +300,8 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
             scale += 1
         if feature in query_domains:
             s_length = query_domains[feature]
-            if option["classicMS"]:
-                p_score = float(search_domains[feature] * s_length) / \
-                          float(max(search_domains[feature], s_length) * max(search_domains[feature], s_length))
-            else:
-                p_score = min(float(search_domains[feature] * s_length) /
-                              float(search_domains[feature] * search_domains[feature]), 1.0)
+            p_score = min(float(search_domains[feature] * s_length) /
+                          float(search_domains[feature] * search_domains[feature]), 1.0)
             scores.append((feature, p_score))
         else:
             scores.append((feature, 0.0))
