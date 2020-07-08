@@ -27,7 +27,7 @@ cd FAS
 pip install .
 ```
 
-In case you do not have admin rights and don't use package systems like Anaconda to manage environments you need to use the --user option:
+In case you do not have admin rights, and don't use package systems like Anaconda to manage environments you need to use the **--user** option:
 ```
 pip install --user .
 ```
