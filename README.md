@@ -21,13 +21,13 @@ First, get the source code of FAS from our github:
 git clone --depth=1 https://github.com/BIONF/FAS
 ```
 
-Then go to FAS directory and run pip install:
+Then go to FAS directory and run pip install (\*):
 ```
 cd FAS
 pip install .
 ```
 
-In case you do not have admin rights, and don't use package systems like Anaconda to manage environments you need to use the **--user** option:
+(\*) In case you do not have admin rights, and don't use package systems like Anaconda to manage environments you need to use the **--user** option:
 ```
 pip install --user .
 ```
