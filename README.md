@@ -57,6 +57,7 @@ prepareFAS -t /directory/where/you/want/to/save/annotation/tools
 Inside the output directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
 
 __*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM version 2.0c and SignalP version 4.1g, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
+
 __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
 ## Perform feature annotation
