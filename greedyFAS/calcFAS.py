@@ -59,9 +59,8 @@ def get_options():
                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                               " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
                               "templates")
-    general.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
-                         help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
-                              "sum should be 1.0, the default is 0.7, 0.0, 0.3")
+    general.add_argument("--priority_mode", action='store_false',
+                         help="deactivates the greedy strategy priority mode for larger architectures, not recommended")
     annotation.add_argument('--force', help='Force override annotations', action='store_true')
     annotation.add_argument("-f", "--eFeature", default="0.001", type=float,
                             help="eValue cutoff for PFAM/SMART domain, applied during annotation but also during "
@@ -87,6 +86,9 @@ def get_options():
     weighting.add_argument("-x", "--weight_constraints", default=None, type=str,
                            help="Apply weight constraints via constraints file, by default there are no constraints. "
                                 "Please look at the FAS wiki pages for templates for the constraints file")
+    weighting.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
+                           help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
+                                "sum should be 1.0, the default is 0.7, 0.0, 0.3")
     inout.add_argument("-n", "--out_name", default=None, type=str,
                        help="name for outputfiles, if none is given the name will be created from the seed and "
                             "query names")
@@ -165,11 +167,12 @@ def fas(args, toolpath):
     loglevel = "ERROR"
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
-                   "priority_mode": True, "priority_threshold": args.priority_threshold, "eFeature": args.eFeature,
-                   "max_cardinality": args.max_cardinality, "cores": 1, "raw": args.raw,
-                   "bidirectional": args.bidirectional, "max_overlap": args.max_overlap, "classicMS": False,
-                   "timelimit": 7200, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
-                   "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance
+                   "priority_mode": args.priotity_mode, "priority_threshold": args.priority_threshold,
+                   "max_cardinality": args.max_cardinality, "cores": args.cpus, "raw": args.raw,
+                   "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
+                   "timelimit": 0, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
+                   "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance,
+                   "eFeature": args.eFeature
                    }
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
@@ -180,6 +183,8 @@ def fas(args, toolpath):
         option_dict["ref_proteome"] = [args.annotation_dir + '/' + name + '.json']
     else:
         option_dict["ref_proteome"] = None
+    if option_dict["cores"] == 0:
+        option_dict["cores"] = mp.cpu_count()-1
     if args.ref_2:
         r2name = ''.join(args.ref_2.split('/')[-1].split('.')[:-1])
         option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
