@@ -293,9 +293,12 @@ def prepare_annoTool(options):
         return(check_status(anno_path, force, file))
 
 
-def checkExcutable(anno_path):
+def checkExecutable(anno_path):
     with open(anno_path+'/annoTools.txt') as file:
         availTool = [line.strip() for line in file]
+    sedCmd ='sed -i \'s/#checked//\' %s/annoTools.txt' % anno_path
+    subprocess.call([sedCmd], shell=True)
+
     print('Checking if annotation tools are excutable...')
     # test pfam and smart
     if not os.path.isfile(anno_path + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
@@ -326,22 +329,27 @@ def checkExcutable(anno_path):
     if 'COILS2' in availTool:
         coilsCmd = '%s/COILS2/COILS2' % anno_path
         try:
+            flag = 1
             p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output3, err3 = p3.communicate()
+            if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
+                flag = 0
             if err3.decode('UTF-8').strip() == 'error: environment variable COILSDIR must be set':
                 print('NOTE: THE TERMINAL MUST BE RESTARTED BEFORE USING FAS!!!')
-            else:
-                if not ('0 sequences' in err3.decode('UTF-8').strip()) or (err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat'):
-                    sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
+                flag = 0
+            if '0 sequences' in err3.decode('UTF-8').strip():
+                flag = 0
+            if flag == 1:
+                sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
         except:
             sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
     # test tmhmm
     if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
         try:
-            p4 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p4 = subprocess.Popen([tmhmmCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output4, err4 = p4.communicate()
-            if 'Error: No modelfile given' in err4.decode('UTF-8').strip():
+            if not 'Error: No modelfile given' in err4.decode('UTF-8').strip():
                 sys.exit('Error with TMHMM. You can reinstall it by running prepareFAS with --force!')
         except:
             sys.exit('Error with TMHMM. You can reinstall it by running prepareFAS with --force!')
@@ -365,6 +373,26 @@ def checkAnnoToolsFile(toolPath):
             if not '#checked' in f.read():
                 sys.exit('ERROR: Some errors occur with annotation tools. Please install them again!')
 
+def saveConfigFile(checkResult, anno_path, greedyFasPath):
+    if checkResult:
+        with open(anno_path+'/annoTools.txt') as f:
+            if not '#checked' in f.read():
+                with open(anno_path+'/annoTools.txt','a') as file:
+                    file.write('#checked')
+                    file.close()
+        f.close()
+        with open(greedyFasPath+'/pathconfig.txt','w') as config:
+            config.write(os.path.abspath(anno_path))
+            config.close()
+        sys.exit('Done! Annotation tools can be found in %s' % anno_path)
+    else:
+        sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
+
+# def removeChecked(anno_path):
+#     if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
+#         sedCmd ='sed -i \'s/#checked//\' %s/annoTools.txt' % anno_path
+#         subprocess.call([sedCmd], shell=True)
+
 def main():
     version = '1.2.2'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
@@ -376,6 +404,7 @@ def main():
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
     optional.add_argument('-s', '--savePath', help='Save annotation tool path to config file for FAS', action='store_true')
     optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!', action='store_true')
+    optional.add_argument('--checkExecutable', help='Check if annotation tools are executable!', action='store_true')
 
     args = parser.parse_args()
     greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
@@ -387,7 +416,12 @@ def main():
         'greedyFasPath': greedyFasPath
     }
 
-
+    if args.checkExecutable:
+        if not os.path.exists(os.path.abspath(args.toolPath+'/annoTools.txt')):
+            sys.exit('ERROR: %s not found' % (args.toolPath+'/annoTools.txt'))
+        else:
+            allRun = checkExecutable(args.toolPath)
+            saveConfigFile(allRun, args.toolPath, greedyFasPath)
 
     if args.check:
         if not os.path.exists(os.path.abspath(greedyFasPath+'/pathconfig.txt')):
@@ -406,21 +440,8 @@ def main():
         sys.exit('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
 
     anno_path = prepare_annoTool(options)
-    allRun = checkExcutable(anno_path)
-    if allRun:
-        with open(anno_path+'/annoTools.txt') as f:
-            if not '#checked' in f.read():
-                with open(anno_path+'/annoTools.txt','a') as file:
-                    file.write('#checked')
-                    file.close()
-        f.close()
-        with open(greedyFasPath+'/pathconfig.txt','w') as config:
-            config.write(os.path.abspath(args.toolPath))
-            config.close()
-        sys.exit('Done! Annotation tools can be found in %s' % anno_path)
-    else:
-        sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
-
+    allRun = checkExecutable(anno_path)
+    saveConfigFile(allRun, anno_path, greedyFasPath)
 
 if __name__ == '__main__':
     main()
