@@ -61,13 +61,13 @@ __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
 ## Perform feature annotation
 
-If you only want to anntate your protein sequences, you can use the `annoFAS` function. 
+If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `annoFAS` function. 
 
 ```
 annoFAS --fasta your_proteins.fa --outPath /annotation/path/
 ```
 
-The annotation output (by default will be `your_proteins.json`) will be saved in `/annotation/path/`. 
+The annotation output (`your_proteins.json` by default) will be saved in `/annotation/path/`. 
 
 Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `annoParserFAS` to convert the InterProScan's *tsv* output into *json format* for using with FAS.
 
