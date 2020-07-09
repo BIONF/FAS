@@ -99,10 +99,10 @@ def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, f
     for spec in jobdict:
         data.append([spec, jobdict[spec],
                     {"weight_const": False, "version": '1.0.0', "seed_id": [seed_name], "query_id": None,
-                     "priority_mode": True, "priority_threshold": 50, "max_cardinality": 5000, "eFeature": 0.001,
+                     "priority_mode": True, "priority_threshold": 30, "max_cardinality": 5000, "eFeature": 0.001,
                      "cores": 1, "eInstance": 0.01, "e_output": True, "feature_info": None,
                      "bidirectional": bidirectional, "raw": False, "silent": False, "reverse": False,
-                     "max_overlap": 0, "classicMS": False, "timelimit": 7200, "ref_2": None, "phyloprofile": None,
+                     "max_overlap": 0, "classicMS": False, "timelimit": 0, "ref_2": None, "phyloprofile": None,
                      "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": True,
                      "pairwise": None, "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
                      "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0,
