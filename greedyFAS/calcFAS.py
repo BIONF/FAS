@@ -40,7 +40,8 @@ def get_options():
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
     general = parser.add_argument_group('general arguments')
-    inout = parser.add_argument_group('input/output arguments')
+    inargs = parser.add_argument_group('input arguments')
+    outargs = parser.add_argument_group('output arguments')
     annotation = parser.add_argument_group('annotation arguments')
     weighting = parser.add_argument_group('weighting arguments')
     thresholds = parser.add_argument_group('threshold arguments')
@@ -81,36 +82,36 @@ def get_options():
     weighting.add_argument("-x", "--weight_constraints", default=None, type=str,
                            help="Apply weight constraints via constraints file, by default there are no constraints. "
                                 "Please look at the FAS wiki pages for templates for the constraints file")
-    inout.add_argument("-n", "--out_name", default=None, type=str,
-                       help="name for outputfiles, if none is given the name will be created from the seed and "
-                            "query names")
-    inout.add_argument("--query_id", default=None, nargs='*', type=str,
-                       help="Choose specific proteins from the query input for calculation, by default this is off "
-                            "(all proteins are used for calculation)")
-    inout.add_argument("--seed_id", default=None, nargs='*', type=str,
-                       help="Choose specific proteins from the seed input for calculation, by default this is off "
-                            "(all proteins are used for calculation)")
-    inout.add_argument("--pairwise", dest="pairwise", default=None, type=str,
-                       help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                            " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
-                            "templates")
-    inout.add_argument("--raw", dest="raw", action="store_true",
-                       help="print FAS scores to terminal")
-    inout.add_argument("--tsv", dest="silent", action="store_true",
-                       help="deactivates creation of the tsv output, automatically enables --raw")
-    inout.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
-                       help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
-                            "only, will run with more but output won't work without editing")
-    inout.add_argument("--domain", dest="domain", action="store_false",
-                       help="deactivate .domains output")
-    inout.add_argument("-d", "--featuretypes", default=None, type=str,
-                       help="inputfile that contains the tools/databases used to predict features. Please look at the "
-                            "FAS wiki pages for templates of the the featuretypes input file")
-    inout.add_argument("--extra_annotation", default=None, nargs='*', type=str,
-                       help="give naming conventions for extra annotation files, eg. if the file name for the seed is "
-                            "someseed.json than the extra annotation files should be named "
-                            "someseed_[EXTRA_ANNOTATION].json, these extra files need to exist for seed, query and the "
-                            "references (if given)")
+    inargs.add_argument("--query_id", default=None, nargs='*', type=str,
+                        help="Choose specific proteins from the query input for calculation, by default this is off "
+                             "(all proteins are used for calculation)")
+    inargs.add_argument("--seed_id", default=None, nargs='*', type=str,
+                        help="Choose specific proteins from the seed input for calculation, by default this is off "
+                             "(all proteins are used for calculation)")
+    inargs.add_argument("--pairwise", dest="pairwise", default=None, type=str,
+                        help="deactivate all against all comparison, needs a pairing file with the ids that should be"
+                             " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
+                             "templates")
+    inargs.add_argument("-d", "--featuretypes", default=None, type=str,
+                        help="inputfile that contains the tools/databases used to predict features. Please look at the "
+                             "FAS wiki pages for templates of the the featuretypes input file")
+    inargs.add_argument("--extra_annotation", default=None, nargs='*', type=str,
+                        help="give naming conventions for extra annotation files, eg. if the file name for the seed is "
+                             "someseed.json than the extra annotation files should be named "
+                             "someseed_[EXTRA_ANNOTATION].json, these extra files need to exist for seed, query and the "
+                             "references (if given)")
+    outargs.add_argument("-n", "--out_name", default=None, type=str,
+                         help="name for outputfiles, if none is given the name will be created from the seed and "
+                              "query names")
+    outargs.add_argument("--raw", dest="raw", action="store_true",
+                         help="print FAS scores to terminal")
+    outargs.add_argument("--tsv", dest="silent", action="store_true",
+                         help="deactivates creation of the tsv output, automatically enables --raw")
+    outargs.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
+                         help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
+                              "only, will run with more but output won't work without editing")
+    outargs.add_argument("--domain", dest="domain", action="store_false",
+                         help="deactivate .domains output")
     thresholds.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
                             help="maximum size overlap allowed, default is 0 amino acids")
     thresholds.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
