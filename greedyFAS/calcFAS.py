@@ -44,6 +44,7 @@ def get_options():
     annotation = parser.add_argument_group('annotation arguments')
     weighting = parser.add_argument_group('weighting arguments')
     thresholds = parser.add_argument_group('threshold arguments')
+    obscure = parser.add_argument_group('obscure arguments')
     required.add_argument("-s", "--seed", default=None, type=str, required=True,
                           help="path to seed protein fasta file")
     required.add_argument("-q", "--query", default=None, type=str, required=True,
@@ -59,8 +60,6 @@ def get_options():
                          help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                               " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
                               "templates")
-    general.add_argument("--priority_mode", action='store_false',
-                         help="deactivates the greedy strategy priority mode for larger architectures, not recommended")
     annotation.add_argument('--force', help='Force override annotations', action='store_true')
     annotation.add_argument("-f", "--eFeature", default="0.001", type=float,
                             help="eValue cutoff for PFAM/SMART domain, applied during annotation but also during "
@@ -86,9 +85,6 @@ def get_options():
     weighting.add_argument("-x", "--weight_constraints", default=None, type=str,
                            help="Apply weight constraints via constraints file, by default there are no constraints. "
                                 "Please look at the FAS wiki pages for templates for the constraints file")
-    weighting.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
-                           help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
-                                "sum should be 1.0, the default is 0.7, 0.0, 0.3")
     inout.add_argument("-n", "--out_name", default=None, type=str,
                        help="name for outputfiles, if none is given the name will be created from the seed and "
                             "query names")
@@ -122,11 +118,21 @@ def get_options():
                                  "is 0.4 (40%%)")
     thresholds.add_argument("-t", "--priority_threshold", type=int, default=30,
                             help="Change to define the feature number threshold for activating priority mode in the "
-                                 "path evaluation.")
+                                 "path evaluation. default=30")
     thresholds.add_argument("-m", "--max_cardinality", default=5000, type=int,
-                            help="Change to define the threshold for the maximal cardinality of feature paths in a "
-                                 "graph. If max. cardinality is exceeded the priority mode will be used to for the "
-                                 "path evaluation.")
+                            help="Change to define the threshold for the maximal cardinality (number) of feature paths "
+                                 "in a graph. If max. cardinality is exceeded the priority mode will be used to for "
+                                 "the path evaluation. default=5000")
+    obscure.add_argument("--priority_mode", action='store_false',
+                         help="deactivates the greedy strategy priority mode for larger architectures, NOT RECOMMENDED")
+    obscure.add_argument("--timelimit", default=0, type=int,
+                         help="Sets a soft time limit in seconds for the calculation between a pair of proteins,"
+                              "This limit does not necessarily represent the actual runtime. It only stops the "
+                              "exhaustive strategy through the architecture and activate priority mode. "
+                              "This option is only relevant if the option [--priority_mode] is set")
+    obscure.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
+                         help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
+                              "sum should be 1.0, the default is 0.7, 0.0, 0.3")
     args = parser.parse_args()
     return args
 
