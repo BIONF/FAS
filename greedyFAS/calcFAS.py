@@ -56,10 +56,6 @@ def get_options():
     general.add_argument("--bidirectional", action="store_true",
                          help="calculate both scoring directions")
     general.add_argument('--cpus', help='number of cores', action='store', default=0)
-    general.add_argument("--pairwise", dest="pairwise", default=None, type=str,
-                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
-                              " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
-                              "templates")
     annotation.add_argument('--force', help='Force override annotations', action='store_true')
     annotation.add_argument("-f", "--eFeature", default="0.001", type=float,
                             help="eValue cutoff for PFAM/SMART domain, applied during annotation but also during "
@@ -94,6 +90,10 @@ def get_options():
     inout.add_argument("--seed_id", default=None, nargs='*', type=str,
                        help="Choose specific proteins from the seed input for calculation, by default this is off "
                             "(all proteins are used for calculation)")
+    inout.add_argument("--pairwise", dest="pairwise", default=None, type=str,
+                       help="deactivate all against all comparison, needs a pairing file with the ids that should be"
+                            " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
+                            "templates")
     inout.add_argument("--raw", dest="raw", action="store_true",
                        help="print FAS scores to terminal")
     inout.add_argument("--tsv", dest="silent", action="store_true",
