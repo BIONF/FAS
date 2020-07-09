@@ -174,7 +174,7 @@ def fas(args, toolpath):
     loglevel = "ERROR"
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
-                   "priority_mode": args.priotity_mode, "priority_threshold": args.priority_threshold,
+                   "priority_mode": args.priority_mode, "priority_threshold": args.priority_threshold,
                    "max_cardinality": args.max_cardinality, "cores": args.cpus, "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
                    "timelimit": 0, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
