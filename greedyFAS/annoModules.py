@@ -377,10 +377,12 @@ def doAnno(args):
     (seqId, seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
     # create temp fasta file
     Path(outPath+'/tmp').mkdir(parents = True, exist_ok = True)
-    tmpFile = open(outPath+'/tmp/'+outName+'_'+seqId+'.fa', 'w')
+    outNameTmp = outName.replace("|","_")
+    seqIdTmp = seqId.replace("|","_")
+    tmpFile = open(outPath+'/tmp/'+outNameTmp+'_'+seqIdTmp+'.fa', 'w')
     tmpFile.write(str('>' + seqId + '\n' + seq))
     tmpFile.close()
-    seqFile = outPath+'/tmp/'+outName+'_'+seqId+'.fa'
+    seqFile = outPath+'/tmp/'+outNameTmp+'_'+seqIdTmp+'.fa'
     # run annotation
     annoList = []
     final = {}
@@ -407,7 +409,8 @@ def doAnno(args):
         annoList.append(anno)
     final['feature'] = mergeNestedDic(annoList)
     # remove tmp fasta file
-    rmCmd = 'rm %s' % (seqFile)
+    seqFileTmp = seqFile.replace("|","\|")
+    rmCmd = 'rm %s' % (seqFileTmp)
     subprocess.run([rmCmd], shell=True)
     return final
 
