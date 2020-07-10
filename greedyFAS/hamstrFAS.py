@@ -143,6 +143,7 @@ def run_fas(data):
         r_results = greedyFAS.fc_main(data[4], query_proteome, seed_proteome, clan_dict, data[2])
         for result in r_results:
             outdata[result[0]] = (outdata[result[0]][0], result[2][0])
+    print(data[0])
     return outdata, data[0]
 
 
