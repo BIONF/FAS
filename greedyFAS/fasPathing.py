@@ -33,7 +33,7 @@ def pb_region_paths(overlap_map):
     for feature in overlap_map:
         reached = []
         links = []
-        if not feature == 'END':
+        if not feature[0] == 'END':
             path_count[feature[0]] = 0
         for candidate in feature[1]:
             links.append(candidate)

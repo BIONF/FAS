@@ -120,10 +120,10 @@ def get_options():
     thresholds.add_argument("-t", "--priority_threshold", type=int, default=30,
                             help="Change to define the feature number threshold for activating priority mode in the "
                                  "path evaluation. default=30")
-    thresholds.add_argument("-m", "--max_cardinality", default=5000, type=int,
+    thresholds.add_argument("-m", "--max_cardinality", default=500, type=int,
                             help="Change to define the threshold for the maximal cardinality (number) of feature paths "
                                  "in a graph. If max. cardinality is exceeded the priority mode will be used to for "
-                                 "the path evaluation. default=5000")
+                                 "the path evaluation. default=500")
     obscure.add_argument("--priority_mode", action='store_false',
                          help="deactivates the greedy strategy priority mode for larger architectures, NOT RECOMMENDED")
     obscure.add_argument("--timelimit", default=0, type=int,
