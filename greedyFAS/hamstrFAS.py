@@ -75,8 +75,8 @@ def create_jobdict(joblist):
     namedict = {}
     for entry in joblist:
         spec = entry[1]
-        prot_id = entry[2]
-        namedict[prot_id] = entry
+        prot_id = '|'.join(entry[2:-1])
+        namedict[prot_id] = entry[-1]
         if spec in jobdict:
             jobdict[spec].append(prot_id)
         else:
@@ -160,8 +160,8 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
                 if not cells[1] == q_id:
                     p_id = seed_spec + "|" + cells[1]
                 else:
-                    p_id = spec + "|" + cells[1] + "|" + namedict[q_id][3]
-                out_f.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" + p_id + "\t" +
+                    p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
+                out_f.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" + p_id + "\t" +
                             "\t".join(cells[2:]))
         os.remove(tmp_path + "/" + spec + "_forward.domains")
         if bidirectional:
@@ -172,8 +172,8 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
                     if not cells[1] == q_id:
                         p_id = seed_spec + "|" + cells[1]
                     else:
-                        p_id = spec + "|" + cells[1] + "|" + namedict[q_id][3]
-                    out_r.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" + p_id + "\t" +
+                        p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
+                    out_r.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" + p_id + "\t" +
                                 "\t".join(cells[2:]))
             os.remove(tmp_path + "/" + spec + "_reverse.domains")
     out_f.close()
@@ -188,7 +188,7 @@ def write_phyloprofile(results, out_path, groupname, namedict):
         spec = result[1]
         ncbi = spec.split("@")[1]
         for q_id in result[0]:
-            out.write(groupname + "\tncbi" + ncbi + "\t" + spec + "|" + q_id + "|" + namedict[q_id][3] + "\t" +
+            out.write(groupname + "\tncbi" + ncbi + "\t" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" +
                       str(result[0][q_id][0]) + "\t" + str(result[0][q_id][1]) + "\n")
     out.close()
 

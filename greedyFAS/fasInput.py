@@ -168,9 +168,9 @@ def featuretypes(path, option):
             mode = "ignore"
         elif mode == "NULL":
             raise Exception(path + " is not a valid input file")
-        elif mode == "lin":
+        elif mode == "lin" and len(tmp) > 0:
             option["input_linearized"].append(tmp)
-        elif mode == "nor":
+        elif mode == "nor" and len(tmp) > 0:
             option["input_normal"].append(tmp)
     ifile.close()
     return option

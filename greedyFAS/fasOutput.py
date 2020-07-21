@@ -48,7 +48,7 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
         groupname = query
     else:
         groupname = seed
-    if option["MS_uni"]:
+    if option["MS_uni"] and len(seedpath) > 0:
         uni_weight = round(1.0 / len(seedpath), 4)
     for tool in tools:
         for feature in seed_proteome[seed][tool]:
