@@ -34,7 +34,7 @@ if version_info.major == 3:
 
 
 def get_options():
-    version = '1.1.0'
+    version = '1.2.3'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -170,7 +170,7 @@ def anno(annojobs, args, toolpath):
 
 
 def fas(args, toolpath):
-    version = "1.1.0"
+    version = "1.2.3"
     loglevel = "ERROR"
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,

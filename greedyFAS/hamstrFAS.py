@@ -161,8 +161,8 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
                     p_id = seed_spec + "|" + cells[1]
                 else:
                     p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
-                out_f.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" + p_id + "\t" +
-                            "\t".join(cells[2:]))
+                out_f.write(groupname + "#" + groupname + "|" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" +
+                            groupname + "|" + p_id + "\t" + "\t".join(cells[2:]))
         os.remove(tmp_path + "/" + spec + "_forward.domains")
         if bidirectional:
             with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
@@ -173,8 +173,8 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, groupname, seed_
                         p_id = seed_spec + "|" + cells[1]
                     else:
                         p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
-                    out_r.write(groupname + "#" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" + p_id + "\t" +
-                                "\t".join(cells[2:]))
+                    out_r.write(groupname + "#" + groupname + "|" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" +
+                                groupname + "|" + p_id + "\t" + "\t".join(cells[2:]))
             os.remove(tmp_path + "/" + spec + "_reverse.domains")
     out_f.close()
     if bidirectional:
@@ -188,8 +188,8 @@ def write_phyloprofile(results, out_path, groupname, namedict):
         spec = result[1]
         ncbi = spec.split("@")[1]
         for q_id in result[0]:
-            out.write(groupname + "\tncbi" + ncbi + "\t" + spec + "|" + q_id + "|" + namedict[q_id] + "\t" +
-                      str(result[0][q_id][0]) + "\t" + str(result[0][q_id][1]) + "\n")
+            out.write(groupname + "\tncbi" + ncbi + "\t" + groupname + "|" + spec + "|" + q_id + "|" + namedict[q_id] +
+                      "\t" + str(result[0][q_id][0]) + "\t" + str(result[0][q_id][1]) + "\n")
     out.close()
 
 

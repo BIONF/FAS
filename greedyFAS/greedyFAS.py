@@ -217,6 +217,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
     mode = 0
     pathcount = 0
     weights = None
+    unsolved = True
     if option["MS_uni"] == 0:
         if option["weight_const"]:
             weights, domain_count = w_weighting_constraints(protein, domain_count, seed_proteome, option)
@@ -225,7 +226,9 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
     search_protein, search_features, a_s_f = su_search_protein(protein, seed_proteome, option)
     search_protein = tuple(search_protein)
     max_fixture = ([], (0.0, 0.0, 0.0, 0.0, 0, 0, False), [], protein)
-
+    region = pb_region_mapper(list(search_protein), search_features, option["max_overlap"],
+                              option["max_overlap_percentage"])
+    search_graph, search_path_number = pb_region_paths(region)
     # check for available paths
     # query <--VS-- seed
     # case M2.1: empty(query)
@@ -241,9 +244,9 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             mode = 0
         else:
             # case M2.1.2: empty(query)-graph(search)
-            tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, [], search_features, weights,
-                                                      query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
-                                                      query_clans, "OFF", option)
+            tmp_path_score = pb_entire_main_nongreedy(protein, [], search_features, weights, query_features,
+                                                      seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, "OFF",
+                                                      option, search_graph, search_path_number)
             path = tmp_path_score[0][0]
             score_w = tmp_path_score[0][1]
             query_architecture = tmp_path_score[0][2]
@@ -251,6 +254,17 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
 
         # set max_fixture according to
         max_fixture = (path, score_w, query_architecture, protein)
+        unsolved = False
+
+    # seed architecture == query architecture
+    elif seed_proteome[protein] == query_proteome[query]:
+        path = list(a_s_f.keys()) + list(search_features.keys())
+        query_architecture = list(a_q_f.keys()) + list(query_features.keys())
+        score_w = sf_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
+                                       query_features, a_q_f, clan_dict, option)
+        mode = 0
+        max_fixture = (path, score_w, query_architecture, protein)
+        unsolved = False
 
     # handle all paths
     # case M2.2: graph(query)
@@ -262,13 +276,13 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             jobpool = multiprocessing.Pool(processes=option["cores"])
             if option["timelimit"] > 0:
                 timelimit = option["timelimit"] / len(stack)
-                func = partial(pb_graph_traversal_sub, search_protein, protein, search_features, weights,
-                               query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
-                               timelimit, tmp_query_graph, option)
+                func = partial(pb_graph_traversal_sub, protein, search_features, weights, query_features, seed_proteome,
+                               a_s_f, a_q_f, clan_dict, query_clans, timelimit, tmp_query_graph, option, search_graph,
+                               search_path_number)
             else:
-                func = partial(pb_graph_traversal_sub, search_protein, protein, search_features, weights,
-                               query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
-                               0, tmp_query_graph, option)
+                func = partial(pb_graph_traversal_sub, protein, search_features, weights, query_features, seed_proteome,
+                               a_s_f, a_q_f, clan_dict, query_clans, 0, tmp_query_graph, option, search_graph,
+                               search_path_number)
             pool_results = jobpool.map_async(func, stack)
             jobpool.close()
             jobpool.join()
@@ -314,9 +328,9 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                         counter = (i + 1) * jobcount[0]
                     for i in range(jobcount[1]):
                         jobs[i].append(jobpaths[-(i + 1)])
-                func = partial(pb_calc_sub, search_protein, protein, search_features, weights, query_features,
-                               seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, timelimit,
-                               option)
+                func = partial(pb_calc_sub, protein, search_features, weights, query_features,
+                               seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, timelimit, option, search_graph,
+                               search_path_number)
                 pool_results = jobpool.map_async(func, jobs)
                 jobpool.close()
                 jobpool.join()
@@ -327,7 +341,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                         go_priority_2 = True
                     if pool_result[0][1][3] >= max_fixture[1][3]:
                         max_fixture = deepcopy(pool_result[0])
-    if go_priority or go_priority_2:
+    if go_priority or go_priority_2 and unsolved:
         mode = 1
         all_query_paths = []
         priority_list = []
@@ -341,7 +355,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                                                   weights, query_features, seed_proteome, a_s_f, a_q_f,
                                                   clan_dict, query_clans, option))
             # max fixture of (search_path, score, query_path)
-    if option["priority_mode"] or go_priority_2:
+    if option["priority_mode"] or go_priority_2 and unsolved:
         for query_path in all_query_paths:
             pathcount += 1
 
@@ -357,15 +371,15 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                 # case M2.2.2 graph(query)-graph(search)
                 # regular traversal of graph based on search_protein
                 if option["priority_mode"]:
-                    tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path,
-                                                              search_features, weights, query_features,
-                                                              seed_proteome, a_s_f, a_q_f, clan_dict,
-                                                              query_clans, "OFF", option)
+                    tmp_path_score = pb_entire_main_nongreedy(protein, query_path, search_features, weights,
+                                                              query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
+                                                              query_clans, "OFF", option, search_graph,
+                                                              search_path_number)
                 else:
-                    tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path,
-                                                              search_features, weights, query_features,
-                                                              seed_proteome, a_s_f, a_q_f, clan_dict,
-                                                              query_clans, "OVER", option)
+                    tmp_path_score = pb_entire_main_nongreedy(protein, query_path, search_features, weights,
+                                                              query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
+                                                              query_clans, "OVER", option, search_graph,
+                                                              search_path_number)
                 path = tmp_path_score[0][0]
                 score_w = tmp_path_score[0][1]
                 query_path_ad = tmp_path_score[0][2]
@@ -649,12 +663,13 @@ def pb_create_jobs(graph, option):
     return queue, paths
 
 
-def pb_graph_traversal_sub(search_protein, protein, search_features, weights, query_features, seed_proteome, a_s_f,
-                           a_q_f, clan_dict, query_clans, timelimit, query_graph, option, stack):
+def pb_graph_traversal_sub(protein, search_features, weights, query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
+                           query_clans, timelimit, query_graph, option, stack, search_graph, search_path_number):
     """Sub function for multi-processing: This function does a depth-first search in the feature graph. The starting
      point in the graph is given in the stack.
 
-    :param search_protein: contains feature architecture of the current seed protein [dictionary]
+    :param search_path_number: number of paths in search protein
+    :param search_graph: architecture graph of the search protein
     :param protein: String that contains the identifier of the seed protein
     :param search_features: all features to be linearized in the seed protein
     :param weights: feature weights
@@ -690,14 +705,14 @@ def pb_graph_traversal_sub(search_protein, protein, search_features, weights, qu
             # case M2.2.2 graph(query)-graph(search)
             # regular traversal of graph based on search_protein
             if option["timelimit"] >= 1:
-                tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path, search_features,
-                                                          weights, query_features, seed_proteome, a_s_f, a_q_f,
-                                                          clan_dict, query_clans,
-                                                          timelimit - (timecheck - tmp_calcstart), option)
+                tmp_path_score = pb_entire_main_nongreedy(protein, query_path, search_features, weights, query_features,
+                                                          seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
+                                                          timelimit - (timecheck - tmp_calcstart), option, search_graph,
+                                                          search_path_number)
             else:
-                tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, query_path, search_features,
-                                                          weights, query_features, seed_proteome, a_s_f, a_q_f,
-                                                          clan_dict, query_clans, "OFF", option)
+                tmp_path_score = pb_entire_main_nongreedy(protein, query_path, search_features, weights, query_features,
+                                                          seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, "OFF",
+                                                          option, search_graph, search_path_number)
             path = tmp_path_score[0][0]
             score_w = tmp_path_score[0][1]
             query_path_ad = tmp_path_score[0][2]
@@ -711,11 +726,10 @@ def pb_graph_traversal_sub(search_protein, protein, search_features, weights, qu
     return max_fixture, timecheck - tmp_calcstart
 
 
-def pb_calc_sub(search_protein, protein, search_features, weights, query_features, seed_proteome, a_s_f, a_q_f,
-                clan_dict, query_clans, timelimit, option, jobpaths):
+def pb_calc_sub(protein, search_features, weights, query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
+                timelimit, option, jobpaths, search_graph, search_path_number):
     """Sub function for multiprocessing [2]: Goes through a list of (query) paths an evaluates them.
 
-    :param search_protein: contains feature architecture of the current seed protein [dictionary]
     :param protein: String that contains the identifier of the seed protein
     :param search_features: all features to be linearized in the seed protein
     :param weights: feature weights
@@ -729,15 +743,19 @@ def pb_calc_sub(search_protein, protein, search_features, weights, query_feature
                       mode is used instead
     :param option: dictionary that contains the main option variables of FAS
     :param jobpaths: a group of (query) paths to be evaluated
+    :param search_path_number: number of paths in search protein
+    :param search_graph: architecture graph of the search protein
     :return: max_fixture, tmpcheck - tmpstart (time taken for calculation)
+
     """
     max_fixture = ([], (0.0, 0.0, 0.0, 0.0, 0, 0, False), [], protein)
     tmpstart = time.time()
     for jobpath in jobpaths:
         tmpcheck = time.time()
-        tmp_path_score = pb_entire_main_nongreedy(search_protein, protein, jobpath, search_features, weights,
-                                                  query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
-                                                  timelimit - (tmpcheck - tmpstart), option)
+        tmp_path_score = pb_entire_main_nongreedy(protein, jobpath, search_features, weights, query_features,
+                                                  seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
+                                                  timelimit - (tmpcheck - tmpstart), option, search_graph,
+                                                  search_path_number)
         path = tmp_path_score[0][0]
         score_w = tmp_path_score[0][1]
         query_path_ad = tmp_path_score[0][2]
@@ -748,9 +766,8 @@ def pb_calc_sub(search_protein, protein, search_features, weights, query_feature
     return max_fixture, tmpcheck - tmpstart
 
 
-def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_features, weights, query_features,
-                             seed_proteome, a_s_f, a_q_f, clan_dict, query_clans, tmp_timelimit,
-                             option):
+def pb_entire_main_nongreedy(protein_id, query_path, search_features, weights, query_features, seed_proteome, a_s_f,
+                             a_q_f, clan_dict, query_clans, tmp_timelimit, option, search_graph, search_path_number):
     """Main Path-building function,
     creates graph with all paths(for seed/search protein), checks priority mode activation if necessary retrieves best
     path from graph traversal function, returns best path, score and mode
@@ -758,7 +775,6 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
                     pb_entire_graphtraversal()
 
     :param tmp_timelimit: timelimit for exhaustive mode
-    :param search_protein: contains feature architecture of the current seed protein [dictionary]
     :param protein_id: String that contains the identifier of the seed protein
     :param query_path: currently evaluated query path
     :param search_features: all features to be linearized in the seed protein
@@ -770,18 +786,20 @@ def pb_entire_main_nongreedy(search_protein, protein_id, query_path, search_feat
     :param clan_dict: dictionary that maps features to clans
     :param query_clans: (Pfam)-clans of the current query protein
     :param option: dictionary that contains the main option variables of FAS
+    :param search_path_number: number of paths in search protein
+    :param search_graph: architecture graph of the search protein
+    :param search_path_number: number of paths in search protein
+    :param search_graph: architecture graph of the search protein
     :return: path_score, mode[priority or extensive]
+
     """
     path_score = 0
     mode = 0
     priority_check = False
 
-    region = pb_region_mapper(list(search_protein), search_features, option["max_overlap"],
-                              option["max_overlap_percentage"])
-    search_graph, path_number = pb_region_paths(region)
-
-    if (int(len(search_features)) >= int(option["priority_threshold"]) and option["priority_mode"]) \
-            or tmp_timelimit == "OVER":
+    if ((int(len(search_features)) >= int(option["priority_threshold"] or
+                                          search_path_number > option['max_cardinality'])) and
+                                          option["priority_mode"]) or tmp_timelimit == "OVER":
         mode = 1
         priority_check = True
         # checking best path for all domain types

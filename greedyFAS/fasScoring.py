@@ -100,7 +100,7 @@ def sf_entire_calc_score(path, query_path, weights, search_features, a_s_f, quer
     if option["weight_const"]:
         for i in adjusted_weights:
             weights[i] = tmp_weight[i]
-    return score_ms, score_ps, score_cs, final_score, path_weight, common_feature, score_ls
+    return score_ms, score_ps, score_cs, float(final_score), path_weight, common_feature, score_ls
 
 
 def sf_cs_score(path, clan_dict, query_clans, features):
@@ -139,7 +139,7 @@ def sf_cs_score(path, clan_dict, query_clans, features):
         score = 0.0
     else:
         score = score / counter
-    return score
+    return float(score)
 
 
 def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_features):
@@ -186,7 +186,7 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
         score = 0.0
     else:
         score = score / counter
-    return score
+    return float(score)
 
 
 def sf_ms_score(path, protein, proteome, features, option):
@@ -236,7 +236,7 @@ def sf_ms_score(path, protein, proteome, features, option):
         scale = 1.0 / float(scale)
     for score in scores:
         final_score += score[1] * scale
-    return final_score, domains, scale
+    return float(final_score), domains, scale
 
 
 def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
@@ -316,7 +316,7 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
     logging.debug(
         "Return entire_ms_score: " + str(final_score) + ", " + str(search_domains) + ", " + str(scale) + ", " + str(
             final_weight) + ", " + str(common_feature))
-    return final_score, search_domains, scale, final_weight, common_feature
+    return float(final_score), search_domains, scale, final_weight, common_feature
 
 
 def sf_ps_score(path, scale, protein, features, seed_proteome, option):
@@ -367,7 +367,7 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
 
     for f_score in scores:
         final_score += scores[f_score] / count[f_score] * scale
-    return final_score
+    return float(final_score)
 
 
 def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
@@ -437,4 +437,4 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
             final_score += scores[f_score] / count[f_score] * scale
             final_ls_score += ls_scores[f_score] / count[f_score] * scale
 
-    return final_score, final_ls_score
+    return float(final_score), float(final_ls_score)
