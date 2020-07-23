@@ -78,7 +78,7 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.3.0'
+    version = '1.3.1'
     parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
@@ -116,6 +116,8 @@ def main():
     toolPath = args.toolPath
     if toolPath == '':
         pathconfigFile = os.path.realpath(__file__).replace('annoFAS.py','pathconfig.txt')
+        if not os.path.exists(pathconfigFile):
+            sys.exit('No pathconfig.txt found. Please run prepareFAS (https://github.com/BIONF/FAS/wiki/prepareFAS).')
         with open(pathconfigFile) as f:
             toolPath = f.readline().strip()
     else:
