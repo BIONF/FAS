@@ -28,6 +28,7 @@ from os.path import expanduser
 from pathlib import Path
 import multiprocessing as mp
 import greedyFAS.annoModules as annoModules
+from tqdm import tqdm
 
 home = expanduser('~')
 
@@ -43,7 +44,9 @@ def runAnnoFas(args):
                                                    eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
             pool = mp.Pool(cpus)
-            annoOut = pool.map(annoModules.doAnno, annoJobs)
+            annoOut = []
+            for _ in tqdm(pool.imap_unordered(annoModules.doAnno, annoJobs), total=len(annoJobs)):
+                annoOut.append(_)
             annoDict = annoModules.mergeNestedDic(annoOut)
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
@@ -65,7 +68,9 @@ def runAnnoFas(args):
                                                    eInstance, hmmCores])
             # redo annotation
             pool = mp.Pool(mp.cpu_count()-1)
-            annoOut = pool.map(annoModules.doAnno, redoJobs)
+            annoOut = []
+            for _ in tqdm(pool.imap_unordered(annoModules.doAnno, redoJobs), total=len(redoJobs)):
+                annoOut.append(_)
             redoAnnoDict = annoModules.mergeNestedDic(annoOut)
             # replace old annotations and save to json output
             annoDict = annoModules.replaceAnno(outFile, redoAnnoDict, redo)
@@ -78,7 +83,7 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.3.1'
+    version = '1.3.2'
     parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')

@@ -38,11 +38,9 @@ home = expanduser('~')
 def complete(text, state):
     return(glob.glob(os.path.expanduser(text)+'*')+[None])[state]
 
-
 def subprocess_cmd(commands):
     for cmd in commands:
         subprocess.call(cmd, shell = True)
-
 
 def download_data(file, checksum):
     url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo' + '/' + file
@@ -57,7 +55,6 @@ def download_data(file, checksum):
             sys.exit('Downloaded file corrupted!')
     else:
         sys.exit('Cannot download annotation tools!')
-
 
 def query_yes_no(question, default='yes'):
     valid = {'yes': True, 'y': True, 'ye': True,
@@ -387,11 +384,6 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         sys.exit('Done! Annotation tools can be found in %s' % anno_path)
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
-
-# def removeChecked(anno_path):
-#     if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
-#         sedCmd ='sed -i \'s/#checked//\' %s/annoTools.txt' % anno_path
-#         subprocess.call([sedCmd], shell=True)
 
 def main():
     version = '1.2.2'
