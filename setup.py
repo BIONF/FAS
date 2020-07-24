@@ -37,7 +37,8 @@ setup(
     packages=find_packages(),
     package_data={'': ['*']},
     install_requires=[
-        'biopython'
+        'biopython',
+        'tqdm'
     ],
     entry_points={
         'console_scripts': ["annoParserFAS = greedyFAS.annoParserFAS:main",
