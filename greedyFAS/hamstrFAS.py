@@ -28,6 +28,7 @@ from greedyFAS import greedyFAS
 from greedyFAS.fasInput import read_json
 from greedyFAS.fasWeighting import w_weight_correction
 from pathlib import Path
+from tqdm import tqdm
 
 
 def main():
@@ -109,7 +110,9 @@ def manage_jobpool(jobdict, seed_name, weight_dir, seed_spec, tmp_path, cores, f
                      "ref_proteome": [spec + '.json']},
                      seed_proteome, seed_weight, weight_dir, clan_dict])
     jobpool = multiprocessing.Pool(processes=cores)
-    results = jobpool.map(run_fas, data)
+    results = []
+    for _ in tqdm(jobpool.imap_unordered(run_fas, data), total=len(jobdict)):
+        results.append(_)
     jobpool.close()
     jobpool.join()
     return results
@@ -143,7 +146,6 @@ def run_fas(data):
         r_results = greedyFAS.fc_main(data[4], query_proteome, seed_proteome, clan_dict, data[2])
         for result in r_results:
             outdata[result[0]] = (outdata[result[0]][0], result[2][0])
-    print(data[0])
     return outdata, data[0]
 
 
