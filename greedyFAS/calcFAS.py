@@ -97,8 +97,8 @@ def get_options():
                              "FAS wiki pages for templates of the the featuretypes input file")
     inargs.add_argument("--extra_annotation", default=None, nargs='*', type=str,
                         help="give naming conventions for extra annotation files, eg. if the file name for the seed is "
-                             "someseed.json than the extra annotation files should be named "
-                             "someseed_[EXTRA_ANNOTATION].json, these extra files need to exist for seed, query and the "
+                             "someseed.json than the extra annotation files should be named someseed_"
+                             "[EXTRA_ANNOTATION].json, these extra files need to exist for seed, query and the "
                              "references (if given)")
     outargs.add_argument("-n", "--out_name", default=None, type=str,
                          help="name for outputfiles, if none is given the name will be created from the seed and "
@@ -106,10 +106,10 @@ def get_options():
     outargs.add_argument("--raw", dest="raw", action="store_true",
                          help="print FAS scores to terminal")
     outargs.add_argument("--tsv", dest="silent", action="store_true",
-                         help="deactivates creation of the tsv output, automatically enables --raw")
+                         help="deactivates creation of the tsv output, either use together with --raw or "
+                              "--phyloprofile")
     outargs.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
-                         help="activate phyloprofile output, needs mapping file for all query proteins, single seed "
-                              "only, will run with more but output won't work without editing")
+                         help="activate phyloprofile output, needs mapping file for all query proteins")
     outargs.add_argument("--domain", dest="domain", action="store_false",
                          help="deactivate .domains output")
     thresholds.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
@@ -179,7 +179,7 @@ def fas(args, toolpath):
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
                    "timelimit": 0, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance,
-                   "eFeature": args.eFeature
+                   "eFeature": args.eFeature, "progress": True
                    }
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
@@ -190,6 +190,8 @@ def fas(args, toolpath):
         option_dict["ref_proteome"] = [args.annotation_dir + '/' + name + '.json']
     else:
         option_dict["ref_proteome"] = None
+    if args.raw:
+        option_dict["progress"] = False
     if option_dict["cores"] == 0:
         option_dict["cores"] = mp.cpu_count()-1
     if args.ref_2:
@@ -197,8 +199,6 @@ def fas(args, toolpath):
         option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
     else:
         option_dict["ref_2"] = None
-    if args.silent:
-        option_dict["raw"] = args.silent
     if args.extra_annotation:
         for i in args.extra_annotation:
             option_dict["p_path"].append(args.annotation_dir + '/' + i + '.json')

@@ -33,12 +33,12 @@ def write_tsv_out(outpath, bidirectional, results):
             outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2], outdict[result[1],
                                                                                                   result[0]][2])
     for pair in outdict:
-        out.write(pair[0] + "\t" + pair[1] + "\t" + f"{float(outdict[pair][0][0]):.4}" + "/" +
-                  f"{float(outdict[pair][1][0]):.4}" + "\t" + f"{float(outdict[pair][0][1]):.4}" + "/" +
-                  f"{float(outdict[pair][1][1]):.4}" + "\t" + f"{float(outdict[pair][0][2]):.4}" + "/" +
-                  f"{float(outdict[pair][1][2]):.4}" + "\t" + f"{float(outdict[pair][0][3]):.4}" + "/" +
-                  f"{float(outdict[pair][1][3]):.4}" + "\t" + f"{float(outdict[pair][0][4]):.4}" + "/" +
-                  f"{float(outdict[pair][1][4]):.4}" + "\t" + outdict[pair][2] + "\n")
+        out.write(pair[0] + "\t" + pair[1] + "\t" + f"{outdict[pair][0][0]:.4}" + "/" +
+                  f"{outdict[pair][1][0]:.4}" + "\t" + f"{outdict[pair][0][1]:.4}" + "/" +
+                  f"{outdict[pair][1][1]:.4}" + "\t" + f"{outdict[pair][0][2]:.4}" + "/" +
+                  f"{outdict[pair][1][2]:.4}" + "\t" + f"{outdict[pair][0][3]:.4}" + "/" +
+                  f"{outdict[pair][1][3]:.4}" + "\t" + f"{outdict[pair][0][4]:.4}" + "/" +
+                  f"{outdict[pair][1][4]:.4}" + "\t" + outdict[pair][2] + "\n")
     out.close()
 
 

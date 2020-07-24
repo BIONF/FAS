@@ -27,6 +27,7 @@ import multiprocessing
 import time
 from functools import partial
 from copy import deepcopy
+from tqdm import tqdm
 from greedyFAS.fasInput import read_json
 from greedyFAS.fasOutput import write_domain_out
 from greedyFAS.fasOutput import write_tsv_out
@@ -104,6 +105,7 @@ def fc_start(option):
             if protid not in query_proteome:
                 raise Exception(protid + " is not in the query annotation")
     if option["bidirectional"]:
+        print("calculating forward scores...")
         f_results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option)
         if option["MS_uni"] == 0 and option["ref_2"]:
             domain_count_2 = {}
@@ -118,12 +120,14 @@ def fc_start(option):
         option["reverse"] = True
         option["seed_id"] = option["query_id"]
         option["query_id"] = id_tmp
+        print("calculating backward scores...")
         r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option)
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
         if not option['output']:
             write_tsv_out(option["outpath"], True, (f_results, r_results))
     else:
+        print("calculating forward scores...")
         results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option)
         if not option["output"]:
             write_tsv_out(option["outpath"], False, (results, None))
@@ -145,6 +149,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
     :param option: dictionary that contains the main option variables of FAS
     """
 
+    progress = None
     domain_out = None
     results = []
     if not option["output"]:
@@ -154,6 +159,8 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
             else:
                 domain_out = open(option["outpath"] + "_forward.domains", "w")
     if option['pairwise']:
+        if option['progress']:
+            progress = tqdm(total=len(option['pairwise']))
         for pair in option['pairwise']:
             query = pair[1]
             protein = pair[0]
@@ -165,23 +172,30 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
             results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
                                        go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
                                        domain_out))
+            if option["progress"]:
+                progress.update(1)
     else:
         if option["query_id"]:
             querylist = option["query_id"]
         else:
             querylist = list(query_proteome.keys())
+        if option["seed_id"]:
+            seedlist = option["seed_id"]
+        else:
+            seedlist = list(seed_proteome.keys())
+        if option['progress']:
+            progress = tqdm(total=len(querylist)*len(seedlist))
         for query in querylist:
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
             query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
             go_priority, domain_count = tmp_query[7:9]
-            if option["seed_id"]:
-                seedlist = option["seed_id"]
-            else:
-                seedlist = list(seed_proteome.keys())
+
             for protein in seedlist:
                 results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths,
                                            query_features, go_priority, a_q_f, clan_dict, query_graph, query_proteome,
                                            query, query_clans, domain_out))
+                if option["progress"]:
+                    progress.update(1)
     return results
 
 
