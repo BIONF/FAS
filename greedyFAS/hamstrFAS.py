@@ -24,9 +24,9 @@
 import multiprocessing
 import argparse
 import os
-from greedyFAS import greedyFAS
-from greedyFAS.fasInput import read_json
-from greedyFAS.fasWeighting import w_weight_correction
+from greedyFAS.mainFAS import greedyFAS
+from greedyFAS.mainFAS.fasInput import read_json
+from greedyFAS.mainFAS.fasWeighting import w_weight_correction
 from pathlib import Path
 from tqdm import tqdm
 
@@ -196,7 +196,10 @@ def write_phyloprofile(results, out_path, groupname, namedict):
 
 
 def get_options():
-    parser = argparse.ArgumentParser()
+    version = '1.2.5'
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+                                     epilog="For more information on certain options, please refer to the wiki pages "
+                                            "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument("-i", "--extended_fa", default=None, type=str, required=True,

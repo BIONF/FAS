@@ -24,7 +24,7 @@
 import logging
 from sys import version_info
 if version_info.major == 3:
-    from greedyFAS.fasWeighting import w_weight_const_rescale
+    from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
 
 
 def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,

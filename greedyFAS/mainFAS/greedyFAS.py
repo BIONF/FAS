@@ -28,20 +28,20 @@ import time
 from functools import partial
 from copy import deepcopy
 from tqdm import tqdm
-from greedyFAS.fasInput import read_json
-from greedyFAS.fasOutput import write_domain_out
-from greedyFAS.fasOutput import write_tsv_out
-from greedyFAS.fasOutput import phyloprofile_out
-from greedyFAS.fasScoring import sf_calc_score
-from greedyFAS.fasScoring import sf_entire_calc_score
-from greedyFAS.fasWeighting import w_weight_const_rescale
-from greedyFAS.fasWeighting import w_weight_correction
-from greedyFAS.fasWeighting import w_weighting
-from greedyFAS.fasWeighting import w_weighting_constraints
-from greedyFAS.fasWeighting import w_count_add_domains
-from greedyFAS.fasPathing import pb_region_mapper
-from greedyFAS.fasPathing import pb_region_paths
-from greedyFAS.annoModules import mergeNestedDic
+from greedyFAS.mainFAS.fasInput import read_json
+from greedyFAS.mainFAS.fasOutput import write_domain_out
+from greedyFAS.mainFAS.fasOutput import write_tsv_out
+from greedyFAS.mainFAS.fasOutput import phyloprofile_out
+from greedyFAS.mainFAS.fasScoring import sf_calc_score
+from greedyFAS.mainFAS.fasScoring import sf_entire_calc_score
+from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
+from greedyFAS.mainFAS.fasWeighting import w_weight_correction
+from greedyFAS.mainFAS.fasWeighting import w_weighting
+from greedyFAS.mainFAS.fasWeighting import w_weighting_constraints
+from greedyFAS.mainFAS.fasWeighting import w_count_add_domains
+from greedyFAS.mainFAS.fasPathing import pb_region_mapper
+from greedyFAS.mainFAS.fasPathing import pb_region_paths
+from greedyFAS.annoFAS.annoModules import mergeNestedDic
 
 
 # important vars #             ###  var looks ###

@@ -27,7 +27,7 @@ import time
 from os.path import expanduser
 from pathlib import Path
 import multiprocessing as mp
-import greedyFAS.annoModules as annoModules
+import greedyFAS.annoFAS.annoModules as annoModules
 from tqdm import tqdm
 
 home = expanduser('~')
@@ -84,7 +84,9 @@ def runAnnoFas(args):
 
 def main():
     version = '1.3.2'
-    parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.')
+    parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.',
+                                     epilog="For more information on certain options, please refer to the wiki pages "
+                                            "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-i', '--fasta', help='Input sequence(s) in fasta format', action='store', default='',
