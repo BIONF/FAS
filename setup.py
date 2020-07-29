@@ -31,6 +31,7 @@ setup(
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Julian Dosch",
     author_email="Dosch@bio.uni-frankfurt.de",
     url="https://github.com/BIONF/FAS",
