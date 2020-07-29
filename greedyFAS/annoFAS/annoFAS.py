@@ -122,7 +122,7 @@ def main():
     annoModules.checkFileExist(seqFile)
     toolPath = args.toolPath
     if toolPath == '':
-        pathconfigFile = os.path.realpath(__file__).replace('annoFAS.py','pathconfig.txt')
+        pathconfigFile = os.path.realpath(__file__).replace('annoFAS/annoFAS.py', 'pathconfig.txt')
         if not os.path.exists(pathconfigFile):
             sys.exit('No pathconfig.txt found. Please run prepareFAS (https://github.com/BIONF/FAS/wiki/prepareFAS).')
         with open(pathconfigFile) as f:
