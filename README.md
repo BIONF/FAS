@@ -15,29 +15,7 @@ FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcent
 
 FAS is provided as a python package and compatible with **Python3**.
 
-First, get the source code of FAS from our github:
-
-```
-git clone --depth=1 https://github.com/BIONF/FAS
-```
-
-Then go to FAS directory and run pip install (\*):
-```
-cd FAS
-pip install .
-```
-
-(\*) In case you do not have admin rights, and don't use package systems like Anaconda to manage environments you need to use the **--user** option:
-```
-pip install --user .
-```
-
-and then add the following line to the end of your `.bashrc` or `.bash_profile` file, restart the current terminal to apply the change:
-```
-export PATH=$HOME/.local/bin:$PATH
-```
-
-Alternatively, you can install FAS directly from a Conda environment without the need of downloading the source code:
+You can install FAS directly from a Conda environment:
 ```
 conda install -c BIONF fas
 ```
@@ -46,6 +24,20 @@ You may have to add bioconda to your channels beforehand as FAS requires the hmm
 conda config --add channels bioconda
 ```
 
+Alternatively, you can install FAS with pip:
+```
+python3 -m pip install greedyFAS
+```
+
+(\*) In case you **do not have admin rights**, and don't use package systems like Anaconda to manage environments you need to use the **--user** option:
+```
+python3 -m pip install --user greedyFAS
+```
+
+and then add the following line to the end of your `.bashrc` or `.bash_profile` file, restart the current terminal to apply the change:
+```
+export PATH=$HOME/.local/bin:$PATH
+```
 
 # Usage
 
