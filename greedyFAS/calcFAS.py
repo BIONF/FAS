@@ -27,13 +27,13 @@ import logging
 from sys import version_info
 import multiprocessing as mp
 if version_info.major == 3:
-    from greedyFAS import annoFAS
+    from greedyFAS.annoFAS import annoFAS
     from greedyFAS.annoFAS import annoModules
     from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.2.5'
+    version = '1.2.6'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
