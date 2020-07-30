@@ -154,8 +154,8 @@ def prepare_annoTool(options):
     checksum = '1818703744 1108970315 ' + file
 
     if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
-        with open(anno_path+'/annoTools.txt') as file:
-            if '#checked' in file.read():
+        with open(anno_path+'/annoTools.txt') as anno_path:
+            if '#checked' in anno_path.read():
                 print('Annotation tools already found at %s' % anno_path)
                 if not os.path.exists(os.path.abspath(options['greedyFasPath']+'/pathconfig.txt')):
                     print('If you want to add %s to config file of FAS, please rerun this function with --savePath!' % anno_path)
@@ -386,7 +386,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 def main():
-    version = '1.2.2'
+    version = '1.2.3'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
