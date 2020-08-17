@@ -27,23 +27,26 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.0.0",
+    version="1.2.8",
+    python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Julian Dosch",
     author_email="Dosch@bio.uni-frankfurt.de",
     url="https://github.com/BIONF/FAS",
     packages=find_packages(),
     package_data={'': ['*']},
-    install_requires=[],
+    install_requires=[
+        'biopython',
+        'tqdm'
+    ],
     entry_points={
-        'console_scripts': ["greedyFAS = greedyFAS.greedyFAS:main",
-                            "parseInterPro = greedyFAS.parserInterPro:main",
-                            "annoFAS = greedyFAS.annoFAS:main",
+        'console_scripts': ["annoParserFAS = greedyFAS.annoFAS.annoParserFAS:main",
+                            "annoFAS = greedyFAS.annoFAS.annoFAS:main",
                             "prepareFAS = greedyFAS.prepareFAS:main",
-                            "easyFAS = greedyFAS.easyFAS:main",
-                            "fasHamstr = greedyFAS.fasHamstr:main",
-                            "processAnnotation = greedyFAS.processAnnotation:main"],
+                            "calcFAS = greedyFAS.calcFAS:main",
+                            "hamstrFAS = greedyFAS.hamstrFAS:main"],
     },
     license="GPL-3.0",
     classifiers=[

@@ -25,75 +25,7 @@ import math
 import logging
 
 
-def w_count(prot_count, domain_count, seed_proteome, query_proteome):
-    """Goes through all feature in query_proteome and seed_proteome and groups them by rarity (according to the
-    reference), also adds features that are not in the reference proteome with a count of 1
-
-    :param prot_count: number of proteins in reference
-    :param domain_count: count for each feature in reference
-    :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
-    :param query_proteome: dictionary that contains the feature architecture of all query proteins
-    :return: relevant_feature, domain_count
-    """
-    logging.debug("w_count: processing query and search domains.")
-    relevant_features = {}
-    for query in query_proteome:
-        for feature in query_proteome[query]:
-            if feature not in domain_count:
-                domain_count[feature] = 1
-                relevant_features[feature] = 1
-            elif feature not in relevant_features:
-                if domain_count[feature] == 1:
-                    relevant_features[feature] = 1
-                elif float(domain_count[feature]) / prot_count <= 0.1:
-                    relevant_features[feature] = domain_count[feature]
-                elif float(domain_count[feature]) / prot_count <= 0.5:
-                    relevant_features[feature] = domain_count[feature]
-                else:
-                    relevant_features[feature] = domain_count[feature]
-    for template in seed_proteome:
-        protein = seed_proteome[template]
-        for feature in protein:
-            if feature not in domain_count:
-                domain_count[feature] = 1
-                relevant_features[feature] = 1
-            elif feature not in relevant_features:
-                if float(domain_count[feature]) / prot_count <= 0.1:
-                    relevant_features[feature] = domain_count[feature]
-                if float(domain_count[feature]) / prot_count <= 0.5:
-                    relevant_features[feature] = domain_count[feature]
-                else:
-                    relevant_features[feature] = domain_count[feature]
-
-    logging.debug("domain counts: " + str(domain_count))
-    return relevant_features, domain_count
-
-
-def w_count_ref(proteome):
-    """Counts all features in reference proteome
-
-    :param proteome: dictionary that contains the feature architecture of all ref proteins
-    :return: prot_count, domain_count
-    """
-    logging.debug("w_count_ref: counting domains in reference gene set.")
-
-    domain_count = {}
-    prot_count = 0
-    for i in proteome:
-        prot_count += 1
-        protein = proteome[i]
-        for feature in protein:
-            # counting instances (subtracts 2 because first and second entry contain assess(bool) and feat_eval(float))
-            count = len(protein[feature]) - 2
-            if feature in domain_count:
-                domain_count[feature] += count
-            else:
-                domain_count[feature] = count
-    logging.debug("domains counts: " + str(domain_count))
-    return float(prot_count), domain_count
-
-
-def w_weighting(protein, domain_count, proteome):
+def w_weighting(protein, domain_count, proteome, option):
     """Calculates weights
 
     :param protein: protein id
@@ -105,8 +37,12 @@ def w_weighting(protein, domain_count, proteome):
     features = []
     scaling_factor = 0.0
     sum_of_features = 0.0
-    for feature in proteome[protein]:
-        features.append(feature)
+    for tool in option["input_linearized"]:
+        for feature in proteome[protein][tool]:
+            features.append(feature)
+    for tool in option["input_normal"]:
+        for feature in proteome[protein][tool]:
+            features.append(feature)
     for feature in features:
         try:
             domain_count[feature]
@@ -153,8 +89,9 @@ def w_weighting_constraints(protein, domain_count, proteome, option):
     features = []
     single_constraints = []
     filled = 0.0
-    for feature in proteome[protein]:
-        features.append(feature)
+    for tool in tools:
+        for feature in proteome[protein][tool]:
+            features.append(feature)
     for feature in features:
         if feature in option["constraints"]:
             filled += option["constraints"][feature]

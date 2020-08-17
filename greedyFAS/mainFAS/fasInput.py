@@ -23,6 +23,7 @@
 import xml.etree.ElementTree as ElTre
 import os
 import logging
+import json
 
 
 def xmlreader(path, mode, tool, assess, proteome, protein_lengths, clan_dict, option):
@@ -158,16 +159,18 @@ def featuretypes(path, option):
     lines = ifile.readlines()
     mode = "NULL"
     for line in lines:
-        tmp = line.rstrip("\n")
+        tmp = line.rstrip("\n").lower()
         if tmp == "#linearized":
             mode = "lin"
         elif tmp == "#normal":
             mode = "nor"
+        elif tmp == "#checked":
+            mode = "ignore"
         elif mode == "NULL":
             raise Exception(path + " is not a valid input file")
-        elif mode == "lin":
+        elif mode == "lin" and len(tmp) > 0:
             option["input_linearized"].append(tmp)
-        elif mode == "nor":
+        elif mode == "nor" and len(tmp) > 0:
             option["input_normal"].append(tmp)
     ifile.close()
     return option
@@ -211,3 +214,9 @@ def read_pairwise(path):
             pairwise.append(line.rstrip('\n').split('\t'))
             line = infile.readline()
     return pairwise
+
+
+def read_json(path):
+    with open(path, 'r') as infile:
+        in_dict = json.loads(infile.read())
+    return in_dict
