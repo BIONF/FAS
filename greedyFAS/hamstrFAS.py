@@ -33,25 +33,26 @@ from tqdm import tqdm
 
 def main():
     args = get_options()
-    joblist = read_extended_fa(args.extended_fa, args.groupnames)
-    jobdict, namedict, groupdict, seedspec = create_jobdict(joblist)
-    features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
     if not args.outname:
         outname = args.extended_fa.split('/')[-1].split('.')[0]
     else:
         outname = args.outname
     if not args.out_dir:
-        out_dir = '/'.join(args.extended_fa.split('/')[:-1]) + '/'
+        out_dir = '/'.join(os.path.abspath(args.extended_fa).split('/')[0:-1]) + '/'
     else:
         out_dir = args.out_dir + '/'
+    print(out_dir)
+    joblist = read_extended_fa(args.extended_fa, args.groupnames)
+    jobdict, namedict, groupdict, seedspec = create_jobdict(joblist)
+    features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
     print('calculating FAS scores for ' + outname + '...')
     Path(args.tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, args.tmp_dir + '/' + outname, args.cores,
                              features, args.bidirectional)
     print('writing phyloprofile output...')
-    write_phyloprofile(results, args.out_dir, outname, namedict, groupdict)
-    join_domain_out(jobdict, args.tmp_dir + "/" + outname, args.out_dir, args.bidirectional, outname,
+    write_phyloprofile(results, out_dir, outname, namedict, groupdict)
+    join_domain_out(jobdict, args.tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
                     seedspec, namedict, groupdict)
     print('hamstrFAS finished!')
     if args.bidirectional:
@@ -170,10 +171,10 @@ def run_fas(data):
 
 
 def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_spec, namedict, groupdict):
-    out_f = open(out_path + "/" + outname + "_forward.domains", "w")
+    out_f = open(out_path + outname + "_forward.domains", "w")
     out_r = None
     if bidirectional:
-        out_r = open(out_path + "/" + outname + "_reverse.domains", "w")
+        out_r = open(out_path + outname + "_reverse.domains", "w")
     for spec in jobdict:
         with open(tmp_path + "/" + spec + "_forward.domains", "r") as infile:
             for line in infile.readlines():
@@ -204,7 +205,7 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_sp
 
 
 def write_phyloprofile(results, out_path, outname, namedict, groupdict):
-    out = open(out_path + "/" + outname + ".phyloprofile", "w+")
+    out = open(out_path + outname + ".phyloprofile", "w+")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
     for result in results:
         spec = result[1]
