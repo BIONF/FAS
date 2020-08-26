@@ -48,7 +48,7 @@ def main():
     print('writing phyloprofile output...')
     write_phyloprofile(results, args.out_dir, outname, namedict, groupdict)
     join_domain_out(jobdict, args.tmp_dir + "/" + outname, args.out_dir, args.bidirectional, outname,
-                    args.seed_spec, namedict, groupdict)
+                    seedspec, namedict, groupdict)
     print('hamstrFAS finished!')
     if args.out_dir[0] == '/':
         out_dir = args.out_dir
@@ -86,7 +86,7 @@ def create_jobdict(joblist):
     prot_id = None
     spec = None
     for entry in joblist:
-        seed = joblist[entry][0]['|'.join(joblist[entry][1:-1])]
+        seed = '|'.join(joblist[entry][0][1:-1])
         if seedspec and not seedspec == joblist[entry][0][0]:
             raise Exception(
                 'There seem to be multiple seed species in the extended.fa but hamstrFAS only supports a single one')
@@ -94,13 +94,13 @@ def create_jobdict(joblist):
             seedspec = joblist[entry][0][0]
         groupdict[seed] = entry
         for query in joblist[entry]:
-            prot_id = '|'.join(joblist[entry][1:-1])
+            prot_id = '|'.join(query[1:-1])
             spec = query[0]
-            namedict[prot_id] = entry[-1]
-        if spec in jobdict:
-            jobdict[spec].append((seed, prot_id))
-        else:
-            jobdict[spec] = [(seed, prot_id)]
+            namedict[prot_id] = query[-1]
+            if spec in jobdict:
+                jobdict[spec].append((seed, prot_id))
+            else:
+                jobdict[spec] = [(seed, prot_id)]
     return jobdict, namedict, groupdict, seedspec
 
 
@@ -180,25 +180,25 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_sp
         with open(tmp_path + "/" + spec + "_forward.domains", "r") as infile:
             for line in infile.readlines():
                 cells = line.split("\t")
-                q_id = cells[0].split("#")[1]
+                s_id, q_id = cells[0].split("#")
                 if not cells[1] == q_id:
                     p_id = seed_spec + "|" + cells[1]
                 else:
                     p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
-                out_f.write(groupdict[p_id] + "#" + groupdict[p_id] + "|" + spec + "|" + q_id + "|" + namedict[q_id] +
-                            "\t" + groupdict[p_id] + "|" + p_id + "\t" + "\t".join(cells[2:]))
+                out_f.write(groupdict[s_id] + "#" + groupdict[s_id] + "|" + spec + "|" + q_id + "|" + namedict[q_id] +
+                            "\t" + groupdict[s_id] + "|" + p_id + "\t" + "\t".join(cells[2:]))
         os.remove(tmp_path + "/" + spec + "_forward.domains")
         if bidirectional:
             with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
                 for line in infile.readlines():
                     cells = line.split("\t")
-                    q_id = cells[0].split("#")[1]
+                    s_id, q_id = cells[0].split("#")
                     if not cells[1] == q_id:
                         p_id = seed_spec + "|" + cells[1]
                     else:
                         p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
-                    out_r.write(groupdict[p_id] + "#" + groupdict[p_id] + "|" + spec + "|" + q_id + "|" +
-                                namedict[q_id] + "\t" + groupdict[p_id] + "|" + p_id + "\t" + "\t".join(cells[2:]))
+                    out_r.write(groupdict[s_id] + "#" + groupdict[s_id] + "|" + spec + "|" + q_id + "|" +
+                                namedict[q_id] + "\t" + groupdict[s_id] + "|" + p_id + "\t" + "\t".join(cells[2:]))
             os.remove(tmp_path + "/" + spec + "_reverse.domains")
     out_f.close()
     if bidirectional:
@@ -235,7 +235,7 @@ def get_options():
                           help="Path to working directory")
     optional.add_argument("-o", "--out_dir", type=str, default='out/',
                           help="path to out directory")
-    optional.add_argument("-s", "--groupnames", default=None, type=str, required=True, nargs='*',
+    optional.add_argument("-s", "--groupnames", default=None, type=str, nargs='*',
                           help="specify which groups in the extended.fa will be calculated")
     optional.add_argument("--bidirectional", action="store_true",
                           help="calculate both scoring directions")
