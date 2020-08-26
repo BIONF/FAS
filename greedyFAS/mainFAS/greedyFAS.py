@@ -28,6 +28,7 @@ import time
 from functools import partial
 from copy import deepcopy
 from tqdm import tqdm
+import sys
 from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.mainFAS.fasOutput import write_domain_out
 from greedyFAS.mainFAS.fasOutput import write_tsv_out
@@ -120,6 +121,10 @@ def fc_start(option):
         option["reverse"] = True
         option["seed_id"] = option["query_id"]
         option["query_id"] = id_tmp
+        pairtmp = []
+        for pair in option["pairwise"]:
+            pairtmp.append((pair[1], pair[0]))
+        option["pairwise"] = pairtmp
         print("calculating backward scores...")
         r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option)
         if option["phyloprofile"]:
@@ -160,7 +165,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                 domain_out = open(option["outpath"] + "_forward.domains", "w")
     if option['pairwise']:
         if option['progress']:
-            progress = tqdm(total=len(option['pairwise']))
+            progress = tqdm(total=len(option['pairwise']), file=sys.stdout)
         for pair in option['pairwise']:
             query = pair[1]
             protein = pair[0]
@@ -184,7 +189,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
         else:
             seedlist = list(seed_proteome.keys())
         if option['progress']:
-            progress = tqdm(total=len(querylist)*len(seedlist))
+            progress = tqdm(total=len(querylist)*len(seedlist), file=sys.stdout)
         for query in querylist:
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
             query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
