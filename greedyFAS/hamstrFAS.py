@@ -40,9 +40,13 @@ def main():
         outname = args.extended_fa.split('/')[-1].split('.')[0]
     else:
         outname = args.outname
+    if not args.out_dir:
+        out_dir = '/'.join(args.extended_fa.split('/')[:-1]) + '/'
+    else:
+        out_dir = args.out_dir + '/'
     print('calculating FAS scores for ' + outname + '...')
     Path(args.tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
-    Path(args.out_dir).mkdir(parents=True, exist_ok=True)
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
     results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, args.tmp_dir + '/' + outname, args.cores,
                              features, args.bidirectional)
     print('writing phyloprofile output...')
@@ -50,10 +54,6 @@ def main():
     join_domain_out(jobdict, args.tmp_dir + "/" + outname, args.out_dir, args.bidirectional, outname,
                     seedspec, namedict, groupdict)
     print('hamstrFAS finished!')
-    if args.out_dir[0] == '/':
-        out_dir = args.out_dir
-    else:
-        out_dir = os.getcwd() + '/' + args.out_dir
     if args.bidirectional:
         print('Output files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains, ' +
               outname + '_reverse.domains in ' + out_dir)
@@ -83,8 +83,6 @@ def create_jobdict(joblist):
     namedict = {}
     groupdict = {}
     seedspec = None
-    prot_id = None
-    spec = None
     for entry in joblist:
         seed = '|'.join(joblist[entry][0][1:-1])
         if seedspec and not seedspec == joblist[entry][0][0]:
@@ -219,7 +217,7 @@ def write_phyloprofile(results, out_path, outname, namedict, groupdict):
 
 
 def get_options():
-    version = '1.2.8'
+    version = '1.3.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -233,7 +231,7 @@ def get_options():
                           help="name of the ortholog group")
     optional.add_argument("-t", "--tmp_dir", type=str, default='tmp/',
                           help="Path to working directory")
-    optional.add_argument("-o", "--out_dir", type=str, default='out/',
+    optional.add_argument("-o", "--out_dir", type=str, default=None,
                           help="path to out directory")
     optional.add_argument("-s", "--groupnames", default=None, type=str, nargs='*',
                           help="specify which groups in the extended.fa will be calculated")
