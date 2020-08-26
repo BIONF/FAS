@@ -236,8 +236,8 @@ def get_options():
                           help="path to out directory")
     optional.add_argument("-s", "--groupnames", default=None, type=str, nargs='*',
                           help="specify which groups in the extended.fa will be calculated")
-    optional.add_argument("--bidirectional", action="store_true",
-                          help="calculate both scoring directions")
+    optional.add_argument("--bidirectional", action="store_false",
+                          help="deactivate bidirectional scoring")
     optional.add_argument('--cores', action='store', type=int, default=1,
                           help='number of cores used for parallel calculation')
     arguments = parser.parse_args()
