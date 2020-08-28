@@ -29,6 +29,7 @@ from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.mainFAS.fasWeighting import w_weight_correction
 from pathlib import Path
 from tqdm import tqdm
+import shutil
 
 
 def main():
@@ -41,19 +42,24 @@ def main():
         out_dir = '/'.join(os.path.abspath(args.extended_fa).split('/')[0:-1]) + '/'
     else:
         out_dir = args.out_dir + '/'
+    if not args.tmp_dir:
+        tmp_dir = out_dir
+    else:
+        tmp_dir = args.tmp_dir + '/'
     print(out_dir)
     joblist = read_extended_fa(args.extended_fa, args.groupnames)
     jobdict, namedict, groupdict, seedspec = create_jobdict(joblist)
     features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
     print('calculating FAS scores for ' + outname + '...')
-    Path(args.tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
+    Path(tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
-    results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, args.tmp_dir + '/' + outname, args.cores,
+    results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, tmp_dir + '/' + outname, args.cores,
                              features, args.bidirectional)
     print('writing phyloprofile output...')
     write_phyloprofile(results, out_dir, outname, namedict, groupdict)
-    join_domain_out(jobdict, args.tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
+    join_domain_out(jobdict, tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
                     seedspec, namedict, groupdict)
+    shutil.rmtree(tmp_dir + "/" + outname, ignore_errors=True)
     print('hamstrFAS finished!')
     if args.bidirectional:
         print('Output files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains, ' +
@@ -218,7 +224,7 @@ def write_phyloprofile(results, out_path, outname, namedict, groupdict):
 
 
 def get_options():
-    version = '1.3.1'
+    version = '1.3.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -230,8 +236,8 @@ def get_options():
                           help="path to weight_dir of Hamstr")
     optional.add_argument("-n", "--outname", default=None, type=str,
                           help="name of the ortholog group")
-    optional.add_argument("-t", "--tmp_dir", type=str, default='tmp/',
-                          help="Path to working directory")
+    optional.add_argument("-t", "--tmp_dir", type=str, default=None,
+                          help="Path to working directory (temporary files are stored here)")
     optional.add_argument("-o", "--out_dir", type=str, default=None,
                           help="path to out directory")
     optional.add_argument("-s", "--groupnames", default=None, type=str, nargs='*',
