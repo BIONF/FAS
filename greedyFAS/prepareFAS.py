@@ -25,12 +25,11 @@ import os
 import sys
 from sys import platform
 from pathlib import Path
-import re
+import shutil
 import subprocess
 import argparse
 import readline
 import glob
-import inspect
 from os.path import expanduser
 
 home = expanduser('~')
@@ -128,8 +127,7 @@ def check_status(toolPath, force, tarfile):
     return flag
 
 def install_signalp():
-    mv_cmd1 = 'mv signalp-4.1* SignalP'
-    subprocess.call([mv_cmd1], shell=True)
+    shutil.move('signalp-4.1', 'SignalP')
     os.chdir('SignalP')
     signalp_path = os.getcwd().replace('/','\/')
     addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+'/signalp')
@@ -138,8 +136,7 @@ def install_signalp():
     # subprocess.call([makelink_signalp], shell=True)
 
 def install_tmhmm():
-    mv_cmd2 = 'mv tmhmm* TMHMM'
-    subprocess.call([mv_cmd2], shell=True)
+    shutil.move('tmhmm-2.0c', 'TMHMM')
     machine = os.uname()[4]
     os.chdir('TMHMM')
     makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
@@ -386,7 +383,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 def main():
-    version = '1.2.3'
+    version = '1.2.4'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
