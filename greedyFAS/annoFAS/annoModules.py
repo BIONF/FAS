@@ -70,7 +70,10 @@ def doFlps(args):
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do fLPS
     cmd = '%s/fLPS/fLPS -s -t %s "%s"' % (toolPath, threshold, seqFile)
-    flpsOut = subprocess.run([cmd], shell=True, capture_output=True)
+    try:
+        flpsOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+    except:
+        sys.exit('Error running\n%s' % cmd)
     lines = flpsOut.stdout.decode().split('\n')
     # save to dict
     annoOut = {}
@@ -106,7 +109,10 @@ def doTmhmm(args):
     # do TMHMM
     cmd = 'cat "%s" | %s/TMHMM/decodeanhmm -f %s/TMHMM//lib/TMHMM2.0.options -modelfile %s/TMHMM/lib/TMHMM2.0.model' % (
         seqFile, toolPath, toolPath, toolPath)
-    tmhmmOut = subprocess.run([cmd], shell=True, capture_output=True)
+    try:
+        tmhmmOut = subprocess.run([cmd], shell=True, capture_output=True) #check=True not works
+    except:
+        sys.exit('Error running\n%s' % cmd)
     lines = tmhmmOut.stdout.decode().split('\n')
     # save to dict
     annoOut = {}
@@ -146,7 +152,10 @@ def doSignalp(args):
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do signalp
     cmd = '%s/SignalP/signalp -t %s "%s"' % (toolPath, org, seqFile)
-    signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
+    try:
+        signalpOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+    except:
+        sys.exit('Error running\n%s' % cmd)
     lines = signalpOut.stdout.decode().split('\n')
     # save to dict
     annoOut = {}
@@ -177,7 +186,10 @@ def doCoils(args):
     # do COILS2
     cmd = '%s/COILS2/COILS2 -f < "%s"' % (toolPath, os.path.abspath(seqFile))
     os.chdir(toolPath + '/COILS2')
-    coilsOut = subprocess.run([cmd], shell=True, capture_output=True)
+    try:
+        coilsOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+    except:
+        sys.exit('Error running\n%s' % cmd)
     results = coilsOut.stdout.decode().split('>')
     # save to dict
     annoOut = {}
@@ -216,7 +228,10 @@ def doSeg(args):
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile),'fasta')))
     # do signalp
     cmd = '%s/SEG/seg "%s" -l -n -p ' % (toolPath, seqFile)
-    signalpOut = subprocess.run([cmd], shell=True, capture_output=True)
+    try:
+        signalpOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+    except:
+        sys.exit('Error running\n%s' % cmd)
     results = signalpOut.stdout.decode().split('>')
     # save to dict
     annoOut = {}
@@ -271,7 +286,7 @@ def checkDB(toolPath, toolName):
             os.path.exists(dbDir + toolName + ext + '.h3m') or os.path.exists(dbDir + toolName + ext + '.h3p')):
         cmd = 'hmmpress -f %s/%s%s' % (dbDir, toolName, ext)
         try:
-            subprocess.run([cmd], shell=True)
+            subprocess.run([cmd], shell=True, check=True)
         except:
             print('Problem occurred while creating binary files for %s/%s%s' % (dbDir, toolName, ext))
 
@@ -285,7 +300,7 @@ def hmmScan(seqFile, toolPath, toolName, cpus):
     flag = False
     try:
         FNULL = open(os.devnull, 'w')
-        hmmOut = subprocess.run([scanCmd], shell=True, capture_output=True)
+        hmmOut = subprocess.run([scanCmd], shell=True, capture_output=True, check=True)
         return(hmmOut.stdout.decode())
     except:
         print('Error running hmmscan! %s' % (scanCmd))
@@ -411,7 +426,10 @@ def doAnno(args):
     # remove tmp fasta file
     seqFileTmp = seqFile.replace("|","\|")
     rmCmd = 'rm %s' % (seqFileTmp)
-    subprocess.run([rmCmd], shell=True)
+    try:
+        subprocess.run([rmCmd], shell=True, check=True)
+    except:
+        sys.exit('Error running\n%s' % rmCmd)
     return final
 
 # function for posprocessing annotation dictionary

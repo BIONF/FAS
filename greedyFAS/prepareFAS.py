@@ -415,7 +415,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 def main():
-    version = '1.2.4'
+    version = '1.2.5'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
