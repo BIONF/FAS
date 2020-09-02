@@ -31,6 +31,10 @@ import argparse
 import readline
 import glob
 from os.path import expanduser
+import ssl
+import urllib.request
+import time
+import gzip
 
 home = expanduser('~')
 
@@ -41,15 +45,38 @@ def subprocess_cmd(commands):
     for cmd in commands:
         subprocess.call(cmd, shell = True)
 
-def download_data(file, checksum):
-    url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo' + '/' + file
-    parameter = '--no-check-certificate'
-    subprocess.call(['wget', url, parameter])
+def download_progress(count, block_size, total_size):
+    global start_time
+    if count == 0:
+        start_time = time.time()
+        return
+    duration = time.time() - start_time
+    progress_size = int(count * block_size)
+    speed = int(progress_size / (1024 * duration))
+    percent = int(count * block_size * 100 / total_size)
+    if percent > 100:
+        percent = 100
+    sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
+                    (percent, progress_size / (1024 * 1024), speed, duration))
+    sys.stdout.flush()
+
+def download_file(url, file):
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    download_file = urllib.request.URLopener(context=ctx)
+    print('Downloading %s' % (url + '/' + file))
+    download_file.retrieve(url + '/' + file, file, download_progress)
+    print(' ... done!')
+
+def download_data(file, checksum, toolPath):
+    url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo'
+    download_file(url, file)
     if os.path.isfile(file):
         checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
         if checksum_file == checksum:
             print('Extracting %s ...' % file)
-            subprocess.call(['tar', 'xf', file])
+            shutil.unpack_archive(file, toolPath, 'gztar')
         else:
             sys.exit('Downloaded file corrupted!')
     else:
@@ -67,7 +94,6 @@ def query_yes_no(question, default='yes'):
     else:
         raise ValueError('invalid default answer: "%s"' % default)
     while True:
-        # sys.stdout.write(question + prompt)
         choice = sys.stdin.readline().rstrip().lower()
         if default is not None and choice == '':
             return valid[default]
@@ -76,7 +102,6 @@ def query_yes_no(question, default='yes'):
         else:
             sys.stdout.write('Please respond with "yes" or "no" '
                              '(or "y" or "n").\n')
-
 
 def get_dtu_path(dtuPathIn):
     if not dtuPathIn == '':
@@ -95,29 +120,34 @@ def get_dtu_path(dtuPathIn):
             dtu_path = ''
 
     if not dtu_path == '':
-        cmd = 'ls %s | grep \'signalp-4.1g\|tmhmm-2.0c\'' % dtu_path
-        dtu_tool = subprocess.check_output([cmd], shell=True).decode(sys.stdout.encoding).strip()
-        if not 'tmhmm' in dtu_tool:
+        files = [f for f in os.listdir(dtu_path) if os.path.isfile(os.path.join(dtu_path, f))]
+        signalp_source = [i for i in files if 'signalp' in i]
+        tmhmm_source = [i for i in files if 'tmhmm' in i]
+        if not tmhmm_source:
             sys.exit('TMHMM not found in %s' % dtu_path)
-        if not 'signalp' in dtu_tool:
+        if not signalp_source:
             sys.exit('signalp-4.1g not found in %s' % dtu_path)
-        return dtu_path, dtu_tool
+        return dtu_path, signalp_source[0], tmhmm_source[0]
     else:
         return 0, 0
 
-
 def check_status(toolPath, force, tarfile):
     flag = 1
+    cwd = os.getcwd()
     if os.path.isfile(toolPath+'/annoTools.txt'):
         with open(toolPath+'/annoTools.txt') as f:
             if '#checked' in f.read():
                 if force:
                     print('Annotation tools found in %s will be deleted and reinstalled! Enter to continue.' % toolPath)
                     if query_yes_no(''):
-                        backupCmd = 'mv %s/%s ../' % (toolPath, tarfile)
-                        rm_annotools = 'rm -rf %s/*' % (toolPath)
-                        mvCmd = 'mv ../%s %s/' % (tarfile, toolPath)
-                        subprocess_cmd([backupCmd, rm_annotools, mvCmd])
+                        if os.path.exists(os.path.abspath(toolPath + '/' + tarfile)):
+                            shutil.move(toolPath + '/' + tarfile, cwd + '/' + tarfile)
+                        try:
+                            shutil.rmtree(toolPath)
+                        except:
+                            sys.exit('Failed to delete %s. Please manually remove it and run prepareFAS again!' % toolPath)
+                        if os.path.exists(os.path.abspath(cwd + '/' + tarfile)):
+                            shutil.move(cwd + '/' + tarfile, toolPath + '/' + tarfile)
                         flag = 1
                     else:
                         flag = toolPath
@@ -142,6 +172,18 @@ def install_tmhmm():
     makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
     subprocess.call([makelink_tmhmm], shell=True)
 
+def write_coilsdir(coilsdir):
+    home = str(Path.home())
+    filename = home + '/.bashrc'
+    if platform == 'darwin':
+        filename = home + '/.bash_profile'
+    with open(filename, "r+") as file:
+        for line in file:
+            if coilsdir in line:
+               break
+        else:
+            file.write(coilsdir)
+
 def prepare_annoTool(options):
     anno_path = options['toolPath']
     dtuPathIn = options['dtuPath']
@@ -151,13 +193,14 @@ def prepare_annoTool(options):
     checksum = '1818703744 1108970315 ' + file
 
     if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
-        with open(anno_path+'/annoTools.txt') as anno_path:
-            if '#checked' in anno_path.read():
-                print('Annotation tools already found at %s' % anno_path)
-                if not os.path.exists(os.path.abspath(options['greedyFasPath']+'/pathconfig.txt')):
-                    print('If you want to add %s to config file of FAS, please rerun this function with --savePath!' % anno_path)
-                print('If you want to re-install them, rerun this function with --force!')
-                sys.exit()
+        with open(anno_path+'/annoTools.txt') as checkfile:
+            if '#checked' in checkfile.read():
+                if not force:
+                    print('Annotation tools already found at %s' % anno_path)
+                    if not os.path.exists(os.path.abspath(options['greedyFasPath']+'/pathconfig.txt')):
+                        print('If you want to add %s to config file of FAS, please rerun this function with --savePath!' % anno_path)
+                    print('If you want to re-install them, rerun this function with --force!')
+                    sys.exit()
 
     current_dir = os.getcwd()
     if check_status(anno_path, force, file) == 1:
@@ -176,30 +219,19 @@ def prepare_annoTool(options):
                 tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n')
 
         # get DTU tools path
-        (dtu_path, dtu_tool) = get_dtu_path(dtuPathIn)
+        (dtu_path, signalp_source, tmhmm_source) = get_dtu_path(dtuPathIn)
 
         # install TMHMM and SignalP
         if not dtu_path == 0:
             print('Installing SignalP and TMHMM...')
-            for tool in dtu_tool.split('\n'):
-                print(dtu_path + '/' + tool)
-                tar_cmd = 'tar xf %s/%s --directory %s 2> /dev/null' % (dtu_path, tool, anno_path)
-                subprocess.call([tar_cmd], shell=True)
-
             if not os.path.isdir(anno_path + '/SignalP'):
+                shutil.unpack_archive(dtu_path + '/' + signalp_source, anno_path, 'gztar')
                 install_signalp()
-            else:
-                rm_signalp = 'rm -rf signalp*'
-                subprocess.call([rm_signalp], shell=True)
             os.chdir(anno_path)
-
             if not os.path.isdir(anno_path + '/TMHMM'):
+                shutil.unpack_archive(dtu_path + '/' + tmhmm_source, anno_path, 'gztar')
                 install_tmhmm()
-            else:
-                rm_tmhmm = 'rm -rf tmhmm*'
-                subprocess.call([rm_tmhmm], shell=True)
             os.chdir(anno_path)
-
             with open('annoTools.txt', mode = 'a') as tool_file:
                 if platform == 'darwin':
                     tool_file.write('SignalP\n')
@@ -207,85 +239,78 @@ def prepare_annoTool(options):
                     tool_file.write('TMHMM\nSignalP\n')
         tool_file.close()
 
-        # create folders for other annotation tools
-        folders = ['fLPS', 'COILS2', 'Pfam', 'Pfam/Pfam-hmms', 'SEG', 'SMART'] #, 'SignalP', 'TMHMM']
-        emptyFlag = 0
-        for folder in folders:
-            Path(anno_path + '/' + folder).mkdir(parents = True, exist_ok = True)
-            if len(os.listdir(anno_path + '/' + folder)) == 0:
-                print(anno_path + '/' + folder)
-                emptyFlag = 1
-
-        # download annotation tools
-        if emptyFlag == 1:
-            print('Installing other tools...')
-            if os.path.isfile(file):
-                checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
-                if checksum_file == checksum:
-                    print('Extracting %s ...' % file)
-                    subprocess.call(['tar', 'xf', file])
-                else:
-                    subprocess.call(['rm', file])
-                    download_data(file, checksum)
+        # download other annotation tools
+        print('Installing other tools...')
+        if os.path.isfile(file):
+            checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
+            if checksum_file == checksum:
+                print('Extracting %s ...' % file)
+                shutil.unpack_archive(anno_path + '/' + file, anno_path, 'gztar')
             else:
-                download_data(file, checksum)
+                os.remove(file)
+                download_data(file, checksum, anno_path)
+        else:
+            download_data(file, checksum, anno_path)
 
-            # copy tools to their folders
-            for tool in tools:
-                if tool == 'fLPS':
-                    print('Downloading fLPS ...')
-                    fLPS_file = 'fLPS.tar.gz'
-                    fLPS_url = 'http://biology.mcgill.ca/faculty/harrison/' + fLPS_file
-                    subprocess.call(['wget', fLPS_url, '--no-check-certificate'])
-                    subprocess.call(['tar', 'xf', fLPS_file])
-                    subprocess.call(['rm', fLPS_file])
-                else:
-                    print('Moving %s ...' % tool)
-                    source_dir = 'annotation_FAS/' + tool + '/'
-                    target_dir = tool + '/'
-                    subprocess.call(['rsync', '-ra', '--include=*', source_dir, target_dir])
-                print('---------------------')
+        # copy tools to their folders
+        for tool in tools:
+            if tool == 'fLPS':
+                print('Downloading fLPS ...')
+                fLPS_file = 'fLPS.tar.gz'
+                fLPS_url = 'http://biology.mcgill.ca/faculty/harrison/'
+                download_file(fLPS_url, fLPS_file)
+                shutil.unpack_archive(fLPS_file, anno_path, 'gztar')
+                os.remove(fLPS_file)
+            else:
+                print('Moving %s ...' % tool)
+                source_dir = 'annotation_FAS/' + tool + '/'
+                if os.path.exists(os.path.abspath(anno_path + '/' + tool)):
+                    shutil.rmtree(anno_path + '/' + tool)
+                shutil.move(source_dir, anno_path, copy_function = shutil.copytree)
 
-            # make symlink for fLPS (depend on OS system)
-            source = os.getcwd() + '/fLPS/bin'
-            target = os.getcwd() + '/fLPS/'
-            if platform == 'darwin':
-                source = source + '/mac64/fLPS'
-                subprocess.call(['ln', '-fs', source, target])
-            else:
-                source = source + '/linux/fLPS'
-                subprocess.call(['ln', '-fs', source, target])
-            # re-compile COILS2
-            coils_path = anno_path + '/COILS2'
-            os.chdir(coils_path)
-            subprocess.call(['tar', 'xf', 'ncoils.tar.gz'])
-            coils_bin = coils_path + '/coils'
-            os.chdir(coils_bin)
-            compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm'
-            if platform == 'darwin':
-                COILSDIR = 'echo \'export COILSDIR=%s\' >> ~/.bash_profile' % coils_bin
-            else:
-                COILSDIR = 'echo \'export COILSDIR=%s\' >> ~/.bashrc' % coils_bin
-            subprocess_cmd((compile_cmd, COILSDIR))
-            os.chdir(coils_path)
-            makelink_cmd = 'ln -s -f coils/ncoils-osf ./COILS2'
-            if platform == 'darwin':
-                source_cmd = 'source ~/.bash_profile'
-            else:
-                source_cmd = 'source ~/.bashrc'
-            subprocess_cmd((makelink_cmd, source_cmd))
-            os.chdir(anno_path)
+        # make symlink for fLPS (depend on OS system)
+        source = os.getcwd() + '/fLPS/bin'
+        target = os.getcwd() + '/fLPS/fLPS'
+        if platform == 'darwin':
+            source = source + '/mac64/fLPS'
+            os.symlink(source, target)
+        else:
+            source = source + '/linux/fLPS'
+            os.symlink(source, target)
 
-            # remove temp files
-            subprocess.call(['rm', '-rf', anno_path + '/annotation_FAS'])
-            if not options['keep']:
-                subprocess.call(['rm', anno_path + '/' + file])
+        # re-compile COILS2
+        coils_path = anno_path + '/COILS2'
+        os.chdir(coils_path)
+        shutil.unpack_archive('ncoils.tar.gz', coils_path, 'gztar')
+        coils_bin = coils_path + '/coils'
+        os.chdir(coils_bin)
+        compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm' + ' > /dev/null 2>&1'
+        try:
+            subprocess.call(compile_cmd, shell = True)
+        except:
+            print('ERROR: Failed to compile COILS2.\nPlease read instruction at %s and do it manually!' % coils_path)
+        COILSDIR = 'export COILSDIR=%s' % coils_bin
+        write_coilsdir(COILSDIR)
+        os.chdir(coils_path)
+        if os.path.exists('COILS2'):
+            os.remove('COILS2')
+        os.symlink('coils/ncoils-osf', './COILS2')
+        home = str(Path.home())
+        if platform == 'darwin':
+            os.system('. %s/.bash_profile' % home)
+        else:
+            os.system('. %s/.bashrc' % home)
+        os.chdir(anno_path)
+        print('----------------------------------')
+        # remove temp files
+        shutil.rmtree(anno_path + '/annotation_FAS')
+        if not options['keep']:
+            os.remove(anno_path + '/' + file)
         os.chdir(current_dir)
         return(anno_path)
     else:
         os.chdir(current_dir)
         return(check_status(anno_path, force, file))
-
 
 def checkExecutable(anno_path):
     with open(anno_path+'/annoTools.txt') as file:
@@ -329,6 +354,13 @@ def checkExecutable(anno_path):
             if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
                 flag = 0
             if err3.decode('UTF-8').strip() == 'error: environment variable COILSDIR must be set':
+                home = str(Path.home())
+                bash_file = '.bashrc'
+                if platform == 'darwin':
+                    bash_file = '.bash_profile'
+                with open(home + '/' + bash_file) as file:
+                    if not 'export COILSDIR' in file.read():
+                        print("PLEASE PUT THE FOLLOWING LINE TO %s/%s:\nexport COILSDIR=%s" % (home, bash_file, anno_path + '/COILS2/coils'))
                 print('NOTE: THE TERMINAL MUST BE RESTARTED BEFORE USING FAS!!!')
                 flag = 0
             if '0 sequences' in err3.decode('UTF-8').strip():
@@ -383,7 +415,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 def main():
-    version = '1.2.4'
+    version = '1.2.5'
     parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
