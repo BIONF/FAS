@@ -333,6 +333,7 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
     final_score = 0.0
     scores = {}
     tools = option["input_linearized"] + option["input_normal"]
+    best_match = 0.0
     for i in path:
         feature = features[i]
         for tool in tools:
@@ -356,7 +357,8 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
                         except TypeError:
                             e_instance = True
                         if e_instance:
-                            pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(seed_proteome[protein]["length"])
+                            pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(
+                                seed_proteome[protein]["length"])
                             match = 1.0 - float(abs(feature[1]) - pos)
                             logging.debug(str(float(instance[1])) + " + " + str(float(instance[2])) + " / 2.0 / " + str(
                                 float(seed_proteome[protein]["length"])) + " = " + str(pos))
@@ -398,10 +400,10 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
         else:
             feature = a_q_f[i]
         if feature[0] in local_query_protein:
-            length = feature[3] - feature[2]
+            length = feature[3] - feature[2] + 1.0
             local_query_protein[feature[0]].append((feature[1], length))
         else:
-            local_query_protein[feature[0]] = [(feature[1], feature[3] - feature[2])]
+            local_query_protein[feature[0]] = [(feature[1], feature[3] - feature[2] + 1.0)]
     logging.debug(str(local_query_protein) + " for query_path " + str(query_path))
 
     # compare features in path with features form query path
@@ -421,9 +423,9 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
                 if best_match < match:
                     best_match = match
                     if instance[1] <= (feature[3] - feature[2]):
-                        ls = float(instance[1]) / float(feature[3] - feature[2])
+                        ls = float(instance[1]) / float(feature[3] - feature[2] + 1.0)
                     else:
-                        ls = float(feature[3] - feature[2]) / float(instance[1])
+                        ls = float(feature[3] - feature[2] + 1.0) / float(instance[1])
 
             scores[feature[0]] += best_match
             ls_scores[feature[0]] += ls

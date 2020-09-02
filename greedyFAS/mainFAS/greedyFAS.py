@@ -683,7 +683,7 @@ def pb_create_jobs(graph, option):
 
 
 def pb_graph_traversal_sub(protein, search_features, weights, query_features, seed_proteome, a_s_f, a_q_f, clan_dict,
-                           query_clans, timelimit, query_graph, option, stack, search_graph, search_path_number):
+                           query_clans, timelimit, query_graph, option, search_graph, search_path_number, stack):
     """Sub function for multi-processing: This function does a depth-first search in the feature graph. The starting
      point in the graph is given in the stack.
 
@@ -746,7 +746,7 @@ def pb_graph_traversal_sub(protein, search_features, weights, query_features, se
 
 
 def pb_calc_sub(protein, search_features, weights, query_features, seed_proteome, a_s_f, a_q_f, clan_dict, query_clans,
-                timelimit, option, jobpaths, search_graph, search_path_number):
+                timelimit, option, search_graph, search_path_number, jobpaths):
     """Sub function for multiprocessing [2]: Goes through a list of (query) paths an evaluates them.
 
     :param protein: String that contains the identifier of the seed protein
