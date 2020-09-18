@@ -55,7 +55,7 @@ def get_options():
                           help="output directory, all outputfiles will be stored here")
     general.add_argument("--bidirectional", action="store_true",
                          help="calculate both scoring directions")
-    general.add_argument('--cpus', help='number of cores', action='store', default=0)
+    general.add_argument('--cpus', help='number of cores', type=int, action='store', default=0)
     annotation.add_argument('--force', help='Force override annotations', action='store_true')
     annotation.add_argument("-f", "--eFeature", default="0.001", type=float,
                             help="eValue cutoff for PFAM/SMART domain, applied during annotation but also during "
@@ -174,7 +174,7 @@ def fas(args, toolpath):
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": args.priority_mode, "priority_threshold": args.priority_threshold,
-                   "max_cardinality": args.max_cardinality, "cores": args.cpus, "raw": args.raw,
+                   "max_cardinality": args.max_cardinality, "cores": int(args.cpus), "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
                    "timelimit": 0, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
                    "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance,
