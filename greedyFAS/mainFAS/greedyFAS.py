@@ -121,10 +121,11 @@ def fc_start(option):
         option["reverse"] = True
         option["seed_id"] = option["query_id"]
         option["query_id"] = id_tmp
-        pairtmp = []
-        for pair in option["pairwise"]:
-            pairtmp.append((pair[1], pair[0]))
-        option["pairwise"] = pairtmp
+        if option["pairwise"]:
+            pairtmp = []
+            for pair in option["pairwise"]:
+                pairtmp.append((pair[1], pair[0]))
+            option["pairwise"] = pairtmp
         print("calculating backward scores...")
         r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option)
         if option["phyloprofile"]:

@@ -33,7 +33,7 @@ if version_info.major == 3:
 
 
 def get_options():
-    version = '1.3.6'
+    version = '1.3.7'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -125,7 +125,7 @@ def get_options():
                                  "the path evaluation. default=500")
     obscure.add_argument("--priority_mode", action='store_false',
                          help="deactivates the greedy strategy priority mode for larger architectures, NOT RECOMMENDED")
-    obscure.add_argument("--timelimit", default=0, type=int,
+    obscure.add_argument("--timelimit", default=3600, type=int,
                          help="Sets a soft time limit in seconds for the calculation between a pair of proteins,"
                               "This limit does not necessarily represent the actual runtime. It only stops the "
                               "exhaustive strategy through the architecture and activate priority mode. "
@@ -169,16 +169,16 @@ def anno(annojobs, args, toolpath):
 
 
 def fas(args, toolpath):
-    version = "1.3.6"
+    version = "1.3.7"
     loglevel = "ERROR"
     option_dict = {
                    "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": args.priority_mode, "priority_threshold": args.priority_threshold,
                    "max_cardinality": args.max_cardinality, "cores": int(args.cpus), "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
-                   "timelimit": 0, "phyloprofile": args.phyloprofile, "score_weights": [], "output": args.silent,
-                   "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None, "eInstance": args.eInstance,
-                   "eFeature": args.eFeature, "progress": True
+                   "timelimit": args.timelimit, "phyloprofile": args.phyloprofile, "score_weights": [],
+                    "output": args.silent, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
+                    "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True
                    }
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
