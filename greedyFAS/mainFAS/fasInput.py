@@ -155,7 +155,7 @@ def featuretypes(path, option):
     """
     option["input_linearized"] = []
     option["input_normal"] = []
-    ifile = open(path, "r+")
+    ifile = open(path, "r")
     lines = ifile.readlines()
     mode = "NULL"
     for line in lines:
@@ -185,7 +185,7 @@ def constraints_in(path):
     :return: constraints
     """
     constraints = {}
-    cfile = open(path, "r+")
+    cfile = open(path, "r")
     lines = cfile.readlines()
     i = 1
     if lines[0][0] == "#":
