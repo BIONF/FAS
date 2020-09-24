@@ -3,7 +3,12 @@ python:
 - '3.8'
 install:
 - pip install .
-script: python3 greedyFAS/calcFAS.py -h
+script:
+- python3 greedyFAS/calcFAS.py -h
+- python3 greedyFAS/fdogFAS.py -h
+- python3 greedyFAS/complexityFAS.py -h
+- python3 greedyFAS/annoFAS.py -h
+- python3 greedyFAS/setupFAS.py -h
 deploy:
   provider: pypi
   username: __token__
