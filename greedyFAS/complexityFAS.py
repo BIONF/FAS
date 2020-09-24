@@ -23,7 +23,10 @@
 
 import argparse
 import os
-from graphviz import Digraph
+try:
+    from graphviz import Digraph
+except ModuleNotFoundError:
+    pass
 from greedyFAS.mainFAS import fasPathing
 from greedyFAS.mainFAS import fasInput
 from greedyFAS.mainFAS import greedyFAS
