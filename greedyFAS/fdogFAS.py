@@ -49,7 +49,10 @@ def main():
     print(out_dir)
     joblist = read_extended_fa(args.extended_fa, args.groupnames)
     jobdict, namedict, groupdict, seedspec = create_jobdict(joblist)
-    features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
+    if args.no_lin:
+        features = [[], ["pfam", "smart", "flps", "coils2", "seg", "signalp", "tmhmm"]]
+    else:
+        features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
     print('calculating FAS scores for ' + outname + '...')
     Path(tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -124,7 +127,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
     data = []
     for spec in jobdict:
         data.append([spec,
-                    {"weight_const": False, "version": '1.0.0', "seed_id": None, "query_id": None,
+                    {"weight_const": False, "seed_id": None, "query_id": None,
                      "priority_mode": True, "priority_threshold": 30, "max_cardinality": 500, "eFeature": 0.001,
                      "cores": 1, "eInstance": 0.01, "e_output": True, "feature_info": None,
                      "bidirectional": bidirectional, "raw": False, "silent": False, "reverse": False,
@@ -224,7 +227,7 @@ def write_phyloprofile(results, out_path, outname, namedict, groupdict):
 
 
 def get_options():
-    version = '1.3.7'
+    version = '1.4.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -244,8 +247,10 @@ def get_options():
                           help="specify which groups in the extended.fa will be calculated")
     optional.add_argument("--bidirectional", action="store_false",
                           help="deactivate bidirectional scoring")
-    optional.add_argument('--cores', action='store', type=int, default=1,
-                          help='number of cores used for parallel calculation')
+    optional.add_argument("--cores", action="store", type=int, default=1,
+                          help="number of cores used for parallel calculation")
+    optional.add_argument("--no_lin", action='store_True',
+                          help="deactivate linearization for pfam/smart")
     arguments = parser.parse_args()
     return arguments
 

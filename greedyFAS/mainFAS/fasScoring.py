@@ -21,10 +21,7 @@
 #######################################################################
 
 
-import logging
-from sys import version_info
-if version_info.major == 3:
-    from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
+from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
 
 
 def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
@@ -132,9 +129,6 @@ def sf_cs_score(path, clan_dict, query_clans, features):
         if clan in query_clans:
             score += float(path_clans[clan] * query_clans[clan]) / float(
                 max(path_clans[clan], query_clans[clan]) * max(path_clans[clan], query_clans[clan]))
-            logging.debug("(" + str(path_clans[clan]) + " * " + str(query_clans[clan]) + ") / (max(" + str(
-                path_clans[clan]) + "," + str(query_clans[clan]) + ") * max(" + str(path_clans[clan]) + "," + str(
-                query_clans[clan]) + ")")
     if counter == 0:
         score = 0.0
     else:
@@ -152,8 +146,6 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
     :param clan_dict: dictionary that maps features to clans
     :return: score (PS)
     """
-    logging.debug("search_path: " + str(path))
-    logging.debug("query_path: " + str(query_path))
 
     counter = 0.0
     s_clans = {}  # clans from path
@@ -291,8 +283,7 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
             if main_features_s[y]:
                 common_feature = True
         except KeyError:
-            logging.debug("Feature not found: " + str(y))
-
+            pass
     for feature in search_domains:
         if option["MS_uni"] == 0:
             scale += weights[feature]
@@ -313,9 +304,6 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
             final_weight += weights[score[0]]
         else:
             final_score += score[1] * scale
-    logging.debug(
-        "Return entire_ms_score: " + str(final_score) + ", " + str(search_domains) + ", " + str(scale) + ", " + str(
-            final_weight) + ", " + str(common_feature))
     return float(final_score), search_domains, scale, final_weight, common_feature
 
 
@@ -360,8 +348,6 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
                             pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(
                                 seed_proteome[protein]["length"])
                             match = 1.0 - float(abs(feature[1]) - pos)
-                            logging.debug(str(float(instance[1])) + " + " + str(float(instance[2])) + " / 2.0 / " + str(
-                                float(seed_proteome[protein]["length"])) + " = " + str(pos))
                             if best_match < match:
                                 best_match = match
                 scores[feature[0]] += best_match
@@ -404,7 +390,6 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
             local_query_protein[feature[0]].append((feature[1], length))
         else:
             local_query_protein[feature[0]] = [(feature[1], feature[3] - feature[2] + 1.0)]
-    logging.debug(str(local_query_protein) + " for query_path " + str(query_path))
 
     # compare features in path with features form query path
     for i in path:

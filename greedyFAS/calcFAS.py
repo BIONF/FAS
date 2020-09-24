@@ -23,17 +23,14 @@
 
 import os
 import argparse
-import logging
-from sys import version_info
 import multiprocessing as mp
-if version_info.major == 3:
-    from greedyFAS.annoFAS import annoFAS
-    from greedyFAS.annoFAS import annoModules
-    from greedyFAS.mainFAS import fasInput, greedyFAS
+from greedyFAS.annoFAS import annoFAS
+from greedyFAS.annoFAS import annoModules
+from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.3.8'
+    version = '1.4.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -67,7 +64,7 @@ def get_options():
     annotation.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
                             choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
     annotation.add_argument("--toolPath", dest="toolPath", default='', type=str,
-                            help="Path to Annotion tool directory created with prepareFAS")
+                            help="Path to Annotion tool directory created with setupFAS")
     weighting.add_argument("-r", "--ref_proteome", default=None, type=str,
                            help="Path to a reference proteome which can be used for the weighting of features, "
                                 "by default there is no reference proteome used, the weighting will be uniform")
@@ -169,10 +166,8 @@ def anno(annojobs, args, toolpath):
 
 
 def fas(args, toolpath):
-    version = "1.3.8"
-    loglevel = "ERROR"
     option_dict = {
-                   "weight_const": False, "version": version, "seed_id": args.seed_id, "query_id": args.query_id,
+                   "weight_const": False, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": args.priority_mode, "priority_threshold": args.priority_threshold,
                    "max_cardinality": args.max_cardinality, "cores": int(args.cpus), "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
@@ -257,15 +252,6 @@ def fas(args, toolpath):
         option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
     else:
         option_dict["pairwise"] = None
-
-    logging.basicConfig(level=loglevel, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info(
-        'greedyFAS.py started with options: priority_threshold=' + str(option_dict["priority_threshold"]) +
-        ', log_level=' + str(loglevel))
-    logging.info(
-        'score_weights are set to: ' + str(option_dict["score_weights"][0]) + " " + str(option_dict["score_weights"][1])
-        + " " + str(option_dict["score_weights"][2]))
-    logging.info('ref_proteome is set to: ' + str(option_dict["ref_proteome"]))
     print('Calculating FAS score...')
     greedyFAS.fc_start(option_dict)
     print('done!')

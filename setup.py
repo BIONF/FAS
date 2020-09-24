@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.3.8",
+    version="1.4.0",
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
@@ -39,14 +39,16 @@ setup(
     package_data={'': ['*']},
     install_requires=[
         'biopython',
-        'tqdm'
+        'tqdm',
+        'graphviz'
     ],
     entry_points={
         'console_scripts': ["annoParserFAS = greedyFAS.annoFAS.annoParserFAS:main",
                             "annoFAS = greedyFAS.annoFAS.annoFAS:main",
-                            "prepareFAS = greedyFAS.prepareFAS:main",
+                            "setupFAS = greedyFAS.setupFAS:main",
                             "calcFAS = greedyFAS.calcFAS:main",
-                            "hamstrFAS = greedyFAS.hamstrFAS:main"],
+                            "fdogFAS = greedyFAS.fdogFAS:main",
+                            "complexityFAS = greedyFAS.complexityFAS.py"],
     },
     license="GPL-3.0",
     classifiers=[

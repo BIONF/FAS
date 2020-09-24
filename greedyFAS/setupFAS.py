@@ -34,16 +34,18 @@ from os.path import expanduser
 import ssl
 import urllib.request
 import time
-import gzip
 
 home = expanduser('~')
+
 
 def complete(text, state):
     return(glob.glob(os.path.expanduser(text)+'*')+[None])[state]
 
+
 def subprocess_cmd(commands):
     for cmd in commands:
         subprocess.call(cmd, shell = True)
+
 
 def download_progress(count, block_size, total_size):
     global start_time
@@ -60,6 +62,7 @@ def download_progress(count, block_size, total_size):
                     (percent, progress_size / (1024 * 1024), speed, duration))
     sys.stdout.flush()
 
+
 def download_file(url, file):
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -68,6 +71,7 @@ def download_file(url, file):
     print('Downloading %s' % (url + '/' + file))
     download_file.retrieve(url + '/' + file, file, download_progress)
     print(' ... done!')
+
 
 def download_data(file, checksum, toolPath):
     url = 'https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo'
@@ -81,6 +85,7 @@ def download_data(file, checksum, toolPath):
             sys.exit('Downloaded file corrupted!')
     else:
         sys.exit('Cannot download annotation tools!')
+
 
 def query_yes_no(question, default='yes'):
     valid = {'yes': True, 'y': True, 'ye': True,
@@ -102,6 +107,7 @@ def query_yes_no(question, default='yes'):
         else:
             sys.stdout.write('Please respond with "yes" or "no" '
                              '(or "y" or "n").\n')
+
 
 def get_dtu_path(dtuPathIn):
     if not dtuPathIn == '':
@@ -131,6 +137,7 @@ def get_dtu_path(dtuPathIn):
     else:
         return 0, 0
 
+
 def check_status(toolPath, force, tarfile):
     flag = 1
     cwd = os.getcwd()
@@ -156,6 +163,7 @@ def check_status(toolPath, force, tarfile):
         f.close()
     return flag
 
+
 def install_signalp():
     shutil.move('signalp-4.1', 'SignalP')
     os.chdir('SignalP')
@@ -165,12 +173,14 @@ def install_signalp():
     # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
     # subprocess.call([makelink_signalp], shell=True)
 
+
 def install_tmhmm():
     shutil.move('tmhmm-2.0c', 'TMHMM')
     machine = os.uname()[4]
     os.chdir('TMHMM')
     makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
     subprocess.call([makelink_tmhmm], shell=True)
+
 
 def write_coilsdir(coilsdir):
     home = str(Path.home())
@@ -183,6 +193,7 @@ def write_coilsdir(coilsdir):
                break
         else:
             file.write(coilsdir)
+
 
 def prepare_annoTool(options):
     anno_path = options['toolPath']
@@ -307,10 +318,11 @@ def prepare_annoTool(options):
         if not options['keep']:
             os.remove(anno_path + '/' + file)
         os.chdir(current_dir)
-        return(anno_path)
+        return anno_path
     else:
         os.chdir(current_dir)
-        return(check_status(anno_path, force, file))
+        return check_status(anno_path, force, file)
+
 
 def checkExecutable(anno_path):
     with open(anno_path+'/annoTools.txt') as file:
@@ -389,7 +401,8 @@ def checkExecutable(anno_path):
                 sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
         except:
             sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
-    return(True)
+    return True
+
 
 def checkAnnoToolsFile(toolPath):
     if not os.path.exists(os.path.abspath(toolPath+'/annoTools.txt')):
@@ -399,10 +412,11 @@ def checkAnnoToolsFile(toolPath):
             if not '#checked' in f.read():
                 sys.exit('ERROR: Some errors occur with annotation tools. Please install them again!')
 
+
 def saveConfigFile(checkResult, anno_path, greedyFasPath):
     if checkResult:
         with open(anno_path+'/annoTools.txt') as f:
-            if not '#checked' in f.read():
+            if '#checked' not in f.read():
                 with open(anno_path+'/annoTools.txt','a') as file:
                     file.write('#checked')
                     file.close()
@@ -413,6 +427,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         sys.exit('Done! Annotation tools can be found in %s' % anno_path)
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
+
 
 def main():
     version = '1.2.5'
@@ -428,7 +443,7 @@ def main():
     optional.add_argument('--checkExecutable', help='Check if annotation tools are executable!', action='store_true')
 
     args = parser.parse_args()
-    greedyFasPath = os.path.realpath(__file__).replace('/prepareFAS.py','')
+    greedyFasPath = os.path.realpath(__file__).replace('/setupFAS.py','')
     options = {
         'toolPath': args.toolPath,
         'dtuPath': args.dtuPath,
@@ -463,6 +478,7 @@ def main():
     anno_path = prepare_annoTool(options)
     allRun = checkExecutable(anno_path)
     saveConfigFile(allRun, anno_path, greedyFasPath)
+
 
 if __name__ == '__main__':
     main()

@@ -22,7 +22,6 @@
 
 import xml.etree.ElementTree as ElTre
 import os
-import logging
 import json
 
 
@@ -73,8 +72,6 @@ def xmlreader(path, mode, tool, assess, proteome, protein_lengths, clan_dict, op
 
                         # evalue check: family/ftype based
                         if 'evalue' in feature.attrib and float(feature.attrib["evalue"]) > option["efilter"]:
-                            logging.debug("reject feature type: " + ftype)
-                            # print "reject feature"
                             # skip current ftype and continue with the next one
                             continue
                         else:
@@ -103,13 +100,8 @@ def xmlreader(path, mode, tool, assess, proteome, protein_lengths, clan_dict, op
                                     end = int(instance.attrib["end"])
 
                                     if inst_eval <= option["inst_efilter"]:
-                                        logging.debug("append instance: " + ftype + ": " + str(instance.attrib))
-
                                         proteome[p_id][ftype].append((inst_eval, start, end))
                                         inst_count += 1
-
-                                    else:
-                                        logging.debug("reject instance: " + ftype + ": " + str(instance.attrib))
 
                                 # XMLcase 2: feature instance contains NO evalue information (XML field inst_eval)
                                 else:
@@ -132,15 +124,11 @@ def xmlreader(path, mode, tool, assess, proteome, protein_lengths, clan_dict, op
                             # any instance appended?
                             if inst_count < 1:
                                 # delete feature type
-                                logging.info("Rejecting feature type " + str(ftype) + " due to rejection of all "
-                                                                                      "instances. Check for thresholds "
-                                                                                      "and E-values (instance based)")
                                 proteome[p_id].pop(ftype)
                             if ftype not in clan_dict:
                                 clan_dict[ftype] = fclan
     else:
         raise Exception(path + " does not exist")
-    logging.debug("proteome: " + str(proteome))
     return proteome, protein_lengths, clan_dict
 
 
