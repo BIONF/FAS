@@ -46,13 +46,13 @@ export PATH=$HOME/.local/bin:$PATH
 # Usage
 
 ## Download and install annotation tools
-Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/). To get these tools and make a configuration file for FAS, please use the `prepareFAS` function:
+Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/). To get these tools and make a configuration file for FAS, please use the `setupFAS` function:
 ```
-prepareFAS -t /directory/where/you/want/to/save/annotation/tools
+setupFAS -t /directory/where/you/want/to/save/annotation/tools
 ```
 Inside the output directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
 
-*Please read our [wiki page of prepareFAS](https://github.com/BIONF/FAS/wiki/prepareFAS) for other use-cases, such as how to use your old annotation tools with the new FAS, etc.*
+*Please read our [wiki page of setupFAS](https://github.com/BIONF/FAS/wiki/setupFAS) for other use-cases, such as how to use your old annotation tools with the new FAS, etc.*
 
 __*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM version 2.0c and SignalP version 4.1g, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
 
@@ -60,13 +60,13 @@ __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
 ## Perform feature annotation
 
-If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `annoFAS` function. 
+If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `annoFAS` function.
 
 ```
 annoFAS --fasta your_proteins.fa --outPath /annotation/path/
 ```
 
-The annotation output (`your_proteins.json` by default) will be saved in `/annotation/path/`. 
+The annotation output (`your_proteins.json` by default) will be saved in `/annotation/path/`.
 
 Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `annoParserFAS` to convert the InterProScan's *tsv* output into *json format* for using with FAS.
 
@@ -83,7 +83,7 @@ The main purpose of FAS is to calculate the similarity score between 2 given pro
 ```
 calcFAS -s seed.fa -q query.fa -a /annotation/path/ -o /output/path/
 ```
-If the annotations of *seed* and *query* protein(s) already exist in `/annotation/path/` (*seed.json* and *query.json*, respectively), `calcFAS` will use these annotations for calculating the FAS scores. Otherwise, it will first annotate the proteins and then compare the feature architectures of those two protein sets. 
+If the annotations of *seed* and *query* protein(s) already exist in `/annotation/path/` (*seed.json* and *query.json*, respectively), `calcFAS` will use these annotations for calculating the FAS scores. Otherwise, it will first annotate the proteins and then compare the feature architectures of those two protein sets.
 
 # Additional Information
 

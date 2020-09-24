@@ -63,7 +63,7 @@ def main():
     join_domain_out(jobdict, tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
                     seedspec, namedict, groupdict)
     shutil.rmtree(tmp_dir + "/" + outname, ignore_errors=True)
-    print('hamstrFAS finished!')
+    print('fdogFAS finished!')
     if args.bidirectional:
         print('Output files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains, ' +
               outname + '_reverse.domains in ' + out_dir)
@@ -97,7 +97,7 @@ def create_jobdict(joblist):
         seed = '|'.join(joblist[entry][0][1:-1])
         if seedspec and not seedspec == joblist[entry][0][0]:
             raise Exception(
-                'There seem to be multiple seed species in the extended.fa but hamstrFAS only supports a single one')
+                'There seem to be multiple seed species in the extended.fa but fdogFAS only supports a single one')
         elif not seedspec:
             seedspec = joblist[entry][0][0]
         groupdict[seed] = entry

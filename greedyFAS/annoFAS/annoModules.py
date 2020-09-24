@@ -372,7 +372,7 @@ def getAnnoTools(toolPath):
     with open(toolPath+'/annoTools.txt') as f:
         file =  f.readlines()
         if '#checked' not in ''.join(file):
-            sys.exit('Annotation tools not ready. Please run prepareFAS first!')
+            sys.exit('Annotation tools not ready. Please run setupFAS first!')
         else:
             for tool in file:
                 if ('#' not in tool) and (len(tool) > 1):

@@ -152,7 +152,7 @@ def check_status(toolPath, force, tarfile):
                         try:
                             shutil.rmtree(toolPath)
                         except:
-                            sys.exit('Failed to delete %s. Please manually remove it and run prepareFAS again!' % toolPath)
+                            sys.exit('Failed to delete %s. Please manually remove it and run setupFAS again!' % toolPath)
                         if os.path.exists(os.path.abspath(cwd + '/' + tarfile)):
                             shutil.move(cwd + '/' + tarfile, toolPath + '/' + tarfile)
                         flag = 1
@@ -333,9 +333,9 @@ def checkExecutable(anno_path):
     print('Checking if annotation tools are excutable...')
     # test pfam and smart
     if not os.path.isfile(anno_path + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
-        sys.exit('Pfam hmm file not found. Please run prepareFAS with --force!')
+        sys.exit('Pfam hmm file not found. Please run setupFAS with --force!')
     if not os.path.isfile(anno_path + '/SMART/SMART-hmms/SMART.hmm'):
-        sys.exit('SMART hmm file not found. Please run prepareFAS with --force!')
+        sys.exit('SMART hmm file not found. Please run setupFAS with --force!')
     # test seg
     if 'SEG' in availTool:
         segCmd = '%s/SEG/seg' % anno_path
@@ -343,9 +343,9 @@ def checkExecutable(anno_path):
             p1 = subprocess.Popen([segCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output1, err1 = p1.communicate()
             if not 'Usage' in err1.decode('UTF-8').strip():
-                sys.exit('Error with SEG. You can reinstall it by running prepareFAS with --force!')
+                sys.exit('Error with SEG. You can reinstall it by running setupFAS with --force!')
         except:
-            sys.exit('Error with SEG. You can reinstall it by running prepareFAS with --force!')
+            sys.exit('Error with SEG. You can reinstall it by running setupFAS with --force!')
     # test fLPS
     if 'fLPS' in availTool:
         flpsCmd = '%s/fLPS/fLPS' % anno_path
@@ -353,9 +353,9 @@ def checkExecutable(anno_path):
             p2 = subprocess.Popen([flpsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output2, err2 = p2.communicate()
             if not err2.decode('UTF-8').strip() == 'There is no sequence file. Please supply one.':
-                sys.exit('Error with fLPS. You can reinstall it by running prepareFAS with --force!')
+                sys.exit('Error with fLPS. You can reinstall it by running setupFAS with --force!')
         except:
-            sys.exit('Error with fLPS. You can reinstall it by running prepareFAS with --force!')
+            sys.exit('Error with fLPS. You can reinstall it by running setupFAS with --force!')
     # test COILS2
     if 'COILS2' in availTool:
         coilsCmd = '%s/COILS2/COILS2' % anno_path
@@ -378,9 +378,9 @@ def checkExecutable(anno_path):
             if '0 sequences' in err3.decode('UTF-8').strip():
                 flag = 0
             if flag == 1:
-                sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
+                sys.exit('Error with COILS2. You can reinstall it by running setupFAS with --force!')
         except:
-            sys.exit('Error with COILS2. You can reinstall it by running prepareFAS with --force!')
+            sys.exit('Error with COILS2. You can reinstall it by running setupFAS with --force!')
     # test tmhmm
     if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
@@ -388,9 +388,9 @@ def checkExecutable(anno_path):
             p4 = subprocess.Popen([tmhmmCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output4, err4 = p4.communicate()
             if not 'Error: No modelfile given' in err4.decode('UTF-8').strip():
-                sys.exit('Error with TMHMM. You can reinstall it by running prepareFAS with --force!')
+                sys.exit('Error with TMHMM. You can reinstall it by running setupFAS with --force!')
         except:
-            sys.exit('Error with TMHMM. You can reinstall it by running prepareFAS with --force!')
+            sys.exit('Error with TMHMM. You can reinstall it by running setupFAS with --force!')
     # test signalp
     if 'SignalP' in availTool:
         signalpCmd = '%s/SignalP/signalp' % anno_path
@@ -398,9 +398,9 @@ def checkExecutable(anno_path):
             p5 = subprocess.Popen([signalpCmd, '-V'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output5, err5 = p5.communicate()
             if not err5.decode('UTF-8').strip() == '':
-                sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
+                sys.exit('Error with SignalP. You can reinstall it by running setupFAS with --force!')
         except:
-            sys.exit('Error with SignalP. You can reinstall it by running prepareFAS with --force!')
+            sys.exit('Error with SignalP. You can reinstall it by running setupFAS with --force!')
     return True
 
 
@@ -430,8 +430,8 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.2.5'
-    parser = argparse.ArgumentParser(description='You are running prepareFAS version ' + str(version) + '.')
+    version = '1.2.6'
+    parser = argparse.ArgumentParser(description='You are running setupFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='', required=True)

@@ -124,7 +124,7 @@ def main():
     if toolPath == '':
         pathconfigFile = os.path.realpath(__file__).replace('annoFAS/annoFAS.py', 'pathconfig.txt')
         if not os.path.exists(pathconfigFile):
-            sys.exit('No pathconfig.txt found. Please run prepareFAS (https://github.com/BIONF/FAS/wiki/prepareFAS).')
+            sys.exit('No pathconfig.txt found. Please run setupFAS (https://github.com/BIONF/FAS/wiki/setupFAS).')
         with open(pathconfigFile) as f:
             toolPath = f.readline().strip()
     else:
