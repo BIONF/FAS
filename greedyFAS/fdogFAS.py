@@ -227,7 +227,7 @@ def write_phyloprofile(results, out_path, outname, namedict, groupdict):
 
 
 def get_options():
-    version = '1.4.0'
+    version = '1.4.1'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -249,7 +249,7 @@ def get_options():
                           help="deactivate bidirectional scoring")
     optional.add_argument("--cores", action="store", type=int, default=1,
                           help="number of cores used for parallel calculation")
-    optional.add_argument("--no_lin", action='store_True',
+    optional.add_argument("--no_lin", action='store_true',
                           help="deactivate linearization for pfam/smart")
     arguments = parser.parse_args()
     return arguments

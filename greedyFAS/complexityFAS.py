@@ -49,7 +49,7 @@ def get_options():
                           help="eValue cutoff for PFAM/SMART domains")
     optional.add_argument("-e", "--eInstance", default="0.01", type=float,
                           help="eValue cutoff for PFAM/SMART instances")
-    optional.add_argument("--show_graph", action='store_True',
+    optional.add_argument("--show_graph", action='store_true',
                           help="visualize the feature graph, you may need to install graphviz for this feature")
     args = parser.parse_args()
     return args
