@@ -233,6 +233,7 @@ def get_options():
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
+    parser.add_argument('--version', action='version', version=str(version))
     required.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
                           help="path to extended.fa file")
     required.add_argument("-w", "--weight_dir", default=None, type=str, required=True,

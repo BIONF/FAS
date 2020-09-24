@@ -33,9 +33,11 @@ from greedyFAS.mainFAS import greedyFAS
 
 
 def get_options():
+    version = '1.4.1'
     parser = argparse.ArgumentParser()
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
+    parser.add_argument('--version', action='version', version=str(version))
     required.add_argument("-i", "--input", default=None, type=str, required=True,
                           help="path to protein fasta file")
     optional.add_argument("-p", "--id", default=None, nargs='*', type=str,

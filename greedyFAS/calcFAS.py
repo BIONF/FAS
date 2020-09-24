@@ -42,6 +42,7 @@ def get_options():
     weighting = parser.add_argument_group('weighting arguments')
     thresholds = parser.add_argument_group('threshold arguments')
     obscure = parser.add_argument_group('obscure arguments')
+    parser.add_argument('--version', action='version', version=str(version))
     required.add_argument("-s", "--seed", default=None, type=str, required=True,
                           help="path to seed protein fasta file")
     required.add_argument("-q", "--query", default=None, type=str, required=True,
