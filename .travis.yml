@@ -7,7 +7,8 @@ script:
 - python3 greedyFAS/calcFAS.py -h
 - python3 greedyFAS/fdogFAS.py -h
 - python3 greedyFAS/complexityFAS.py -h
-- python3 greedyFAS/annoFAS.py -h
+- python3 greedyFAS/annoFAS/annoFAS.py -h
+- python3 greedyFAS/annoFAS/annoParserFAS.py -h
 - python3 greedyFAS/setupFAS.py -h
 deploy:
   provider: pypi
