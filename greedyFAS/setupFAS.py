@@ -44,7 +44,7 @@ def complete(text, state):
 
 def subprocess_cmd(commands):
     for cmd in commands:
-        subprocess.call(cmd, shell = True)
+        subprocess.call(cmd, shell=True)
 
 
 def download_progress(count, block_size, total_size):
@@ -59,7 +59,7 @@ def download_progress(count, block_size, total_size):
     if percent > 100:
         percent = 100
     sys.stdout.write("\r...%d%%, %d MB, %d KB/s, %d seconds passed" %
-                    (percent, progress_size / (1024 * 1024), speed, duration))
+                     (percent, progress_size / (1024 * 1024), speed, duration))
     sys.stdout.flush()
 
 
@@ -121,7 +121,8 @@ def get_dtu_path(dtuPathIn):
             readline.set_completer_delims(' \t\n;')
             readline.parse_and_bind('tab: complete')
             readline.set_completer(complete)
-            dtu_path = input('Please download TMHMM 2.0c and SignalP 4.1g at https://services.healthtech.dtu.dk/ and enter path to the downloaded tar files:')
+            dtu_path = input('Please download TMHMM 2.0c and SignalP 4.1g at https://services.healthtech.dtu.dk/ and '
+                             'enter path to the downloaded tar files:')
         else:
             dtu_path = ''
 
@@ -152,7 +153,8 @@ def check_status(toolPath, force, tarfile):
                         try:
                             shutil.rmtree(toolPath)
                         except:
-                            sys.exit('Failed to delete %s. Please manually remove it and run setupFAS again!' % toolPath)
+                            sys.exit('Failed to delete %s. Please manually remove it and run setupFAS again!'
+                                     % toolPath)
                         if os.path.exists(os.path.abspath(cwd + '/' + tarfile)):
                             shutil.move(cwd + '/' + tarfile, toolPath + '/' + tarfile)
                         flag = 1
@@ -168,7 +170,8 @@ def install_signalp():
     shutil.move('signalp-4.1', 'SignalP')
     os.chdir('SignalP')
     signalp_path = os.getcwd().replace('/','\/')
-    addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % (signalp_path, signalp_path+'/signalp')
+    addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % \
+                      (signalp_path, signalp_path+'/signalp')
     subprocess.call([addPath_signalp], shell=True)
     # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
     # subprocess.call([makelink_signalp], shell=True)
@@ -190,7 +193,7 @@ def write_coilsdir(coilsdir):
     with open(filename, "r+") as file:
         for line in file:
             if coilsdir in line:
-               break
+                break
         else:
             file.write(coilsdir)
 
@@ -209,13 +212,14 @@ def prepare_annoTool(options):
                 if not force:
                     print('Annotation tools already found at %s' % anno_path)
                     if not os.path.exists(os.path.abspath(options['greedyFasPath']+'/pathconfig.txt')):
-                        print('If you want to add %s to config file of FAS, please rerun this function with --savePath!' % anno_path)
+                        print('If you want to add %s to config file of FAS, please rerun this function with --savePath!'
+                              % anno_path)
                     print('If you want to re-install them, rerun this function with --force!')
                     sys.exit()
 
     current_dir = os.getcwd()
     if check_status(anno_path, force, file) == 1:
-        Path(anno_path).mkdir(parents = True, exist_ok = True)
+        Path(anno_path).mkdir(parents=True, exist_ok=True)
         anno_path = os.path.abspath(anno_path)
         os.chdir(anno_path)
 
@@ -223,7 +227,7 @@ def prepare_annoTool(options):
         print(os.getcwd())
         print('----------------------------------')
         tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
-        with open('annoTools.txt', mode = 'wt') as tool_file:
+        with open('annoTools.txt', mode='wt') as tool_file:
             if platform == 'darwin':
                 tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\n')
             else:
@@ -243,7 +247,7 @@ def prepare_annoTool(options):
                 shutil.unpack_archive(dtu_path + '/' + tmhmm_source, anno_path, 'gztar')
                 install_tmhmm()
             os.chdir(anno_path)
-            with open('annoTools.txt', mode = 'a') as tool_file:
+            with open('annoTools.txt', mode='a') as tool_file:
                 if platform == 'darwin':
                     tool_file.write('SignalP\n')
                 else:
@@ -277,17 +281,25 @@ def prepare_annoTool(options):
                 source_dir = 'annotation_FAS/' + tool + '/'
                 if os.path.exists(os.path.abspath(anno_path + '/' + tool)):
                     shutil.rmtree(anno_path + '/' + tool)
-                shutil.move(source_dir, anno_path, copy_function = shutil.copytree)
+                shutil.move(source_dir, anno_path, copy_function=shutil.copytree)
 
         # make symlink for fLPS (depend on OS system)
         source = os.getcwd() + '/fLPS/bin'
         target = os.getcwd() + '/fLPS/fLPS'
         if platform == 'darwin':
             source = source + '/mac64/fLPS'
-            os.symlink(source, target)
+            try:
+                os.symlink(source, target)
+            except FileExistsError:
+                os.remove(target)
+                os.symlink(source, target)
         else:
             source = source + '/linux/fLPS'
-            os.symlink(source, target)
+            try:
+                os.symlink(source, target)
+            except FileExistsError:
+                os.remove(target)
+                os.symlink(source, target)
 
         # re-compile COILS2
         coils_path = anno_path + '/COILS2'
@@ -297,7 +309,7 @@ def prepare_annoTool(options):
         os.chdir(coils_bin)
         compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm' + ' > /dev/null 2>&1'
         try:
-            subprocess.call(compile_cmd, shell = True)
+            subprocess.call(compile_cmd, shell=True)
         except:
             print('ERROR: Failed to compile COILS2.\nPlease read instruction at %s and do it manually!' % coils_path)
         COILSDIR = 'export COILSDIR=%s' % coils_bin
@@ -372,7 +384,8 @@ def checkExecutable(anno_path):
                     bash_file = '.bash_profile'
                 with open(home + '/' + bash_file) as file:
                     if not 'export COILSDIR' in file.read():
-                        print("PLEASE PUT THE FOLLOWING LINE TO %s/%s:\nexport COILSDIR=%s" % (home, bash_file, anno_path + '/COILS2/coils'))
+                        print("PLEASE PUT THE FOLLOWING LINE TO %s/%s:\nexport COILSDIR=%s" %
+                              (home, bash_file, anno_path + '/COILS2/coils'))
                 print('NOTE: THE TERMINAL MUST BE RESTARTED BEFORE USING FAS!!!')
                 flag = 0
             if '0 sequences' in err3.decode('UTF-8').strip():
@@ -395,7 +408,8 @@ def checkExecutable(anno_path):
     if 'SignalP' in availTool:
         signalpCmd = '%s/SignalP/signalp' % anno_path
         try:
-            p5 = subprocess.Popen([signalpCmd, '-V'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p5 = subprocess.Popen([signalpCmd, '-V'], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE)
             output5, err5 = p5.communicate()
             if not err5.decode('UTF-8').strip() == '':
                 sys.exit('Error with SignalP. You can reinstall it by running setupFAS with --force!')
@@ -417,11 +431,11 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
     if checkResult:
         with open(anno_path+'/annoTools.txt') as f:
             if '#checked' not in f.read():
-                with open(anno_path+'/annoTools.txt','a') as file:
+                with open(anno_path+'/annoTools.txt', 'a') as file:
                     file.write('#checked')
                     file.close()
         f.close()
-        with open(greedyFasPath+'/pathconfig.txt','w') as config:
+        with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
             config.write(os.path.abspath(anno_path))
             config.close()
         sys.exit('Done! Annotation tools can be found in %s' % anno_path)
@@ -430,16 +444,20 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.2.6'
+    version = '1.2.7'
     parser = argparse.ArgumentParser(description='You are running setupFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
-    required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='', required=True)
-    optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store', default='')
+    required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='',
+                          required=True)
+    optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store',
+                          default='')
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
-    optional.add_argument('-s', '--savePath', help='Save annotation tool path to config file for FAS', action='store_true')
-    optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!', action='store_true')
+    optional.add_argument('-s', '--savePath', help='Save annotation tool path to config file for FAS',
+                          action='store_true')
+    optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!',
+                          action='store_true')
     optional.add_argument('--checkExecutable', help='Check if annotation tools are executable!', action='store_true')
 
     args = parser.parse_args()
@@ -470,7 +488,7 @@ def main():
 
     if args.savePath:
         checkAnnoToolsFile(args.toolPath)
-        with open(greedyFasPath+'/pathconfig.txt','w') as config:
+        with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
             config.write(os.path.abspath(args.toolPath))
             config.close()
         sys.exit('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
