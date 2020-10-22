@@ -88,7 +88,7 @@ def read_extended_fa(path, grouplist):
     return joblist
 
 
-def create_jobdict(joblist):
+def create_jobdict(joblist):# check jobdict generation
     jobdict = {}
     namedict = {}
     groupdict = {}
