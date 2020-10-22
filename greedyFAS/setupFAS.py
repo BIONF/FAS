@@ -136,7 +136,7 @@ def get_dtu_path(dtuPathIn):
             sys.exit('signalp-4.1g not found in %s' % dtu_path)
         return dtu_path, signalp_source[0], tmhmm_source[0]
     else:
-        return 0, 0
+        return 0, 0, 0
 
 
 def check_status(toolPath, force, tarfile):
@@ -170,7 +170,7 @@ def install_signalp():
     shutil.move('signalp-4.1', 'SignalP')
     os.chdir('SignalP')
     signalp_path = os.getcwd().replace('/','\/')
-    addPath_signalp = 'sed -i -e \'s/$ENV{SIGNALP} = .*/$ENV{SIGNALP} = \"%s\";/\' %s' % \
+    addPath_signalp = 'perl -pi -e \'s/\$ENV{SIGNALP} = .*/\$ENV{SIGNALP} = \"%s\";/\' %s' % \
                       (signalp_path, signalp_path+'/signalp')
     subprocess.call([addPath_signalp], shell=True)
     # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
@@ -339,7 +339,7 @@ def prepare_annoTool(options):
 def checkExecutable(anno_path):
     with open(anno_path+'/annoTools.txt') as file:
         availTool = [line.strip() for line in file]
-    sedCmd ='sed -i \'s/#checked//\' %s/annoTools.txt' % anno_path
+    sedCmd ='perl -pi -e \'s/#checked\\n//\' %s/annoTools.txt' % anno_path
     subprocess.call([sedCmd], shell=True)
 
     print('Checking if annotation tools are excutable...')
@@ -444,7 +444,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.2.7'
+    version = '1.4.5'
     parser = argparse.ArgumentParser(description='You are running setupFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')

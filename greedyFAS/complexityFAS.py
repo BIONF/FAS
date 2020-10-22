@@ -33,7 +33,7 @@ from greedyFAS.mainFAS import greedyFAS
 
 
 def get_options():
-    version = '1.4.4'
+    version = '1.4.5'
     parser = argparse.ArgumentParser()
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
