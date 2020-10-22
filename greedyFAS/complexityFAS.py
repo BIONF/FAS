@@ -39,7 +39,7 @@ def get_options():
     optional = parser.add_argument_group('optional arguments')
     parser.add_argument('--version', action='version', version=str(version))
     required.add_argument("-i", "--input", default=None, type=str, required=True,
-                          help="path to protein fasta file")
+                          help="path to protein architecture json file")
     optional.add_argument("-p", "--id", default=None, nargs='*', type=str,
                           help="Choose specific proteins from the input for the complexity analysis")
     optional.add_argument("-d", "--featuretypes", default=None, type=str,

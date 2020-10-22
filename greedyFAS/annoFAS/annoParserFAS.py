@@ -33,8 +33,8 @@ def read_infile_single(ignore_lines, feature_columns, tool_name, path):
     feature_dict = {}
     while line:
         cells = line.rstrip('\n').split('\t')
-        p_id, length = cells[feature_columns[0]], cells[feature_columns[1]]
-        start, stop = cells[feature_columns[3]], cells[feature_columns[4]]
+        p_id, length = cells[feature_columns[0]], int(cells[feature_columns[1]])
+        start, stop = int(cells[feature_columns[3]]), int(cells[feature_columns[4]])
         f_id = tool_name + '_' + cells[feature_columns[2]]
         if p_id not in feature_dict:
             feature_dict[p_id] = {'length': length, tool_name: {}}
@@ -53,8 +53,8 @@ def read_infile_multiple(ignore_lines, feature_columns, tool_names, tool_column,
     feature_dict = {}
     while line:
         cells = line.rstrip('\n').split('\t')
-        p_id, length = cells[feature_columns[0]], cells[feature_columns[1]]
-        start, stop = cells[feature_columns[3]], cells[feature_columns[4]]
+        p_id, length = cells[feature_columns[0]], int(cells[feature_columns[1]])
+        start, stop = int(cells[feature_columns[3]]), int(cells[feature_columns[4]])
         tool_name = cells[tool_column].lower()
         f_id = tool_name + '_' + cells[feature_columns[2]]
         if tool_name not in tool_names:
