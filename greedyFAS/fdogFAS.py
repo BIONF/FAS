@@ -48,7 +48,7 @@ def main():
         tmp_dir = args.tmp_dir + '/'
     print(out_dir)
     joblist = read_extended_fa(args.extended_fa, args.groupnames)
-    jobdict, namedict, groupdict, seedspec = create_jobdict(joblist)
+    jobdict, groupdict, seedspec = create_jobdict(joblist)
     if args.no_lin:
         features = [[], ["pfam", "smart", "flps", "coils2", "seg", "signalp", "tmhmm"]]
     else:
@@ -59,16 +59,16 @@ def main():
     results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, tmp_dir + '/' + outname, args.cores,
                              features, args.bidirectional)
     print('writing phyloprofile output...')
-    write_phyloprofile(results, out_dir, outname, namedict, groupdict)
+    write_phyloprofile(results, out_dir, outname, groupdict)
     join_domain_out(jobdict, tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
-                    seedspec, namedict, groupdict)
+                    seedspec, groupdict)
     shutil.rmtree(tmp_dir + "/" + outname, ignore_errors=True)
     print('fdogFAS finished!')
     if args.bidirectional:
-        print('Output files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains, ' +
+        print('fdogFAS files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains, ' +
               outname + '_reverse.domains in ' + out_dir)
     else:
-        print('Output files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains in' +
+        print('fdogFAS files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains in' +
               out_dir)
 
 
@@ -90,7 +90,6 @@ def read_extended_fa(path, grouplist):
 
 def create_jobdict(joblist):# check jobdict generation
     jobdict = {}
-    namedict = {}
     groupdict = {}
     seedspec = None
     for entry in joblist:
@@ -100,16 +99,19 @@ def create_jobdict(joblist):# check jobdict generation
                 'There seem to be multiple seed species in the extended.fa but fdogFAS only supports a single one')
         elif not seedspec:
             seedspec = joblist[entry][0][0]
-        groupdict[seed] = entry
+        if seed not in groupdict:
+            groupdict[seed] = {entry: {}}
+        else:
+            groupdict[seed][entry] = {}
         for query in joblist[entry]:
             prot_id = '|'.join(query[1:-1])
             spec = query[0]
-            namedict[prot_id] = query[-1]
-            if spec in jobdict:
-                jobdict[spec].append((seed, prot_id))
-            else:
+            groupdict[seed][entry][prot_id] = query[-1]
+            if spec not in jobdict:
                 jobdict[spec] = [(seed, prot_id)]
-    return jobdict, namedict, groupdict, seedspec
+            elif (seed, prot_id) not in jobdict[spec]:
+                jobdict[spec].append((seed, prot_id))
+    return jobdict, groupdict, seedspec
 
 
 def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, features, bidirectional):
@@ -179,7 +181,7 @@ def run_fas(data):
     return outdata, data[0]
 
 
-def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_spec, namedict, groupdict):
+def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_spec, groupdict):
     out_f = open(out_path + outname + "_forward.domains", "w")
     out_r = None
     if bidirectional:
@@ -189,45 +191,50 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_sp
             for line in infile.readlines():
                 cells = line.split("\t")
                 s_id, q_id = cells[0].split("#")
-                if not cells[1] == q_id:
-                    p_id = seed_spec + "|" + cells[1]
-                else:
-                    p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
-                out_f.write(groupdict[s_id] + "#" + groupdict[s_id] + "|" + spec + "|" + q_id + "|" + namedict[q_id] +
-                            "\t" + groupdict[s_id] + "|" + p_id + "\t" + "\t".join(cells[2:]))
+                for seed in groupdict[s_id]:
+                    if q_id in groupdict[s_id][seed]:
+                        if not cells[1] == q_id:
+                            p_id = seed_spec + "|" + cells[1]
+                        else:
+                            p_id = spec + "|" + cells[1] + "|" + groupdict[s_id][seed][q_id]
+                        out_f.write(seed + "#" + seed + "|" + spec + "|" + q_id + "|" + groupdict[s_id][seed][q_id] +
+                                    "\t" + seed + "|" + p_id + "\t" + "\t".join(cells[2:]))
         os.remove(tmp_path + "/" + spec + "_forward.domains")
         if bidirectional:
             with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
                 for line in infile.readlines():
                     cells = line.split("\t")
                     s_id, q_id = cells[0].split("#")
-                    if not cells[1] == q_id:
-                        p_id = seed_spec + "|" + cells[1]
-                    else:
-                        p_id = spec + "|" + cells[1] + "|" + namedict[q_id]
-                    out_r.write(groupdict[s_id] + "#" + groupdict[s_id] + "|" + spec + "|" + q_id + "|" +
-                                namedict[q_id] + "\t" + groupdict[s_id] + "|" + p_id + "\t" + "\t".join(cells[2:]))
+                    for seed in groupdict[s_id]:
+                        if q_id in groupdict[s_id][seed]:
+                            if not cells[1] == q_id:
+                                p_id = seed_spec + "|" + cells[1]
+                            else:
+                                p_id = spec + "|" + cells[1] + "|" + groupdict[s_id][seed][q_id]
+                            out_r.write(seed + "#" + seed + "|" + spec + "|" + q_id + "|" + groupdict[s_id][seed][q_id]
+                                        + "\t" + seed + "|" + p_id + "\t" + "\t".join(cells[2:]))
             os.remove(tmp_path + "/" + spec + "_reverse.domains")
     out_f.close()
     if bidirectional:
         out_r.close()
 
 
-def write_phyloprofile(results, out_path, outname, namedict, groupdict):
+def write_phyloprofile(results, out_path, outname, groupdict):
     out = open(out_path + outname + ".phyloprofile", "w+")
     out.write("geneID\tncbiID\torthoID\tFAS_F\tFAS_B\n")
     for result in results:
         spec = result[1]
         ncbi = spec.split("@")[1]
         for pair in result[0]:
-            out.write(groupdict[pair[0]] + "\tncbi" + ncbi + "\t" + groupdict[pair[0]] + "|" + spec + "|" + pair[1] +
-                      "|" + namedict[pair[1]] + "\t" + str(result[0][pair][0]) + "\t" + str(result[0][pair][1]) +
-                      "\n")
+            for seed in groupdict[pair[0]]:
+                out.write(seed + "\tncbi" + ncbi + "\t" + seed + "|" + spec + "|" + pair[1] + "|" +
+                          groupdict[pair[0]][seed][pair[1]] + "\t" + str(result[0][pair][0]) + "\t" +
+                          str(result[0][pair][1]) + "\n")
     out.close()
 
 
 def get_options():
-    version = '1.4.7'
+    version = '1.4.8'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
