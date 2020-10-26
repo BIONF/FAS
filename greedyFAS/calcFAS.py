@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.4.7'
+    version = '1.4.8'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -80,11 +80,11 @@ def get_options():
                            help="Apply weight constraints via constraints file, by default there are no constraints. "
                                 "Please look at the FAS wiki pages for templates for the constraints file")
     inargs.add_argument("--query_id", default=None, nargs='*', type=str,
-                        help="Choose specific proteins from the query input for calculation, by default this is off "
-                             "(all proteins are used for calculation)")
+                        help="Choose specific proteins (ids divided by spaces) from the query input for calculation, "
+                             "by default this is off (all proteins are used for calculation)")
     inargs.add_argument("--seed_id", default=None, nargs='*', type=str,
-                        help="Choose specific proteins from the seed input for calculation, by default this is off "
-                             "(all proteins are used for calculation)")
+                        help="Choose specific proteins (ids divided by spaces) from the seed input for calculation, "
+                             "by default this is off (all proteins are used for calculation)")
     inargs.add_argument("--pairwise", dest="pairwise", default=None, type=str,
                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                              " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
