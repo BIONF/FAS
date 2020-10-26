@@ -227,7 +227,8 @@ def write_phyloprofile(results, out_path, outname, groupdict):
         ncbi = spec.split("@")[1]
         for pair in result[0]:
             for seed in groupdict[pair[0]]:
-                out.write(seed + "\tncbi" + ncbi + "\t" + seed + "|" + spec + "|" + pair[1] + "|" +
+                if pair[1] in groupdict[pair[0]][seed]:
+                    out.write(seed + "\tncbi" + ncbi + "\t" + seed + "|" + spec + "|" + pair[1] + "|" +
                           groupdict[pair[0]][seed][pair[1]] + "\t" + str(result[0][pair][0]) + "\t" +
                           str(result[0][pair][1]) + "\n")
     out.close()
