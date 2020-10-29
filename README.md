@@ -1,5 +1,4 @@
 # FAS - Feature Architecture Similarity
-[![conda-install](https://anaconda.org/bionf/hamstr/badges/installer/conda.svg)](https://anaconda.org/bionf/fas)
 [![PyPI version](https://badge.fury.io/py/greedyFAS.svg)](https://badge.fury.io/py/greedyFAS)
 [![Build Status](https://travis-ci.com/BIONF/FAS.svg?branch=master)](https://travis-ci.com/BIONF/FAS)
 [![GPLv3-license](https://anaconda.org/bionf/hamstr/badges/license.svg)](https://www.gnu.org/licenses/gpl-3.0.de.html)
