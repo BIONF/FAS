@@ -19,21 +19,12 @@ FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcent
 
 FAS is provided as a python package and compatible with **Python3**.
 
-You can install FAS directly from a Conda environment:
-```
-conda install -c BIONF fas
-```
-You may have to add bioconda to your channels beforehand as FAS requires the hmmer package:
-```
-conda config --add channels bioconda
-```
-
-Alternatively, you can install FAS with pip:
+You can install FAS with pip:
 ```
 python3 -m pip install greedyFAS
 ```
 
-(\*) In case you **do not have admin rights**, and don't use package systems like Anaconda to manage environments you need to use the **--user** option:
+(\*) In case you **do not have admin rights**, and don't use package systems like Anaconda to manage environments you need to use the **--user** option (not recommended):
 ```
 python3 -m pip install --user greedyFAS
 ```
