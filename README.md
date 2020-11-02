@@ -48,6 +48,12 @@ __*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will
 
 __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
+We suggest you test the annotation tools by running this command:
+```
+annoFAS -i test_annofas.fa -o test_output
+```
+*`test_annofas.fa` is a demo multiple fasta file, which is saved in the installed greedyFAS directory.*
+
 ## Perform feature annotation
 
 If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `annoFAS` function.

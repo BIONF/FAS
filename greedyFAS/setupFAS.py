@@ -168,11 +168,16 @@ def check_status(toolPath, force, tarfile):
 
 def install_signalp():
     shutil.move('signalp-4.1', 'SignalP')
+    subprocess.call(['chmod', '-R', '+w', './SignalP'])
     os.chdir('SignalP')
-    signalp_path = os.getcwd().replace('/','\/')
-    addPath_signalp = 'perl -pi -e \'s/\$ENV{SIGNALP} = .*/\$ENV{SIGNALP} = \"%s\";/\' %s' % \
-                      (signalp_path, signalp_path+'/signalp')
-    subprocess.call([addPath_signalp], shell=True)
+    signalp_path = os.getcwd()
+    with open(signalp_path+'/signalp', "r") as infile, open(signalp_path+'/signalp.mod', "w") as outfile:
+        for line in infile:
+            if 'ENV{SIGNALP} = ' in line:
+                line = '    $ENV{SIGNALP} = "%s";\n' % signalp_path
+            outfile.write(line)
+    shutil.move(signalp_path+'/signalp.mod', signalp_path+'/signalp')
+    subprocess.call(['chmod', '0755', signalp_path+'/signalp'])
     # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
     # subprocess.call([makelink_signalp], shell=True)
 
@@ -412,9 +417,9 @@ def checkExecutable(anno_path):
                                   stderr=subprocess.PIPE)
             output5, err5 = p5.communicate()
             if not err5.decode('UTF-8').strip() == '':
-                sys.exit('Error with SignalP. You can reinstall it by running setupFAS with --force!')
+                sys.exit('Error with SignalP. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-SignalP!')
         except:
-            sys.exit('Error with SignalP. You can reinstall it by running setupFAS with --force!')
+            sys.exit('Error with SignalP. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-SignalP!')
     return True
 
 
@@ -444,7 +449,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.4.5'
+    version = '1.4.6'
     parser = argparse.ArgumentParser(description='You are running setupFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')

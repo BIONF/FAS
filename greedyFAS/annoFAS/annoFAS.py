@@ -29,6 +29,7 @@ from pathlib import Path
 import multiprocessing as mp
 import greedyFAS.annoFAS.annoModules as annoModules
 from tqdm import tqdm
+from shutil import copyfile
 
 home = expanduser('~')
 
@@ -83,7 +84,7 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.3.2'
+    version = '1.3.3'
     parser = argparse.ArgumentParser(description='You are running annoFAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -118,8 +119,6 @@ def main():
     args = parser.parse_args()
 
     # options for doing annotation
-    seqFile = os.path.abspath(args.fasta)
-    annoModules.checkFileExist(seqFile)
     toolPath = args.toolPath
     if toolPath == '':
         pathconfigFile = os.path.realpath(__file__).replace('annoFAS/annoFAS.py', 'pathconfig.txt')
@@ -129,6 +128,14 @@ def main():
             toolPath = f.readline().strip()
     else:
         toolPath = os.path.abspath(args.toolPath)
+
+    seqFile = args.fasta
+    if seqFile == 'test_annofas.fa':
+        seqFile = os.path.realpath(__file__).replace('annoFAS.py', 'test_annofas.fa')
+    else:
+        seqFile = os.path.abspath(seqFile)
+    annoModules.checkFileExist(seqFile)
+
     eFlps = args.eFlps
     signalpOrg = args.org
     eFeature = args.eFeature
