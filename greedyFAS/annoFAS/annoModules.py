@@ -29,6 +29,7 @@ import subprocess
 import re
 import collections
 import json
+import shutil
 
 # general functions
 def mergeNestedDic(dictList):
@@ -147,34 +148,38 @@ def doTmhmm(args):
 
 
 def doSignalp(args):
-    (seqFile, toolPath, org) = args
+    (seqFile, toolPath, org, outPath) = args
+    # create tmp folder for signalp output
+    seqFileName = seqFile.split('/')[-1].split('.')[0]
+    Path(outPath+'/tmp/signalp/'+seqFileName).mkdir(parents = True, exist_ok = True)
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
     # do signalp
-    cmd = '%s/SignalP/signalp -t %s "%s"' % (toolPath, org, seqFile)
+    cmd = '%s/SignalP/signalp -T %s/tmp/signalp/%s -t %s "%s"' % (toolPath, outPath, seqFileName, org, seqFile)
     try:
         signalpOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
     except:
         sys.exit('Error running\n%s' % cmd)
     lines = signalpOut.stdout.decode().split('\n')
+    # print(signalpOut.stdout.decode())
     # save to dict
     annoOut = {}
     if len(lines) > 0:
         for line in lines:
-            if not line.startswith('#'):
-                if len(line) > 0:
-                    tmp = line.strip().split()
-                    if tmp[9] == 'Y':
-                        annoOut[tmp[0]] = {}
-                        annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
-                        annoOut[tmp[0]]['signalp'] = {}
-                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = {}
-                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['evalue'] = 'NA'
-                        annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['instance'] = [[1, int(tmp[4])-1, 'NA']]
-                    else:
-                        annoOut[tmp[0]] = {}
-                        annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
-                        annoOut[tmp[0]]['signalp'] = {}
+            if not line.startswith('#') and not 'Temporary files in' in line:
+                    if len(line) > 0:
+                        tmp = line.strip().split()
+                        if tmp[9] == 'Y':
+                            annoOut[tmp[0]] = {}
+                            annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
+                            annoOut[tmp[0]]['signalp'] = {}
+                            annoOut[tmp[0]]['signalp']['signalp_SIGNALP'] = {}
+                            annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['evalue'] = 'NA'
+                            annoOut[tmp[0]]['signalp']['signalp_SIGNALP']['instance'] = [[1, int(tmp[4])-1, 'NA']]
+                        else:
+                            annoOut[tmp[0]] = {}
+                            annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
+                            annoOut[tmp[0]]['signalp'] = {}
     return annoOut
 
 
@@ -408,7 +413,7 @@ def doAnno(args):
         anno = doTmhmm([seqFile, toolPath])
         annoList.append(anno)
     if 'signalp' in toolList:
-        anno = doSignalp([seqFile, toolPath, signalpOrg])
+        anno = doSignalp([seqFile, toolPath, signalpOrg, outPath])
         annoList.append(anno)
     if 'coils2' in toolList:
         anno = doCoils([seqFile, toolPath])
@@ -430,6 +435,10 @@ def doAnno(args):
         subprocess.run([rmCmd], shell=True, check=True)
     except:
         sys.exit('Error running\n%s' % rmCmd)
+    try:
+        shutil.rmtree('%s/tmp/signalp/%s_%s' % (outPath, outNameTmp, seqIdTmp))
+    except:
+        sys.exit('Error deleting %s/tmp/signalp/%s_%s' % (outPath, outNameTmp, seqIdTmp))
     return final
 
 # function for posprocessing annotation dictionary
