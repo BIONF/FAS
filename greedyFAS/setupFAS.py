@@ -317,7 +317,7 @@ def prepare_annoTool(options):
             subprocess.call(compile_cmd, shell=True)
         except:
             print('ERROR: Failed to compile COILS2.\nPlease read instruction at %s and do it manually!' % coils_path)
-        COILSDIR = 'export COILSDIR=%s' % coils_bin
+        COILSDIR = 'export COILSDIR=%s\n' % coils_bin
         write_coilsdir(COILSDIR)
         os.chdir(coils_path)
         if os.path.exists('COILS2'):
@@ -449,7 +449,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.4.6'
+    version = '1.4.7'
     parser = argparse.ArgumentParser(description='You are running setupFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
