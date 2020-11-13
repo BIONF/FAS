@@ -328,7 +328,7 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
             if feature[0] in seed_proteome[protein][tool]:
                 e_feature = False
                 try:
-                    if seed_proteome[protein][tool][feature[0]]["evalue"] <= option["eFeature"]:
+                    if seed_proteome[protein][tool][feature[2]]["evalue"] <= option["eFeature"]:
                         e_feature = True
                 except TypeError:
                     e_feature = True
@@ -345,7 +345,7 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
                         except TypeError:
                             e_instance = True
                         if e_instance:
-                            pos = (float(instance[1]) + float(instance[2])) / 2.0 / float(
+                            pos = (float(instance[0]) + float(instance[1])) / 2.0 / float(
                                 seed_proteome[protein]["length"])
                             match = 1.0 - float(abs(feature[1]) - pos)
                             if best_match < match:
