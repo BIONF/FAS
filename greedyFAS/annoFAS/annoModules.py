@@ -398,7 +398,7 @@ def doAnno(args):
     # create temp fasta file
     Path(outPath+'/tmp').mkdir(parents = True, exist_ok = True)
     outNameTmp = outName.replace("|","_")
-    seqIdTmp = seqId.replace("|","_")
+    seqIdTmp = seqId.replace("|","_").replace(".","_")
     tmpFile = open(outPath+'/tmp/'+outNameTmp+'_'+seqIdTmp+'.fa', 'w')
     tmpFile.write(str('>' + seqId + '\n' + seq))
     tmpFile.close()
