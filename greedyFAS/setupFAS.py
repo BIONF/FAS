@@ -396,9 +396,9 @@ def checkExecutable(anno_path):
             if '0 sequences' in err3.decode('UTF-8').strip():
                 flag = 0
             if flag == 1:
-                sys.exit('Error with COILS2. You can reinstall it by running setupFAS with --force!')
+                sys.exit('Error with COILS2. Please restart the terminal and run setupFAS again with --checkExecutable!')
         except:
-            sys.exit('Error with COILS2. You can reinstall it by running setupFAS with --force!')
+            sys.exit('Error with COILS2. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
     # test tmhmm
     if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
@@ -443,13 +443,16 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
             config.write(os.path.abspath(anno_path))
             config.close()
-        sys.exit('Done! Annotation tools can be found in %s' % anno_path)
+        print('Done! Annotation tools can be found in %s' % anno_path)
+        print('You should test annoFAS with this command:')
+        print('annoFAS -i test_annofas.fa -o testFas_output')
+        sys.exit()
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 
 def main():
-    version = '1.4.7'
+    version = '1.4.8'
     parser = argparse.ArgumentParser(description='You are running setupFAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
@@ -489,14 +492,20 @@ def main():
             with open(greedyFasPath+'/pathconfig.txt', 'r') as file:
                 savedPath = file.read().strip()
                 checkAnnoToolsFile(savedPath)
-                sys.exit('Annotation tools can be found at %s. FAS is ready to run!' % savedPath)
+                print('Annotation tools can be found at %s. FAS is ready to run!' % savedPath)
+                print('You should test annoFAS with this command:')
+                print('annoFAS -i test_annofas.fa -o testFas_output')
+                sys.exit()
 
     if args.savePath:
         checkAnnoToolsFile(args.toolPath)
         with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
             config.write(os.path.abspath(args.toolPath))
             config.close()
-        sys.exit('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
+        print('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
+        print('You should test annoFAS with this command:')
+        print('annoFAS -i test_annofas.fa -o testFas_output')
+        sys.exit()
 
     anno_path = prepare_annoTool(options)
     allRun = checkExecutable(anno_path)
