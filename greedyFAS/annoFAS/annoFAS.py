@@ -84,7 +84,7 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.4.17'
+    version = '1.5.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

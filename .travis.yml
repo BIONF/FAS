@@ -10,6 +10,7 @@ script:
 - python3 greedyFAS/annoFAS/annoFAS.py -h
 - python3 greedyFAS/annoFAS/annoParserFAS.py -h
 - python3 greedyFAS/setupFAS.py -h
+- python3 greedyFAS/domainFAS.py -h
 deploy:
   provider: pypi
   username: __token__
