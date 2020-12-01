@@ -49,7 +49,7 @@ def main():
     print(out_dir)
     joblist = read_extended_fa(args.extended_fa, args.groupnames)
     if len(joblist) == 0:
-        raise Exception("Fasta file (extended.fa) is empty!")
+        raise Exception(args.extended_fa + " is empty!")
     jobdict, groupdict, seedspec = create_jobdict(joblist)
     if args.no_lin:
         features = [[], ["pfam", "smart", "flps", "coils2", "seg", "signalp", "tmhmm"]]
@@ -237,7 +237,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.5.1'
+    version = '1.5.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
