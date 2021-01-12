@@ -435,11 +435,12 @@ def doAnno(args):
         subprocess.run([rmCmd], shell=True, check=True)
     except:
         sys.exit('Error running\n%s' % rmCmd)
-    try:
-        seqFileName = seqFile.split('/')[-1].split('.')[0]
-        shutil.rmtree('%s/tmp/signalp/%s' % (outPath, seqFileName))
-    except:
-        sys.exit('Error deleting %s/tmp/signalp/%s_%s' % (outPath, outNameTmp, seqIdTmp))
+    if 'signalp' in toolList:
+        try:
+            seqFileName = seqFile.split('/')[-1].split('.')[0]
+            shutil.rmtree('%s/tmp/signalp/%s' % (outPath, seqFileName))
+        except:
+            sys.exit('Error deleting %s/tmp/signalp/%s_%s' % (outPath, outNameTmp, seqIdTmp))
     return final
 
 # function for posprocessing annotation dictionary
