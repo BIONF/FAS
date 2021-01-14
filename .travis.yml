@@ -13,6 +13,8 @@ script:
 - wget https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo/annotation_FAS2020d.tar.gz &> /dev/null
 #- mv annotation_FAS2020d.tar.gz $TRAVIS_BUILD_DIR/annotation_tools
 - setupFAS -t $TRAVIS_BUILD_DIR -d $TRAVIS_BUILD_DIR
+- less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
+- mv annoTools.txt.mod annoTools.txt
 - annoFAS -i test_annofas.fa -o test_output
 - ls
 - ls $TRAVIS_BUILD_DIR/test_output
