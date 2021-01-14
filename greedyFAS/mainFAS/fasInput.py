@@ -132,7 +132,7 @@ def xmlreader(path, mode, tool, assess, proteome, protein_lengths, clan_dict, op
     return proteome, protein_lengths, clan_dict
 
 
-def featuretypes(path, option):
+def featuretypes(path):
     """
     Input function,
     reads the tools/featuretypes input-file and stores information in option
@@ -141,8 +141,8 @@ def featuretypes(path, option):
     :param option: dictionary that contains the main option variables of FAS
     :return: option
     """
-    option["input_linearized"] = []
-    option["input_normal"] = []
+    input_linearized = []
+    input_normal = []
     ifile = open(path, "r")
     lines = ifile.readlines()
     mode = "NULL"
@@ -157,11 +157,11 @@ def featuretypes(path, option):
         elif mode == "NULL":
             raise Exception(path + " is not a valid input file")
         elif mode == "lin" and len(tmp) > 0:
-            option["input_linearized"].append(tmp)
+            input_linearized.append(tmp)
         elif mode == "nor" and len(tmp) > 0:
-            option["input_normal"].append(tmp)
+            input_normal.append(tmp)
     ifile.close()
-    return option
+    return input_linearized, input_normal
 
 
 def constraints_in(path):

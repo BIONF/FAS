@@ -986,8 +986,8 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                     query_path_ad = query_path + list(a_q_f.keys())
                     score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
-                    if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
-                       score_w[3] >= best_path[1][3]:
+                    if ((score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3])
+                            or score_w[3] >= best_path[1][3]):
                         best_path = (path_ad, score_w, query_path_ad)
                     p_found = 2
             elif mode == 1:

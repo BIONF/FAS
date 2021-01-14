@@ -53,8 +53,8 @@ def sf_calc_score(path, protein, weights, search_features, query_features, seed_
     score_ms = round(tmp[0], 4)
     score_ps = round(
         sf_ps_score(path, tmp[2], protein, query_features, seed_proteome, option), 4)
-    final_score = (score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1]) + (
-        score_ps * option["score_weights"][2])
+    final_score = ((score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1])
+                   + (score_ps * option["score_weights"][2]))
     if option["weight_const"]:
         for i in adjusted_weights:
             weights[i] = tmp_weight[i]
@@ -92,8 +92,8 @@ def sf_entire_calc_score(path, query_path, weights, search_features, a_s_f, quer
                                 option)
     score_ps = round(ps_tmp[0], 4)
     score_ls = round(ps_tmp[1], 4)
-    final_score = (score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1]) + (
-        score_ps * option["score_weights"][2])
+    final_score = ((score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1])
+                   + (score_ps * option["score_weights"][2]))
     if option["weight_const"]:
         for i in adjusted_weights:
             weights[i] = tmp_weight[i]
@@ -127,8 +127,8 @@ def sf_cs_score(path, clan_dict, query_clans, features):
     for clan in path_clans:
         counter += 1.0
         if clan in query_clans:
-            score += float(path_clans[clan] * query_clans[clan]) / float(
-                max(path_clans[clan], query_clans[clan]) * max(path_clans[clan], query_clans[clan]))
+            score += float(path_clans[clan] * query_clans[clan])\
+                     / float(max(path_clans[clan], query_clans[clan]) * max(path_clans[clan], query_clans[clan]))
     if counter == 0:
         score = 0.0
     else:

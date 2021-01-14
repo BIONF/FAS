@@ -66,16 +66,18 @@ def write_domain_file(path, idlist, outpath, tools, groupname):
 def main():
     args = get_options()
     toolpath = args.toolPath
+    option_dict = {}
     if toolpath is None:
         pathconfigfile = os.path.realpath(__file__).replace('domainFAS.py', 'pathconfig.txt')
         with open(pathconfigfile) as f:
             toolpath = f.readline().strip()
     if args.featuretypes is not None:
-        option_dict = fasInput.featuretypes(args.featuretypes, {})
+        option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(args.featuretypes)
     else:
-        option_dict = fasInput.featuretypes(toolpath + '/' + 'annoTools.txt', {})
-    write_domain_file(args.json, args.protein_id, args.outfile, option_dict["input_linearized"] +
-                      option_dict["input_normal"], args.groupname)
+        option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(toolpath + '/'
+                                                                                             + 'annoTools.txt')
+    write_domain_file(args.json, args.protein_id, args.outfile, option_dict["input_linearized"]
+                      + option_dict["input_normal"], args.groupname)
 
 
 if __name__ == '__main__':

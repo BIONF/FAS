@@ -33,7 +33,7 @@ from greedyFAS.mainFAS import greedyFAS
 
 
 def get_options():
-    version = '1.5.3'
+    version = '1.5.4'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to assess the complexity (number of paths) of the "
                                             "feature architecture for linearization.")
@@ -66,12 +66,14 @@ def main():
     args = get_options()
     clan_dict = {}
     pathconfigfile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
+    option_dict = {}
     with open(pathconfigfile) as f:
         toolpath = f.readline().strip()
     if args.featuretypes is not None:
-        option_dict = fasInput.featuretypes(args.featuretypes, {})
+        option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(args.featuretypes)
     else:
-        option_dict = fasInput.featuretypes(toolpath + '/' + 'annoTools.txt', {})
+        option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(toolpath + '/'
+                                                                                             + 'annoTools.txt')
     option_dict["max_overlap"] = args.max_overlap
     if 0.0 <= float(args.max_overlap_percentage) <= 1.0:
         option_dict["max_overlap_percentage"] = float(args.max_overlap_percentage)

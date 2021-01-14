@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.5.3'
+    version = '1.5.4'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -245,10 +245,10 @@ def fas(args, toolpath):
     else:
         option_dict['outpath'] = args.out_dir.rstrip('/') + '/' + seedname + '_' + queryname
     if args.featuretypes is not None:
-        option_dict = fasInput.featuretypes(args.featuretypes, option_dict)
+        option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(args.featuretypes)
     else:
-        option_dict = fasInput.featuretypes(toolpath + '/' + 'annoTools.txt', option_dict)
-
+        option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(toolpath
+                                                                                             + '/' + 'annoTools.txt')
     if args.pairwise:
         option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
     else:

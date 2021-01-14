@@ -24,12 +24,13 @@
 import multiprocessing
 import argparse
 import os
-from greedyFAS.mainFAS import greedyFAS
-from greedyFAS.mainFAS.fasInput import read_json
-from greedyFAS.mainFAS.fasWeighting import w_weight_correction
 from pathlib import Path
-from tqdm import tqdm
 import shutil
+from tqdm import tqdm
+from greedyFAS.mainFAS import greedyFAS
+from greedyFAS.mainFAS.fasInput import read_json, featuretypes
+from greedyFAS.mainFAS.fasWeighting import w_weight_correction
+
 
 
 def main():
@@ -51,10 +52,12 @@ def main():
     if len(joblist) == 0:
         raise Exception(args.extended_fa + " is empty!")
     jobdict, groupdict, seedspec = create_jobdict(joblist)
+    pathconfigfile = os.path.realpath(__file__).replace('fdogFAS.py', 'pathconfig.txt')
+    with open(pathconfigfile) as f:
+        toolpath = f.readline().strip()
+    features = featuretypes(toolpath + '/' + 'annoTools.txt')
     if args.no_lin:
-        features = [[], ["pfam", "smart", "flps", "coils2", "seg", "signalp", "tmhmm"]]
-    else:
-        features = [["pfam", "smart"], ["flps", "coils2", "seg", "signalp", "tmhmm"]]
+        features = ([], features[1] + features[0])
     print('calculating FAS scores for ' + outname + '...')
     Path(tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -237,7 +240,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.5.3'
+    version = '1.5.4'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
