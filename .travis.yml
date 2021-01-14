@@ -2,10 +2,11 @@ language: python
 python:
 - '3.8'
 sudo: required
+before install:
+- sudo apt-get -y install hmmer
 install:
 - pip install .
 before_script:
-- apt install hmmer
 - cd $TRAVIS_BUILD_DIR
 # - mkdir $TRAVIS_BUILD_DIR/annotation_tools
 script:
