@@ -8,25 +8,20 @@ install:
 - pip install .
 before_script:
 - cd $TRAVIS_BUILD_DIR
-# - mkdir $TRAVIS_BUILD_DIR/annotation_tools
 script:
 - wget https://github.com/BIONF/data4travis/raw/main/dtu/signalp-4.1g.Linux.tar.gz &> /dev/null
 - wget https://github.com/BIONF/data4travis/raw/main/dtu/tmhmm-2.0c.Linux.tar.gz &> /dev/null
 - wget https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo/annotation_FAS2020d.tar.gz &> /dev/null
-#- mv annotation_FAS2020d.tar.gz $TRAVIS_BUILD_DIR/annotation_tools
 - setupFAS -t $TRAVIS_BUILD_DIR -d $TRAVIS_BUILD_DIR
 - less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
 - mv annoTools.txt.mod annoTools.txt
-- hmmscan -E 0.01 --domE 0.1 --noali --cpu 1 Pfam/Pfam-hmms/Pfam-A.hmm "greedyFAS/annoFAS/test_annofas.fa"
-- annoFAS -i test_annofas.fa -o test_output
-- ls
-- ls $TRAVIS_BUILD_DIR/test_output
-# - python3 greedyFAS/calcFAS.py -h
+- annoFAS -i test_annofas.fa -o anno_output
+- calcFAS -s greedyFAS/test_annofas.fa -q greedyFAS/test_annofas.fa -a anno_output -o fas_output
+- ls $TRAVIS_BUILD_DIR/fas_output
+- ls $TRAVIS_BUILD_DIR/anno_output
 # - python3 greedyFAS/fdogFAS.py -h
 # - python3 greedyFAS/complexityFAS.py -h
-# - python3 greedyFAS/annoFAS/annoFAS.py -h
 # - python3 greedyFAS/annoFAS/annoParserFAS.py -h
-# - python3 greedyFAS/setupFAS.py -h
 # - python3 greedyFAS/domainFAS.py -h
 branches:
   only:
