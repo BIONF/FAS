@@ -6,10 +6,12 @@ install:
 - pip install .
 before_script:
 - cd $TRAVIS_BUILD_DIR
-# - mkdir $TRAVIS_BUILD_DIR/dtu
+- mkdir $TRAVIS_BUILD_DIR/annotation_tools
 script:
 - wget https://github.com/BIONF/data4travis/raw/main/dtu/signalp-4.1g.Linux.tar.gz &> /dev/null
 - wget https://github.com/BIONF/data4travis/raw/main/dtu/tmhmm-2.0c.Linux.tar.gz &> /dev/null
+- wget https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo/annotation_FAS2020d.tar.gz &> /dev/null
+#- mv annotation_FAS2020d.tar.gz $TRAVIS_BUILD_DIR/annotation_tools
 - setupFAS -t $TRAVIS_BUILD_DIR/annotation_tools -d $TRAVIS_BUILD_DIR
 - annoFAS -i test_annofas.fa -o test_output
 - ls
