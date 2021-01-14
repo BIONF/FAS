@@ -6,10 +6,10 @@ install:
 - pip install .
 before_script:
 - cd $TRAVIS_BUILD_DIR
-- mkdir $TRAVIS_BUILD_DIR/dtu
+# - mkdir $TRAVIS_BUILD_DIR/dtu
 script:
-- wget -O dtu/signalp-4.1g.Linux.tar.gz https://github.com/BIONF/data4travis/blob/main/dtu/signalp-4.1g.Linux.tar.gz
-- wget -O dtu/tmhmm-2.0c.Linux.tar.gz https://github.com/BIONF/data4travis/blob/main/dtu/tmhmm-2.0c.Linux.tar.gz
+- wget https://github.com/BIONF/data4travis/blob/main/dtu/signalp-4.1g.Linux.tar.gz
+- wget https://github.com/BIONF/data4travis/blob/main/dtu/tmhmm-2.0c.Linux.tar.gz
 - setupFAS -t $TRAVIS_BUILD_DIR/annotation_tools -d $TRAVIS_BUILD_DIR/dtu
 - annoFAS -i test_annofas.fa -o test_output
 # - python3 greedyFAS/calcFAS.py -h
