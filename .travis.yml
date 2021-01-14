@@ -10,9 +10,10 @@ before_script:
 script:
 - wget https://github.com/BIONF/data4travis/raw/main/dtu/signalp-4.1g.Linux.tar.gz
 - wget https://github.com/BIONF/data4travis/raw/main/dtu/tmhmm-2.0c.Linux.tar.gz
-- ls
 - setupFAS -t $TRAVIS_BUILD_DIR/annotation_tools -d $TRAVIS_BUILD_DIR
 - annoFAS -i test_annofas.fa -o test_output
+- ls
+- ls $TRAVIS_BUILD_DIR/test_output
 # - python3 greedyFAS/calcFAS.py -h
 # - python3 greedyFAS/fdogFAS.py -h
 # - python3 greedyFAS/complexityFAS.py -h
