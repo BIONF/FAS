@@ -17,12 +17,12 @@ script:
 - mv annoTools.txt.mod annoTools.txt
 - annoFAS -i test_annofas.fa -o anno_output
 - calcFAS -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
-- ls $TRAVIS_BUILD_DIR/fas_output
-- ls $TRAVIS_BUILD_DIR/anno_output
-# - python3 greedyFAS/fdogFAS.py -h
-# - python3 greedyFAS/complexityFAS.py -h
-# - python3 greedyFAS/annoFAS/annoParserFAS.py -h
-# - python3 greedyFAS/domainFAS.py -h
+# - ls $TRAVIS_BUILD_DIR/fas_output
+# - ls $TRAVIS_BUILD_DIR/anno_output
+- python3 greedyFAS/fdogFAS.py -h
+- python3 greedyFAS/complexityFAS.py -h
+- python3 greedyFAS/annoFAS/annoParserFAS.py -h
+- python3 greedyFAS/domainFAS.py -h
 branches:
   only:
     - master
