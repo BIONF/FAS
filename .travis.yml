@@ -15,7 +15,8 @@ script:
 - setupFAS -t $TRAVIS_BUILD_DIR -d $TRAVIS_BUILD_DIR
 - less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
 - mv annoTools.txt.mod annoTools.txt
-- annoFAS -i test_annofas.fa -o test_output
+- hmmscan -E 0.01 --domE 0.1 --noali --cpu 1 Pfam/Pfam-hmms/Pfam-A.hmm "greedyFAS/annoFAS/test_annofas.fa"
+- annoFAS -i test_annofas.fa -o test_output --cpus 1
 - ls
 - ls $TRAVIS_BUILD_DIR/test_output
 # - python3 greedyFAS/calcFAS.py -h
