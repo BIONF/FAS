@@ -150,7 +150,7 @@ def main():
     Path(outPath).mkdir(parents=True, exist_ok=True)
     outName = args.name
     if len(outName) == 0:
-        outName = seqFile.split('/')[-1].split('.')[0]
+        outName = '.'.join(seqFile.split('/')[-1].split('.')[0:-1])
 
     # other options
     force = args.force

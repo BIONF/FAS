@@ -16,7 +16,7 @@ script:
 - less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
 - mv annoTools.txt.mod annoTools.txt
 - annoFAS -i test_annofas.fa -o anno_output
-- calcFAS -s greedyFAS/test_annofas.fa -q greedyFAS/test_annofas.fa -a anno_output -o fas_output
+- calcFAS -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
 - ls $TRAVIS_BUILD_DIR/fas_output
 - ls $TRAVIS_BUILD_DIR/anno_output
 # - python3 greedyFAS/fdogFAS.py -h
