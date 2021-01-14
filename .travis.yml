@@ -1,16 +1,28 @@
 language: python
 python:
 - '3.8'
+sudo: required
 install:
 - pip install .
+before_script:
+- cd $TRAVIS_BUILD_DIR
+- mkdir $TRAVIS_BUILD_DIR/dtu
 script:
-- python3 greedyFAS/calcFAS.py -h
-- python3 greedyFAS/fdogFAS.py -h
-- python3 greedyFAS/complexityFAS.py -h
-- python3 greedyFAS/annoFAS/annoFAS.py -h
-- python3 greedyFAS/annoFAS/annoParserFAS.py -h
-- python3 greedyFAS/setupFAS.py -h
-- python3 greedyFAS/domainFAS.py -h
+- wget -O dtu/signalp-4.1g.Linux.tar.gz https://github.com/BIONF/data4travis/blob/main/dtu/signalp-4.1g.Linux.tar.gz
+- wget -O dtu/tmhmm-2.0c.Linux.tar.gz https://github.com/BIONF/data4travis/blob/main/dtu/tmhmm-2.0c.Linux.tar.gz
+- setupFAS -t $TRAVIS_BUILD_DIR/annotation_tools -d $TRAVIS_BUILD_DIR/dtu
+- annoFAS -i test_annofas.fa -o test_output
+# - python3 greedyFAS/calcFAS.py -h
+# - python3 greedyFAS/fdogFAS.py -h
+# - python3 greedyFAS/complexityFAS.py -h
+# - python3 greedyFAS/annoFAS/annoFAS.py -h
+# - python3 greedyFAS/annoFAS/annoParserFAS.py -h
+# - python3 greedyFAS/setupFAS.py -h
+# - python3 greedyFAS/domainFAS.py -h
+branches:
+  only:
+    - master
+    - /^v.*$/
 deploy:
   provider: pypi
   username: __token__
