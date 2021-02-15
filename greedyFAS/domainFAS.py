@@ -27,7 +27,7 @@ import os
 
 
 def get_options():
-    version = '1.5.7'
+    version = '1.5.8'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to create domain input files for phyloprofile "
                                             "without doing a FAS calculation.")
