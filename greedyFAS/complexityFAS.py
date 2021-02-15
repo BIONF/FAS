@@ -33,7 +33,7 @@ from greedyFAS.mainFAS import greedyFAS
 
 
 def get_options():
-    version = '1.5.5'
+    version = '1.5.6'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to assess the complexity (number of paths) of the "
                                             "feature architecture for linearization.")
@@ -108,7 +108,7 @@ def approx_greedy_comp(graph):
     node = 'START'
     complexity = 0
     while not node == 'END':
-        complexity += len(graph[node])
+        complexity += len(graph[node]) - 1
         node = graph[node][0]
     return complexity
 
