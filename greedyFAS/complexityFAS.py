@@ -33,7 +33,7 @@ from greedyFAS.mainFAS import greedyFAS
 
 
 def get_options():
-    version = '1.5.4'
+    version = '1.5.5'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to assess the complexity (number of paths) of the "
                                             "feature architecture for linearization.")
@@ -65,7 +65,7 @@ def get_options():
 def main():
     args = get_options()
     clan_dict = {}
-    pathconfigfile = os.path.realpath(__file__).replace('calcFAS.py', 'pathconfig.txt')
+    pathconfigfile = os.path.realpath(__file__).replace('complexityFAS.py', 'pathconfig.txt')
     option_dict = {}
     with open(pathconfigfile) as f:
         toolpath = f.readline().strip()
@@ -88,6 +88,7 @@ def main():
         proteins = args.id
     else:
         proteins = list(proteome.keys())
+    print('Protein ID\t#Paths\tapproximate greedy complexity')
     for protein in proteins:
         calc_complex(protein, proteome, option_dict, clan_dict, args)
 
@@ -97,9 +98,21 @@ def calc_complex(protein, proteome, option, clan_dict, args):
         protein, proteome, clan_dict, option)
     graph, path_number = fasPathing.pb_region_paths(fasPathing.pb_region_mapper(
         lin_set, features, option["max_overlap"], option["max_overlap_percentage"]))
-    print(protein + "\t" + str(path_number))
+    greedy_comp = approx_greedy_comp(graph)
+    print(protein + "\t" + str(path_number) + '\t' + str(greedy_comp))
     if args.show_graph:
         show_graph(graph)
+
+
+def approx_greedy_comp(graph):
+    node = 'START'
+    complexity = 0
+    while not node == 'END':
+        complexity += len(graph[node])
+        node = graph[node][0]
+    return complexity
+
+
 
 
 def show_graph(graph):

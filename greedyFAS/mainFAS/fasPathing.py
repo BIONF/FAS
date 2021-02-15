@@ -59,7 +59,7 @@ def pb_region_mapper(overlap_region, features, max_overlap, max_overlap_percenta
     :return: overlap_map
     """
 
-    overlap_map = [("START", overlap_region)]
+    overlap_map = [("START", overlap_region + ['END'])]
     for i in range(0, len(overlap_region)):
         end = features[overlap_region[i]][3]
         length_i = features[overlap_region[i]][3] - features[overlap_region[i]][2]
