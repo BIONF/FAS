@@ -69,7 +69,7 @@ def pb_region_mapper(overlap_region, features, max_overlap, max_overlap_percenta
         while x < len(overlap_region):
             length_x = features[overlap_region[x]][3] - features[overlap_region[x]][2]
             length_x = length_x * max_overlap_percentage
-            overlap_size = end - features[overlap_region[x]][2]
+            overlap_size = end - features[overlap_region[x]][2] + 1
             if overlap_size <= max_overlap and overlap_size <= length_i and overlap_size <= length_x:
                 overlap.append(overlap_region[x])
             x += 1

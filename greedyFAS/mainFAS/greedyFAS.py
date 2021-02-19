@@ -201,6 +201,8 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                                            query, query_clans, domain_out))
                 if option["progress"]:
                     progress.update(1)
+        progress.refresh()
+        progress.close()
     return results
 
 
