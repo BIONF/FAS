@@ -32,7 +32,6 @@ from greedyFAS.mainFAS.fasInput import read_json, featuretypes
 from greedyFAS.mainFAS.fasWeighting import w_weight_correction
 
 
-
 def main():
     args = get_options()
     if not args.outname:
@@ -93,7 +92,7 @@ def read_extended_fa(path, grouplist):
     return joblist
 
 
-def create_jobdict(joblist):# check jobdict generation
+def create_jobdict(joblist):  # check jobdict generation
     jobdict = {}
     groupdict = {}
     seedspec = None
@@ -169,7 +168,6 @@ def run_fas(data):
         except KeyError:
             raise Exception('The protein: "' + i[1] + '" is missing in taxon: "' + data[0] + '". The annotations ' +
                             'in weight_dir should contain all proteins from the genome_dir.')
-
     f_results = greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[1])
     outdata = {}
     for result in f_results:
@@ -234,8 +232,8 @@ def write_phyloprofile(results, out_path, outname, groupdict):
             for seed in groupdict[pair[0]]:
                 if pair[1] in groupdict[pair[0]][seed]:
                     out.write(seed + "\tncbi" + ncbi + "\t" + seed + "|" + spec + "|" + pair[1] + "|" +
-                          groupdict[pair[0]][seed][pair[1]] + "\t" + str(result[0][pair][0]) + "\t" +
-                          str(result[0][pair][1]) + "\n")
+                              groupdict[pair[0]][seed][pair[1]] + "\t" + str(result[0][pair][0]) + "\t" +
+                              str(result[0][pair][1]) + "\n")
     out.close()
 
 

@@ -28,6 +28,7 @@ from functools import partial
 from copy import deepcopy
 from tqdm import tqdm
 import sys
+from time import sleep
 from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.mainFAS.fasOutput import write_domain_out
 from greedyFAS.mainFAS.fasOutput import write_tsv_out
@@ -203,6 +204,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                     progress.update(1)
         progress.refresh()
         progress.close()
+        sleep(0.5)
     return results
 
 
@@ -227,7 +229,7 @@ def fc_prep_query(query, domain_count, query_proteome, option, clan_dict):
     else:
         all_query_paths = "NOPRIORITY"
     return tmp_query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict, \
-           go_priority, domain_count
+        go_priority, domain_count
 
 
 def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features, go_priority, a_q_f,
@@ -728,8 +730,6 @@ def pb_calc_sub(protein, search_features, weights, query_features, seed_proteome
     :param a_q_f: additional query features [non linearized]
     :param clan_dict: dictionary that maps features to clans
     :param query_clans: (Pfam)-clans of the current query protein
-    :param timelimit: the amount of time this job is allowed to take before the calculation is stopped and priority
-                      mode is used instead
     :param option: dictionary that contains the main option variables of FAS
     :param jobpaths: a group of (query) paths to be evaluated
     :param search_path_number: number of paths in search protein
@@ -778,9 +778,6 @@ def pb_entire_main_nongreedy(protein_id, query_path, search_features, weights, q
     :return: path_score, mode[priority or extensive]
 
     """
-    path_score = 0
-    mode = 0
-
     if (int(len(search_features)) >= option["priority_threshold"] or search_path_number > option['max_cardinality']) \
             and option["priority_mode"]:
         mode = 1
@@ -871,7 +868,6 @@ def pb_entire_graphtraversal(search_graph, query_path, search_features, weights,
                     if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
                        score_w[3] >= best_path[1][3]:
                         best_path = (path_ad, score_w, query_path_ad)
-                    first = 0
                 else:
                     v_stack.append(next_vertex)
                     p_stack.append(path + [next_vertex])

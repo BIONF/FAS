@@ -42,12 +42,12 @@ def get_options():
     required.add_argument("-o", "--outfile", default=None, type=str,
                           help="path and name of outfile")
     optional.add_argument("-d", "--featuretypes", default=None, type=str,
-                        help="inputfile that contains the tools/databases used to predict features. Please look at the "
-                             "FAS wiki pages for templates of the the featuretypes input file")
+                          help="inputfile that contains the tools/databases used to predict features. Please look at "
+                               "the FAS wiki pages for templates of the the featuretypes input file")
     optional.add_argument("-n", "--groupname", default='Group', type=str,
                           help="Name of the protein group in the domain file")
     optional.add_argument("--toolPath", dest="toolPath", default=None, type=str,
-                            help="Path to Annotion tool directory created with setupFAS")
+                          help="Path to Annotion tool directory created with setupFAS")
     args = parser.parse_args()
     return args
 

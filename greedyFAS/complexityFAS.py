@@ -114,8 +114,6 @@ def approx_greedy_comp(graph):
     return complexity
 
 
-
-
 def show_graph(graph):
     dot = Digraph(comment='feature graph')
     for feature in graph:

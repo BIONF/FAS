@@ -22,7 +22,6 @@
 
 
 import math
-import logging
 
 
 def w_weighting(protein, domain_count, proteome, option):
