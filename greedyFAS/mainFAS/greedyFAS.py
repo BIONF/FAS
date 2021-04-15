@@ -130,12 +130,12 @@ def fc_start(option):
         r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option)
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
-        if not option['output']:
+        if not option['tsv']:
             write_tsv_out(option["outpath"], True, (f_results, r_results))
     else:
         print("calculating forward scores...")
         results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option)
-        if not option["output"]:
+        if not option["tsv"]:
             write_tsv_out(option["outpath"], False, (results, None))
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
@@ -158,12 +158,11 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
     progress = None
     domain_out = None
     results = []
-    if not option["output"]:
-        if option["domain"]:
-            if option["reverse"]:
-                domain_out = open(option["outpath"] + "_reverse.domains", "w")
-            else:
-                domain_out = open(option["outpath"] + "_forward.domains", "w")
+    if option["domain"]:
+        if option["reverse"]:
+            domain_out = open(option["outpath"] + "_reverse.domains", "w")
+        else:
+            domain_out = open(option["outpath"] + "_forward.domains", "w")
     if option['pairwise']:
         if option['progress']:
             progress = tqdm(total=len(option['pairwise']), file=sys.stdout)
@@ -424,39 +423,38 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                                     query_features[feature][2], query_features[feature][3]))
         else:
             best_query_path.append((a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
-    if not option["output"]:
-        path_tmp = {}
-        path_tmp_query = {}
-        scale = 0
-        if option["weight_const"] == 1:
-            path_tmp2 = []
-            for feature in best_template_path:
-                if feature[0] not in path_tmp2:
-                    path_tmp2.append(feature[0])
-            adjusted_weights = w_weight_const_rescale(path_tmp2, weights, search_features, True, option)
-            for adj_feature in adjusted_weights:
-                weights[adj_feature] = adjusted_weights[adj_feature]
+    path_tmp = {}
+    path_tmp_query = {}
+    scale = 0
+    if option["weight_const"] == 1:
+        path_tmp2 = []
         for feature in best_template_path:
-            if feature[0] in path_tmp:
-                path_tmp[feature[0]].append((feature[2], feature[3]))
-            else:
-                path_tmp[feature[0]] = [(feature[2], feature[3])]
-                if option["MS_uni"] == 0:
-                    scale += weights[feature[0]]
-        for feature in best_query_path:
-            if feature[0] in path_tmp_query:
-                path_tmp_query[feature[0]].append((feature[2], feature[3]))
-            else:
-                path_tmp_query[feature[0]] = [(feature[2], feature[3])]
+            if feature[0] not in path_tmp2:
+                path_tmp2.append(feature[0])
+        adjusted_weights = w_weight_const_rescale(path_tmp2, weights, search_features, True, option)
+        for adj_feature in adjusted_weights:
+            weights[adj_feature] = adjusted_weights[adj_feature]
+    for feature in best_template_path:
+        if feature[0] in path_tmp:
+            path_tmp[feature[0]].append((feature[2], feature[3]))
+        else:
+            path_tmp[feature[0]] = [(feature[2], feature[3])]
+            if option["MS_uni"] == 0:
+                scale += weights[feature[0]]
+    for feature in best_query_path:
+        if feature[0] in path_tmp_query:
+            path_tmp_query[feature[0]].append((feature[2], feature[3]))
+        else:
+            path_tmp_query[feature[0]] = [(feature[2], feature[3])]
 
-        # unweighted case
-        if option["MS_uni"] == 0:
-            if scale > 0:
-                scale = 1.0 / float(scale)
-            else:
-                scale = 1.0
-        if option["domain"]:
-            write_domain_out(seed_proteome, query_proteome, protein, query, weights, scale, path_tmp, path_tmp_query,
+    # unweighted case
+    if option["MS_uni"] == 0:
+        if scale > 0:
+            scale = 1.0 / float(scale)
+        else:
+            scale = 1.0
+    if option["domain"]:
+        write_domain_out(seed_proteome, query_proteome, protein, query, weights, scale, path_tmp, path_tmp_query,
                              domain_out, option)
     if option["raw"]:
         print('#' + '\t' + protein + '\t' + query + '\t' + str(score[3]))

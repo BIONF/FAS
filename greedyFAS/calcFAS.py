@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.6.1'
+    version = '1.6.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -102,7 +102,7 @@ def get_options():
                               "query names")
     outargs.add_argument("--raw", dest="raw", action="store_true",
                          help="print FAS scores to terminal")
-    outargs.add_argument("--tsv", dest="silent", action="store_true",
+    outargs.add_argument("--tsv", dest="tsv", action="store_true",
                          help="deactivates creation of the tsv output, either use together with --raw or "
                               "--phyloprofile")
     outargs.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
@@ -173,7 +173,7 @@ def fas(args, toolpath):
                    "max_cardinality": args.max_cardinality, "cores": int(args.cpus), "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
                    "timelimit": args.timelimit, "phyloprofile": args.phyloprofile, "score_weights": [],
-                    "output": args.silent, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
+                    "tsv": args.tsv, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
                     "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True
                    }
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
