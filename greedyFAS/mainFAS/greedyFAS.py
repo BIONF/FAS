@@ -203,7 +203,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
                     progress.update(1)
         progress.refresh()
         progress.close()
-        sleep(0.5)
+        sleep(1.0)
     return results
 
 

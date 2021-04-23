@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.6.2",
+    version="1.7",
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
@@ -49,7 +49,8 @@ setup(
                             "calcFAS = greedyFAS.calcFAS:main",
                             "fdogFAS = greedyFAS.fdogFAS:main",
                             "complexityFAS = greedyFAS.complexityFAS:main",
-                            "domainFAS = greedyFAS.domainFAS:main"],
+                            "domainFAS = greedyFAS.domainFAS:main",
+                            "extractAnnoFAS = greedyFAS.extractAnnoFAS:main"],
     },
     license="GPL-3.0",
     classifiers=[
