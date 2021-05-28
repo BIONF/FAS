@@ -27,7 +27,7 @@ from pathlib import Path
 import json
 import re
 
-def checkCompleteAnno(featureList, jsonFile):
+def checkCompleteAnno(featureList, jsonFile, condition):
     with open(jsonFile) as jf:
         dt = json.load(jf)
         # get list of proteins that contain selected features
@@ -35,9 +35,14 @@ def checkCompleteAnno(featureList, jsonFile):
         for prot in list(dt['feature'].keys()):
             for item in dt['feature'][prot]:
                 if isinstance(dt['feature'][prot][item], dict):
-                    if any(re.search(feat+';', ';'.join(list(dt['feature'][prot][item].keys()))+';', re.I)
-                        for feat in featureList):
-                        protList.append(prot)
+                    if condition == "ANY" or condition == "any":
+                        if any(re.search(feat+';', ';'.join(list(dt['feature'][prot][item].keys()))+';', re.I)
+                            for feat in featureList):
+                            protList.append(prot)
+                    elif condition == "ALL" or condition == "all":
+                        if all(re.search(feat+';', ';'.join(list(dt['feature'][prot][item].keys()))+';', re.I)
+                            for feat in featureList):
+                            protList.append(prot)
         # get all features for found proteins
         out = {}
         for prot in protList:
@@ -50,7 +55,7 @@ def checkCompleteAnno(featureList, jsonFile):
         return(out)
 
 def main():
-    version = '0.0.1'
+    version = '0.0.2'
     parser = argparse.ArgumentParser(description='You are running getProtByAnno version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -61,6 +66,8 @@ def main():
     required.add_argument('-f', '--features', help='List of features of interest, separated by comma. E.g. pfam_ig,pfam_TMA7', action='store', default='',
                           required=True)
     optional.add_argument('-i', '--idOnly', help='Get only protein IDs', action='store_true')
+    optional.add_argument('-c','--condition', help='Choose to query based on ALL or ANY features. Default: ANY',
+                            choices=['ALL', 'all', 'ANY', 'any'], action='store', default='ANY', type=str)
 
     args = parser.parse_args()
     featureList = str(args.features).split(",")
@@ -70,6 +77,7 @@ def main():
     if not os.path.exists(jsonFile):
         sys.exit('%s not found!' % jsonFile)
     idOnly = args.idOnly
+    condition = args.condition
 
     out = checkCompleteAnno(featureList, jsonFile)
     if not idOnly:
