@@ -1,5 +1,25 @@
 # -*- coding: utf-8 -*-
 
+#######################################################################
+# Copyright (C) 2021 Vinh Tran
+#
+#  This file is part of FAS.
+#
+#  FAS is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  FAS is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with FAS.  If not, see <http://www.gnu.org/licenses/>.
+#
+#######################################################################
+
 import sys
 import os
 import argparse
@@ -70,7 +90,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
 
 def main():
     version = '0.0.1'
-    parser = argparse.ArgumentParser(description='You are running checkAnno version ' + str(version) + '.',
+    parser = argparse.ArgumentParser(description='You are running checkAnnoFAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
