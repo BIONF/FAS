@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.8.0",
+    version="1.9.0",
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
@@ -46,6 +46,7 @@ setup(
         'console_scripts': ["annoParserFAS = greedyFAS.annoFAS.annoParserFAS:main",
                             "annoFAS = greedyFAS.annoFAS.annoFAS:main",
                             "checkAnnoFAS = greedyFAS.annoFAS.checkAnno:main",
+                            "getProtByAnno = greedyFAS.annoFAS.getProtByAnno:main",
                             "setupFAS = greedyFAS.setupFAS:main",
                             "calcFAS = greedyFAS.calcFAS:main",
                             "fdogFAS = greedyFAS.fdogFAS:main",
