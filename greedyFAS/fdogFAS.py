@@ -24,6 +24,7 @@
 import multiprocessing
 import argparse
 import os
+import fnmatch
 from pathlib import Path
 import shutil
 from tqdm import tqdm
@@ -44,9 +45,9 @@ def main():
     else:
         out_dir = args.out_dir + '/'
     if not args.tmp_dir:
-        tmp_dir = out_dir + outname + '_tmp/'
+        tmp_dir = out_dir
     else:
-        tmp_dir = args.tmp_dir + '/' + outname + '_tmp/'
+        tmp_dir = args.tmp_dir + '/'
     joblist, fasta = read_extended_fa(args.extended_fa, args.groupnames, args.redo_anno)
     if len(joblist) == 0:
         raise Exception(args.extended_fa + " is empty!")
@@ -66,25 +67,33 @@ def main():
     write_phyloprofile(results, out_dir, outname, groupdict)
     join_domain_out(jobdict, tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
                     seedspec, groupdict)
+    if args.redo_anno:
+        err_taxa = []
+        files = os.listdir(tmp_dir + "/" + outname)
+        pattern = "*.json"
+        for entry in files:
+            if fnmatch.fnmatch(entry, pattern):
+                err_taxa.append(entry)
+        if err_taxa:
+            print('\033[93mWARNING: There were missing annotations in the following taxa:')
+            for i in err_taxa:
+                print(i)
     shutil.rmtree(tmp_dir + "/" + outname, ignore_errors=True)
-    print('fdogFAS finished!')
-    if args.bidirectional:
-        print('fdogFAS files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains, ' +
-              outname + '_reverse.domains in ' + out_dir)
-    else:
-        print('fdogFAS files: ' + outname + '.phyloprofile, ' + outname + '_forward.domains in' +
-              out_dir)
+    print('\033[0mfdogFAS finished!')
 
 
 def read_extended_fa(path, grouplist, reanno):
     joblist = {}
     seq = ''
     fasta = {}
+    cells = []
     with open(path, 'r') as infile:
         for line in infile.readlines():
             if line[0] == '>':
                 if seq and reanno:
-                    if cells[1] not in fasta:
+                    if cells == []:
+                        raise Exception('Please check the fasta file for errors')
+                    elif cells[1] not in fasta:
                         fasta[cells[1]] = {}
                     fasta[cells[1]][cells[2]] = seq
                 seq = ''
@@ -281,7 +290,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.10'
+    version = '1.10.1'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
