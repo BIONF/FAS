@@ -33,7 +33,7 @@ from greedyFAS.mainFAS import greedyFAS
 
 
 def get_options():
-    version = '1.9.1'
+    version = '1.10'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to assess the complexity (number of paths) of the "
                                             "feature architecture for linearization.")

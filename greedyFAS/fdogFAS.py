@@ -30,6 +30,7 @@ from tqdm import tqdm
 from greedyFAS.mainFAS import greedyFAS
 from greedyFAS.mainFAS.fasInput import read_json, featuretypes
 from greedyFAS.mainFAS.fasWeighting import w_weight_correction
+from greedyFAS.annoFAS.checkAnno import doAnnoForMissing
 
 
 def main():
@@ -43,11 +44,10 @@ def main():
     else:
         out_dir = args.out_dir + '/'
     if not args.tmp_dir:
-        tmp_dir = out_dir
+        tmp_dir = out_dir + outname + '_tmp/'
     else:
-        tmp_dir = args.tmp_dir + '/'
-    print(out_dir)
-    joblist = read_extended_fa(args.extended_fa, args.groupnames)
+        tmp_dir = args.tmp_dir + '/' + outname + '_tmp/'
+    joblist, fasta = read_extended_fa(args.extended_fa, args.groupnames, args.redo_anno)
     if len(joblist) == 0:
         raise Exception(args.extended_fa + " is empty!")
     jobdict, groupdict, seedspec = create_jobdict(joblist)
@@ -61,7 +61,7 @@ def main():
     Path(tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, tmp_dir + '/' + outname, args.cores,
-                             features, args.bidirectional)
+                             features, args.bidirectional, fasta)
     print('writing phyloprofile output...')
     write_phyloprofile(results, out_dir, outname, groupdict)
     join_domain_out(jobdict, tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
@@ -76,11 +76,18 @@ def main():
               out_dir)
 
 
-def read_extended_fa(path, grouplist):
+def read_extended_fa(path, grouplist, reanno):
     joblist = {}
+    seq = ''
+    fasta = {}
     with open(path, 'r') as infile:
         for line in infile.readlines():
             if line[0] == '>':
+                if seq and reanno:
+                    if cells[1] not in fasta:
+                        fasta[cells[1]] = {}
+                    fasta[cells[1]][cells[2]] = seq
+                seq = ''
                 cells = line.lstrip('>').rstrip('\n').split('|')
                 if grouplist:
                     if cells[0] in grouplist and cells[0] not in joblist:
@@ -89,7 +96,9 @@ def read_extended_fa(path, grouplist):
                     joblist[cells[0]] = []
                 if cells[0] in joblist:
                     joblist[cells[0]].append(cells[1:])
-    return joblist
+            else:
+                seq = seq + line
+    return joblist, fasta
 
 
 def create_jobdict(joblist):  # check jobdict generation
@@ -118,17 +127,29 @@ def create_jobdict(joblist):  # check jobdict generation
     return jobdict, groupdict, seedspec
 
 
-def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, features, bidirectional):
+def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, features, bidirectional, fasta):
     try:
         tmp_data = read_json(weight_dir + "/" + seed_spec + ".json")
     except FileNotFoundError:
         raise Exception('Taxon: "' + seed_spec + '" is missing in the weight_dir')
     seed_weight = w_weight_correction("loge", tmp_data["count"])
     seed_proteome = tmp_data["feature"]
+    missing = []
     for seed_name in seed_names:
         if seed_name not in seed_proteome:
-            raise Exception('The protein: "' + seed_name + '" is missing in taxon: "' + seed_spec +
-                            '". The annotations in weight_dir should contain all proteins from the genome_dir.')
+            if fasta:
+                missing.append(seed_name)
+            else:
+                raise Exception('The protein: "' + seed_name + '" is missing in taxon: "' + seed_spec +
+                                '". The annotations in weight_dir should contain all proteins from the genome_dir.')
+    if missing:
+        missinseq = []
+        for i in missing:
+            missinseq.append('>' + i + '\n' + fasta[seed_spec][i])
+        doAnnoForMissing(seed_spec, missinseq, weight_dir + "/" + seed_spec + ".json", tmp_path + "/", cores, True)
+        tmp_data = read_json(tmp_path + "/" + seed_spec + ".json")
+        seed_weight = w_weight_correction("loge", tmp_data["count"])
+        seed_proteome = tmp_data["feature"]
     clan_dict = tmp_data["clan"]
     data = []
     for spec in jobdict:
@@ -142,7 +163,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
                      "pairwise": jobdict[spec], "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
                      "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0,
                      "ref_proteome": [spec + '.json'], "progress": False},
-                     seed_proteome, seed_weight, weight_dir, clan_dict])
+                     seed_proteome, seed_weight, weight_dir, clan_dict, fasta, tmp_path])
     jobpool = multiprocessing.Pool(processes=cores)
     results = []
     for _ in tqdm(jobpool.imap_unordered(run_fas, data), total=len(jobdict)):
@@ -153,21 +174,43 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
 
 
 def run_fas(data):
+    tmp = True
     try:
-        tmp_data = read_json(data[4] + "/" + data[0] + ".json")
+        tmp_data = read_json(data[7] + "/" + data[0] + ".json")
     except FileNotFoundError:
-        raise Exception('Taxon: "' + data[0] + '" is missing in the weight_dir')
+        try:
+            tmp_data = read_json(data[4] + "/" + data[0] + ".json")
+            tmp = False
+        except FileNotFoundError:
+            raise Exception('Taxon: "' + data[0] + '" is missing in the weight_dir')
     query_proteome = {}
-    clan_dict = data[5]
-    clan_dict.update(tmp_data["clan"])
-    seed_proteome = data[2]
-    weight = w_weight_correction("loge", tmp_data["count"])
+    missing = []
     for i in data[1]['pairwise']:
         try:
             query_proteome[i[1]] = tmp_data["feature"][i[1]]
         except KeyError:
-            raise Exception('The protein: "' + i[1] + '" is missing in taxon: "' + data[0] + '". The annotations ' +
+            if data[6]:
+                missing.append(i[1])
+            else:
+                raise Exception('The protein: "' + i[1] + '" is missing in taxon: "' + data[0] + '". The annotations ' +
                             'in weight_dir should contain all proteins from the genome_dir.')
+    if missing:
+        missinseq = []
+        for i in missing:
+            missinseq.append('>' + i + '\n' + data[6][data[0]][i])
+        if tmp:
+            weight_dir = data[7]
+        else:
+            weight_dir = data[4]
+        doAnnoForMissing(data[0], missinseq, weight_dir + "/" + data[0] + ".json", data[7] + "/", 1, True)
+        tmp_data = read_json(data[7] + "/" + data[0] + ".json")
+        for i in missing:
+            query_proteome[i] = tmp_data["feature"][i]
+
+    clan_dict = data[5]
+    clan_dict.update(tmp_data["clan"])
+    seed_proteome = data[2]
+    weight = w_weight_correction("loge", tmp_data["count"])
     f_results = greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[1])
     outdata = {}
     for result in f_results:
@@ -238,7 +281,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.9.1'
+    version = '1.10'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -248,7 +291,9 @@ def get_options():
     required.add_argument("-i", "--extended_fa", default=None, type=str, required=True,
                           help="path to extended.fa file")
     required.add_argument("-w", "--weight_dir", default=None, type=str, required=True,
-                          help="path to weight_dir of Hamstr")
+                          help="path to weight_dir of fdog")
+    optional.add_argument("-r", "--redo_anno", action="store_true",
+                          help="enable automatic annotation of missing proteins")
     optional.add_argument("-n", "--outname", default=None, type=str,
                           help="name of the ortholog group")
     optional.add_argument("-t", "--tmp_dir", type=str, default=None,
