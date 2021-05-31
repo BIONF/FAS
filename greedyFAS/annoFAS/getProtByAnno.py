@@ -55,7 +55,7 @@ def checkCompleteAnno(featureList, jsonFile, condition):
         return(out)
 
 def main():
-    version = '0.0.2'
+    version = '0.0.3'
     parser = argparse.ArgumentParser(description='You are running getProtByAnno version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -79,7 +79,7 @@ def main():
     idOnly = args.idOnly
     condition = args.condition
 
-    out = checkCompleteAnno(featureList, jsonFile)
+    out = checkCompleteAnno(featureList, jsonFile, condition)
     if not idOnly:
         for prot in out:
             print('%s\t%s' % (prot, ';'.join(out[prot])))
