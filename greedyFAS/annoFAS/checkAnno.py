@@ -89,7 +89,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
     shutil.rmtree('%s/tmp' % outPath)
 
 def main():
-    version = '0.0.1'
+    version = '1.11'
     parser = argparse.ArgumentParser(description='You are running checkAnnoFAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

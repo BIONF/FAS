@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.10.3",
+    version="1.11",
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
@@ -43,16 +43,16 @@ setup(
         'graphviz'
     ],
     entry_points={
-        'console_scripts': ["annoParserFAS = greedyFAS.annoFAS.annoParserFAS:main",
-                            "annoFAS = greedyFAS.annoFAS.annoFAS:main",
-                            "checkAnnoFAS = greedyFAS.annoFAS.checkAnno:main",
-                            "getProtByAnno = greedyFAS.annoFAS.getProtByAnno:main",
-                            "setupFAS = greedyFAS.setupFAS:main",
-                            "calcFAS = greedyFAS.calcFAS:main",
-                            "fdogFAS = greedyFAS.fdogFAS:main",
-                            "complexityFAS = greedyFAS.complexityFAS:main",
-                            "domainFAS = greedyFAS.domainFAS:main",
-                            "extractAnnoFAS = greedyFAS.extractAnnoFAS:main"],
+        'console_scripts': ["fas.parseAnno = greedyFAS.annoFAS.annoParserFAS:main",
+                            "fas.doAnno = greedyFAS.annoFAS.annoFAS:main",
+                            "fas.checkAnno = greedyFAS.annoFAS.checkAnno:main",
+                            "fas.getProtByAnno = greedyFAS.annoFAS.getProtByAnno:main",
+                            "fas.setup = greedyFAS.setupFAS:main",
+                            "fas.run = greedyFAS.calcFAS:main",
+                            "fas.runFdogFas = greedyFAS.fdogFAS:main",
+                            "fas.calcComplexity = greedyFAS.complexityFAS:main",
+                            "fas.getDomains = greedyFAS.domainFAS:main",
+                            "fas.splitJson = greedyFAS.extractAnnoFAS:main"],
     },
     license="GPL-3.0",
     classifiers=[
