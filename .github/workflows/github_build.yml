@@ -47,6 +47,12 @@ jobs:
         mv annoTools.txt.mod annoTools.txt
         fas.doAnno -i test_annofas.fa -o anno_output
         fas.run -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
+        fas.checkAnno -s greedyFAS/annoFAS/test_annofas.fa -a anno_output/test_annofas.json -o tmp
+        fas.getProtByAnno -a anno_output/test_annofas.json -f G-alpha
+        fas.calcComplexity -i anno_output/test_annofas.json
+        fas.getDomains -j anno_output/test_annofas.json -p A0A1S4GN31 -o A0A1S4GN31.domains
+        echo "A0A1W5C929" > id.txt
+        fas.splitJson -x id.txt -i anno_output/test_annofas.json -o anno_output/out.json
         ls
     - name: Deploy
       if: startsWith(github.event.ref, 'refs/tags')

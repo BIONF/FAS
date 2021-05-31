@@ -27,7 +27,7 @@ import os
 
 
 def get_options():
-    version = '1.11.1'
+    version = '1.11.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to create domain input files for phyloprofile "
                                             "without doing a FAS calculation.")
@@ -47,7 +47,7 @@ def get_options():
     optional.add_argument("-n", "--groupname", default='Group', type=str,
                           help="Name of the protein group in the domain file")
     optional.add_argument("--toolPath", dest="toolPath", default=None, type=str,
-                          help="Path to Annotion tool directory created with setupFAS")
+                          help="Path to Annotion tool directory created with fas.setup")
     args = parser.parse_args()
     return args
 

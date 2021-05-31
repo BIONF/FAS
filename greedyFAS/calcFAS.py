@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.11.1'
+    version = '1.11.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -65,7 +65,7 @@ def get_options():
     annotation.add_argument('--org', help='Organism of input sequence(s) for SignalP search',
                             choices=['euk', 'gram+', 'gram-'], action='store', default='euk', type=str)
     annotation.add_argument("--toolPath", dest="toolPath", default='', type=str,
-                            help="Path to Annotion tool directory created with setupFAS")
+                            help="Path to Annotion tool directory created with fas.setup")
     weighting.add_argument("-r", "--ref_proteome", default=None, type=str,
                            help="Path to a reference proteome which can be used for the weighting of features, "
                                 "by default there is no reference proteome used, the weighting will be uniform")

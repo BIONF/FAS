@@ -32,7 +32,7 @@ import json
 import greedyFAS.annoFAS.annoModules as annoModules
 
 def getFasToolPath():
-    cmd = 'setupFAS -t ~/ -c'
+    cmd = 'fas.setup -t ~/ -c'
     try:
         flpsOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
     except:
@@ -66,13 +66,13 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
     with open(faFile, 'w') as f:
         f.write(''.join(missingAnno))
 
-    annoCmd = 'annoFAS -i %s -o %s --cpus %s' % (faFile, outPath, cpus)
+    annoCmd = 'fas.doAnno -i %s -o %s --cpus %s' % (faFile, outPath, cpus)
     if silent:
         annoCmd = annoCmd + ' > /dev/null 2>&1'
     try:
         subprocess.call([annoCmd], shell = True)
     except:
-        print('\033[91mProblem with running annoFAS. You can check it with this command:\n%s\033[0m' % annoCmd)
+        print('\033[91mProblem with running fas.doAnno. You can check it with this command:\n%s\033[0m' % annoCmd)
     # merge with old annotation json file
     with open(jsonFile) as oldJson:
         oldAnno = json.load(oldJson)
@@ -89,8 +89,8 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
     shutil.rmtree('%s/tmp' % outPath)
 
 def main():
-    version = '1.11.1'
-    parser = argparse.ArgumentParser(description='You are running checkAnnoFAS version ' + str(version) + '.',
+    version = '1.11.2'
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
