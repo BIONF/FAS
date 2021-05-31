@@ -42,11 +42,11 @@ jobs:
         wget https://github.com/BIONF/data4travis/raw/main/dtu/signalp-4.1g.Linux.tar.gz &> /dev/null
         wget https://github.com/BIONF/data4travis/raw/main/dtu/tmhmm-2.0c.Linux.tar.gz &> /dev/null
         wget https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo/annotation_FAS2020d.tar.gz &> /dev/null
-        setupFAS -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
+        fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
         less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
         mv annoTools.txt.mod annoTools.txt
-        annoFAS -i test_annofas.fa -o anno_output
-        calcFAS -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
+        fas.doAnno -i test_annofas.fa -o anno_output
+        fas.run -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
         ls
     - name: Deploy
       if: startsWith(github.event.ref, 'refs/tags')
