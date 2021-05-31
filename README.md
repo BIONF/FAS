@@ -39,7 +39,7 @@ export PATH=$HOME/.local/bin:$PATH
 ## Download and install annotation tools
 Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](http://www.biology.wustl.edu/gcg/seg.html), [COILS](https://embnet.vital-it.ch/software/COILS_form.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/). To get these tools and make a configuration file for FAS, please use the `setupFAS` function:
 ```
-setupFAS -t /directory/where/you/want/to/save/annotation/tools
+fas.setup -t /directory/where/you/want/to/save/annotation/tools
 ```
 Inside the output directory you will find a file called *annoTools.txt* that contains all installed annotation tools. If you wish to discard any of them from the annotation process, you can just remove the unneeded tools from that file.
 
@@ -51,7 +51,7 @@ __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
 We suggest you test the annotation tools by running this command:
 ```
-annoFAS -i test_annofas.fa -o test_output
+fas.doAnno -i test_annofas.fa -o test_output
 ```
 *`test_annofas.fa` is a demo multiple fasta file, which is saved in the installed greedyFAS directory.*
 
@@ -60,7 +60,7 @@ annoFAS -i test_annofas.fa -o test_output
 If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `annoFAS` function.
 
 ```
-annoFAS --fasta your_proteins.fa --outPath /annotation/path/
+fas.doAnno --fasta your_proteins.fa --outPath /annotation/path/
 ```
 
 The annotation output (`your_proteins.json` by default) will be saved in `/annotation/path/`.
@@ -68,7 +68,7 @@ The annotation output (`your_proteins.json` by default) will be saved in `/annot
 Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `annoParserFAS` to convert the InterProScan's *tsv* output into *json format* for using with FAS.
 
 ```
-annoParserFAS -i INPUT.tsv -o /annotation/path/INPUT.json -t <tool_name> -f <feature columns> ...
+fas.parseAnno -i INPUT.tsv -o /annotation/path/INPUT.json -t <tool_name> -f <feature columns> ...
 ```
 
 Please check the usage of `annoParserFAS` for more info (using `annoParserFAS -h`).
@@ -78,7 +78,7 @@ Please check the usage of `annoParserFAS` for more info (using `annoParserFAS -h
 The main purpose of FAS is to calculate the similarity score between 2 given proteins (or two list of proteins). This can be done using the `calcFAS` function.
 
 ```
-calcFAS -s seed.fa -q query.fa -a /annotation/path/ -o /output/path/
+fas.run -s seed.fa -q query.fa -a /annotation/path/ -o /output/path/
 ```
 If the annotations of *seed* and *query* protein(s) already exist in `/annotation/path/` (*seed.json* and *query.json*, respectively), `calcFAS` will use these annotations for calculating the FAS scores. Otherwise, it will first annotate the proteins and then compare the feature architectures of those two protein sets.
 
