@@ -107,6 +107,10 @@ def read_extended_fa(path, grouplist, reanno):
                     joblist[cells[0]].append(cells[1:])
             else:
                 seq = seq + line
+        if seq and reanno:
+            if cells[1] not in fasta:
+                fasta[cells[1]] = {}
+            fasta[cells[1]][cells[2]] = seq
     return joblist, fasta
 
 
@@ -290,7 +294,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.10.1'
+    version = '1.10.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
