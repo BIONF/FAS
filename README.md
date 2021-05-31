@@ -57,7 +57,7 @@ fas.doAnno -i test_annofas.fa -o test_output
 
 ## Perform feature annotation
 
-If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `annoFAS` function.
+If you only want to annotate your protein sequences without calculating the FAS scores, you can use the `doAnno` function.
 
 ```
 fas.doAnno --fasta your_proteins.fa --outPath /annotation/path/
@@ -65,22 +65,22 @@ fas.doAnno --fasta your_proteins.fa --outPath /annotation/path/
 
 The annotation output (`your_proteins.json` by default) will be saved in `/annotation/path/`.
 
-Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `annoParserFAS` to convert the InterProScan's *tsv* output into *json format* for using with FAS.
+Alternatively, you can do the annotation using [InterProScan](https://www.ebi.ac.uk/interpro/about/interproscan/) and use the function `parseAnno` to convert the InterProScan's *tsv* output into *json format* for using with FAS.
 
 ```
 fas.parseAnno -i INPUT.tsv -o /annotation/path/INPUT.json -t <tool_name> -f <feature columns> ...
 ```
 
-Please check the usage of `annoParserFAS` for more info (using `annoParserFAS -h`).
+Please check the usage of `parseAnno` for more info (using `fas.parseAnno -h`).
 
 ## Compare protein feature architectures
 
-The main purpose of FAS is to calculate the similarity score between 2 given proteins (or two list of proteins). This can be done using the `calcFAS` function.
+The main purpose of FAS is to calculate the similarity score between 2 given proteins (or two list of proteins). This can be done using the `run` function.
 
 ```
 fas.run -s seed.fa -q query.fa -a /annotation/path/ -o /output/path/
 ```
-If the annotations of *seed* and *query* protein(s) already exist in `/annotation/path/` (*seed.json* and *query.json*, respectively), `calcFAS` will use these annotations for calculating the FAS scores. Otherwise, it will first annotate the proteins and then compare the feature architectures of those two protein sets.
+If the annotations of *seed* and *query* protein(s) already exist in `/annotation/path/` (*seed.json* and *query.json*, respectively), `run` will use these annotations for calculating the FAS scores. Otherwise, it will first annotate the proteins and then compare the feature architectures of those two protein sets.
 
 # Additional Information
 
