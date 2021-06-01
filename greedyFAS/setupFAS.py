@@ -444,15 +444,15 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
             config.write(os.path.abspath(anno_path))
             config.close()
         print('Done! Annotation tools can be found in %s' % anno_path)
-        print('You should test annoFAS with this command:')
-        print('annoFAS -i test_annofas.fa -o testFas_output')
+        print('You should test fas.doAnno with this command:')
+        print('fas.doAnno -i test_annofas.fa -o testFas_output')
         sys.exit()
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
 
 
 def main():
-    version = '1.11.2'
+    version = '1.11.3'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
