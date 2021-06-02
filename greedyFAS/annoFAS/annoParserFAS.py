@@ -109,7 +109,10 @@ def create_json(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Parses .tsv formatted files into the json format used by FAS")
+    version = '1.11.4'
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+                                     epilog="For more information on certain options, please refer to the wiki pages "
+                                            "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument("-i", "--input", type=str, default=None, required=True,

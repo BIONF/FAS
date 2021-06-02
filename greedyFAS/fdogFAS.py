@@ -141,10 +141,16 @@ def create_jobdict(joblist):  # check jobdict generation
 
 
 def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, features, bidirectional, fasta):
+    missing = []
+    for spec in jobdict:
+        if not os.path.exists(weight_dir + "/" + spec + ".json"):
+            missing.append(spec)
     try:
         tmp_data = read_json(weight_dir + "/" + seed_spec + ".json")
     except FileNotFoundError:
-        raise Exception('Taxon: "' + seed_spec + '" is missing in the weight_dir')
+        missing.append(seed_spec)
+    if missing:
+        raise Exception('The following taxa are missing in the weight_dir:\n' + '\n'.join(missing))
     seed_weight = w_weight_correction("loge", tmp_data["count"])
     seed_proteome = tmp_data["feature"]
     missing = []
@@ -294,7 +300,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.11.3'
+    version = '1.11.4'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

@@ -63,11 +63,11 @@ def main():
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-a', '--annoFile', help='Input annotation file in json format', action='store', default='',
                           required=True)
-    required.add_argument('-f', '--features', help='List of features of interest, separated by comma. E.g. pfam_ig,pfam_TMA7', action='store', default='',
-                          required=True)
+    required.add_argument('-f', '--features', action='store', default='', required=True,
+                          help='List of features of interest, separated by comma. E.g. pfam_ig,pfam_TMA7')
     optional.add_argument('-i', '--idOnly', help='Get only protein IDs', action='store_true')
-    optional.add_argument('-c','--condition', help='Choose to query based on ALL or ANY features. Default: ANY',
-                            choices=['ALL', 'all', 'ANY', 'any'], action='store', default='ANY', type=str)
+    optional.add_argument('-c', '--condition', help='Choose to query based on ALL or ANY features. Default: ANY',
+                          choices=['ALL', 'all', 'ANY', 'any'], action='store', default='ANY', type=str)
 
     args = parser.parse_args()
     featureList = str(args.features).split(",")
@@ -85,6 +85,7 @@ def main():
             print('%s\t%s' % (prot, ';'.join(out[prot])))
     else:
         print('\n'.join(out))
+
 
 if __name__ == '__main__':
     main()
