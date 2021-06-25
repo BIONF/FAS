@@ -29,7 +29,7 @@ from greedyFAS.mainFAS.fasInput import read_json
 
 
 def get_options():
-    version = '1.12.0'
+    version = '1.12.1'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
