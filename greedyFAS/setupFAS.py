@@ -452,7 +452,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.11.6'
+    version = '1.11.7'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')

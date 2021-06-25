@@ -371,17 +371,29 @@ def readClanFile(toolPath):
 
 
 # functions for doing annotation for multiple tools
-def getAnnoTools(toolPath):
-    checkFileExist(toolPath+'/annoTools.txt')
-    toolList = []
-    with open(toolPath+'/annoTools.txt') as f:
-        file =  f.readlines()
-        if '#checked' not in ''.join(file):
-            sys.exit('Annotation tools not ready. Please run fas.setup first!')
-        else:
-            for tool in file:
-                if ('#' not in tool) and (len(tool) > 1):
-                    toolList.append(tool.strip().lower())
+def getAnnoTools(annoToolFile, toolPath):
+    if annoToolFile == "":
+        checkFileExist(toolPath+'/annoTools.txt')
+        toolList = []
+        with open(toolPath+'/annoTools.txt') as f:
+            file =  f.readlines()
+            if '#checked' not in ''.join(file):
+                sys.exit('Annotation tools not ready. Please run fas.setup first!')
+            else:
+                for tool in file:
+                    if ('#' not in tool) and (len(tool) > 1):
+                        toolList.append(tool.strip().lower())
+    else:
+        checkFileExist(annoToolFile)
+        toolList = []
+        with open(annoToolFile) as f:
+            file =  f.readlines()
+            if '#checked' not in ''.join(file):
+                sys.exit('Annotation tools not ready. Please run fas.setup first!')
+            else:
+                for tool in file:
+                    if ('#' not in tool) and (len(tool) > 1):
+                        toolList.append(tool.strip().lower())
     return toolList
 
 

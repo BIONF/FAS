@@ -35,13 +35,13 @@ home = expanduser('~')
 
 def runAnnoFas(args):
     (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract,
-     annoFile, cpus) = args
+     annoFile, cpus, annoToolFile) = args
     # do annotation
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
             print('Doing annotation for %s...' % seqFile)
-            annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, annoModules.getAnnoTools(toolPath),
+            annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, annoModules.getAnnoTools(annoToolFile, toolPath),
                                                    eFlps, signalpOrg, eFeature, eInstance, hmmCores])
             # do annotation and save to json output
             pool = mp.Pool(cpus)
@@ -84,7 +84,7 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.11.6'
+    version = '1.11.7'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -114,6 +114,8 @@ def main():
     optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). --annoFile required for specifying existing annotation file!',
                           action='store_true', default='')
     optional.add_argument('-a', '--annoFile', help='Path to existing annotation JSON file',
+                          action='store', default='')
+    optional.add_argument('--annoToolFile', help='Path to files contains annotation tool names',
                           action='store', default='')
 
     args = parser.parse_args()
@@ -162,11 +164,12 @@ def main():
         if annoFile == '':
             sys.exit('No existing annotation file given for extraction! Please specify it using --annoFile')
 
+    annoToolFile = args.annoToolFile
     # run annoFAS
     start = time.time()
     print('PID ' + str(os.getpid()))
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
-                extract, annoFile, cpus])
+                extract, annoFile, cpus, annoToolFile])
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 

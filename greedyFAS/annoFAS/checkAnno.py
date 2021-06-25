@@ -89,7 +89,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
     shutil.rmtree('%s/tmp' % outPath)
 
 def main():
-    version = '1.11.6'
+    version = '1.11.7'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -130,7 +130,7 @@ def main():
                 print('%s missing proteins of %s has been annotated!' % (len(missingAnno), taxon))
         else:
             if not silent:
-                print('Annotation for %s proteins of %s are missing!' % (len(missingAnno), taxon))
+                print('Annotation for %s proteins of %s are missing!\n%s' % (len(missingAnno), taxon, missingAnno))
     else:
         if not silent:
             print('Annotations found for all %s sequences!' % (taxon))
