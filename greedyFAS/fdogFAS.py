@@ -65,7 +65,7 @@ def main():
     Path(tmp_dir + '/' + outname).mkdir(parents=True, exist_ok=True)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     results = manage_jobpool(jobdict, groupdict, seedspec, args.weight_dir, tmp_dir + '/' + outname, args.cores,
-                             features, args.bidirectional, fasta)
+                             features, args.bidirectional, fasta, args.featuretypes)
     print('writing phyloprofile output...')
     write_phyloprofile(results, out_dir, outname, groupdict)
     join_domain_out(jobdict, tmp_dir + "/" + outname, out_dir, args.bidirectional, outname,
@@ -143,7 +143,7 @@ def create_jobdict(joblist):  # check jobdict generation
     return jobdict, groupdict, seedspec
 
 
-def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, features, bidirectional, fasta):
+def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, features, bidirectional, fasta, annoToolFile):
     missing = []
     for spec in jobdict:
         if not os.path.exists(weight_dir + "/" + spec + ".json"):
@@ -168,7 +168,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
         missinseq = []
         for i in missing:
             missinseq.append('>' + i + '\n' + fasta[seed_spec][i])
-        doAnnoForMissing(seed_spec, missinseq, weight_dir + "/" + seed_spec + ".json", tmp_path + "/", cores, True)
+        doAnnoForMissing(seed_spec, missinseq, weight_dir + "/" + seed_spec + ".json", tmp_path + "/", cores, True, annoToolFile)
         tmp_data = read_json(tmp_path + "/" + seed_spec + ".json")
         seed_weight = w_weight_correction("loge", tmp_data["count"])
         seed_proteome = tmp_data["feature"]
@@ -224,7 +224,7 @@ def run_fas(data):
             weight_dir = data[7]
         else:
             weight_dir = data[4]
-        doAnnoForMissing(data[0], missinseq, weight_dir + "/" + data[0] + ".json", data[7] + "/", 1, True)
+        doAnnoForMissing(data[0], missinseq, weight_dir + "/" + data[0] + ".json", data[7] + "/", 1, True, "None")
         tmp_data = read_json(data[7] + "/" + data[0] + ".json")
         for i in missing:
             query_proteome[i] = tmp_data["feature"][i]
@@ -303,7 +303,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.11.7'
+    version = '1.11.8'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

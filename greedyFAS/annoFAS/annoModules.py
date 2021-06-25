@@ -372,7 +372,7 @@ def readClanFile(toolPath):
 
 # functions for doing annotation for multiple tools
 def getAnnoTools(annoToolFile, toolPath):
-    if annoToolFile == "":
+    if annoToolFile == "" or annoToolFile == "None":
         checkFileExist(toolPath+'/annoTools.txt')
         toolList = []
         with open(toolPath+'/annoTools.txt') as f:

@@ -59,16 +59,17 @@ def checkCompleteAnno(seqFile, jsonFile):
         else:
             return()
 
-def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
+def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoToolFile):
     toolPath = getFasToolPath()
     # do annotation for missing proteins
     faFile = '%s/%s_tmp.fa' % (outPath, taxon)
     with open(faFile, 'w') as f:
         f.write(''.join(missingAnno))
 
-    annoCmd = 'fas.doAnno -i %s -o %s --cpus %s' % (faFile, outPath, cpus)
-    if silent:
-        annoCmd = annoCmd + ' > /dev/null 2>&1'
+    annoCmd = 'fas.doAnno -i %s -o %s --cpus %s --annoToolFile %s' % (faFile, outPath, cpus, annoToolFile)
+    # if silent:
+    #     annoCmd = annoCmd + ' > /dev/null 2>&1'
+    print(annoCmd)
     try:
         subprocess.call([annoCmd], shell = True)
     except:
@@ -89,7 +90,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent):
     shutil.rmtree('%s/tmp' % outPath)
 
 def main():
-    version = '1.11.7'
+    version = '1.11.8'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -104,6 +105,8 @@ def main():
     optional.add_argument('--silent', help='Turn off terminal output', action='store_true')
     optional.add_argument('--cpus', help='Number of CPUs used for annotation. Default = available cores - 1',
                           action='store', default=0, type=int)
+    optional.add_argument('--annoToolFile', help='Path to files contains annotation tool names',
+                          action='store', default='')
 
     args = parser.parse_args()
 
@@ -120,12 +123,14 @@ def main():
         cpus = mp.cpu_count()-1
     noAnno = args.noAnno
     silent = args.silent
+    annoToolFile = args.annoToolFile
+    annoModules.checkFileExist(annoToolFile)
 
     taxon = annoFile.split('/')[-1].replace('.json', '')
     missingAnno = checkCompleteAnno(seqFile, annoFile)
     if len(missingAnno) > 0:
         if noAnno == False:
-            doAnnoForMissing(taxon, missingAnno, annoFile, outPath, cpus, silent)
+            doAnnoForMissing(taxon, missingAnno, annoFile, outPath, cpus, silent, annoToolFile)
             if not silent:
                 print('%s missing proteins of %s has been annotated!' % (len(missingAnno), taxon))
         else:
