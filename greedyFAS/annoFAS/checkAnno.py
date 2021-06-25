@@ -67,9 +67,8 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoTo
         f.write(''.join(missingAnno))
 
     annoCmd = 'fas.doAnno -i %s -o %s --cpus %s --annoToolFile %s' % (faFile, outPath, cpus, annoToolFile)
-    # if silent:
-    #     annoCmd = annoCmd + ' > /dev/null 2>&1'
-    print(annoCmd)
+    if silent:
+        annoCmd = annoCmd + ' > /dev/null 2>&1'
     try:
         subprocess.call([annoCmd], shell = True)
     except:
@@ -90,7 +89,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoTo
     shutil.rmtree('%s/tmp' % outPath)
 
 def main():
-    version = '1.11.8'
+    version = '1.12.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
