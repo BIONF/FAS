@@ -303,7 +303,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.11.5'
+    version = '1.11.6'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -330,7 +330,7 @@ def get_options():
                           help="number of cores used for parallel calculation")
     optional.add_argument("--no_lin", action='store_true',
                           help="deactivate linearization (for pfam/smart)")
-    optional.add_argument("-d, --featuretypes", type=str, default=None,
+    optional.add_argument("-d", "--featuretypes", type=str, default=None,
                           help="inputfile that contains the tools/databases used for comparison. Please look at the "
                                "FAS wiki pages for templates of the the featuretypes input file")
     arguments = parser.parse_args()
