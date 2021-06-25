@@ -55,7 +55,10 @@ def main():
     pathconfigfile = os.path.realpath(__file__).replace('fdogFAS.py', 'pathconfig.txt')
     with open(pathconfigfile) as f:
         toolpath = f.readline().strip()
-    features = featuretypes(toolpath + '/' + 'annoTools.txt')
+    if args.featuretypes:
+        features = featuretypes(args.featuretypes)
+    else:
+        features = featuretypes(toolpath + '/' + 'annoTools.txt')
     if args.no_lin:
         features = ([], features[1] + features[0])
     print('calculating FAS scores for ' + outname + '...')
@@ -300,7 +303,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.11.4'
+    version = '1.11.5'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -326,7 +329,10 @@ def get_options():
     optional.add_argument("--cores", action="store", type=int, default=1,
                           help="number of cores used for parallel calculation")
     optional.add_argument("--no_lin", action='store_true',
-                          help="deactivate linearization for pfam/smart")
+                          help="deactivate linearization (for pfam/smart)")
+    optional.add_argument("-d, --featuretypes", type=str, default=None,
+                          help="inputfile that contains the tools/databases used for comparison. Please look at the "
+                               "FAS wiki pages for templates of the the featuretypes input file")
     arguments = parser.parse_args()
     return arguments
 
