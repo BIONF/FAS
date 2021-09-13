@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.12.2'
+    version = '1.12.3'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -164,9 +164,6 @@ def anno(annojobs, args, toolpath):
             annoFAS.runAnnoFas(
                 [seqfile, outpath, toolpath, args.force, name, eflps, signalporg, efeature, einstance, hmmcores, '',
                  '', '', cpus, args.featuretypes])
-
-        runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
-                    extract, annoFile, cpus, annoToolFile])
 
 
 def fas(args, toolpath):
