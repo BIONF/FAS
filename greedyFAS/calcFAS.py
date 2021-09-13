@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.12.1'
+    version = '1.12.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -89,7 +89,7 @@ def get_options():
                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                              " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
                              "templates")
-    inargs.add_argument("-d", "--featuretypes", default=None, type=str,
+    inargs.add_argument("-d", "--featuretypes", default='', type=str,
                         help="inputfile that contains the tools/databases used to predict features. Please look at the "
                              "FAS wiki pages for templates of the the featuretypes input file")
     inargs.add_argument("--extra_annotation", default=None, nargs='*', type=str,
@@ -164,6 +164,9 @@ def anno(annojobs, args, toolpath):
             annoFAS.runAnnoFas(
                 [seqfile, outpath, toolpath, args.force, name, eflps, signalporg, efeature, einstance, hmmcores, '',
                  '', '', cpus, args.featuretypes])
+
+        runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
+                    extract, annoFile, cpus, annoToolFile])
 
 
 def fas(args, toolpath):
@@ -244,7 +247,7 @@ def fas(args, toolpath):
         option_dict['outpath'] = args.out_dir.rstrip('/') + '/' + args.out_name
     else:
         option_dict['outpath'] = args.out_dir.rstrip('/') + '/' + seedname + '_' + queryname
-    if args.featuretypes is not None:
+    if args.featuretypes:
         option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(args.featuretypes)
     else:
         option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(toolpath
