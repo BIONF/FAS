@@ -207,6 +207,7 @@ def prepare_annoTool(options):
     anno_path = options['toolPath']
     dtuPathIn = options['dtuPath']
     force = options['force']
+    ignoreList = options['ignore']
 
     file = 'annotation_FAS2020d.tar.gz'
     checksum = '1818703744 1108970315 ' + file
@@ -231,32 +232,41 @@ def prepare_annoTool(options):
         print('Annotation tools will be installed in ')
         print(os.getcwd())
         print('----------------------------------')
-        tools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
-        with open('annoTools.txt', mode='wt') as tool_file:
-            if platform == 'darwin':
-                tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\n')
-            else:
-                tool_file.write('#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\n')
+        defaultTools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
+        if platform == 'darwin':
+            ignoreList.extend(('SEG', 'TMHMM'))
+        tools = [tool for tool in defaultTools if tool not in ignoreList]
 
         # get DTU tools path
-        (dtu_path, signalp_source, tmhmm_source) = get_dtu_path(dtuPathIn)
+        if not ('TMHMM' in ignoreList and 'SignalP' in ignoreList):
+            (dtu_path, signalp_source, tmhmm_source) = get_dtu_path(dtuPathIn)
+        else:
+            dtu_path = 0
 
         # install TMHMM and SignalP
         if not dtu_path == 0:
-            print('Installing SignalP and TMHMM...')
-            if not os.path.isdir(anno_path + '/SignalP'):
-                shutil.unpack_archive(dtu_path + '/' + signalp_source, anno_path, 'gztar')
-                install_signalp()
-            os.chdir(anno_path)
-            if not os.path.isdir(anno_path + '/TMHMM'):
-                shutil.unpack_archive(dtu_path + '/' + tmhmm_source, anno_path, 'gztar')
-                install_tmhmm()
-            os.chdir(anno_path)
-            with open('annoTools.txt', mode='a') as tool_file:
-                if platform == 'darwin':
-                    tool_file.write('SignalP\n')
-                else:
-                    tool_file.write('TMHMM\nSignalP\n')
+            if not 'SignalP' in ignoreList:
+                print('Installing SignalP...')
+                if not os.path.isdir(anno_path + '/SignalP'):
+                    shutil.unpack_archive(dtu_path + '/' + signalp_source, anno_path, 'gztar')
+                    install_signalp()
+                os.chdir(anno_path)
+                tools.append('SignalP')
+            if not 'TMHMM' in ignoreList:
+                if not platform == 'darwin':
+                    print('Installing TMHMM...')
+                    if not os.path.isdir(anno_path + '/TMHMM'):
+                        shutil.unpack_archive(dtu_path + '/' + tmhmm_source, anno_path, 'gztar')
+                        install_tmhmm()
+                    os.chdir(anno_path)
+                    tools.append('TMHMM')
+
+        # close annoTools file
+        with open('annoTools.txt', mode='wt') as tool_file:
+            tool_file.write('#linearized\nPfam\nSMART\n#normal\n')
+            for t in tools:
+                if not t in ['Pfam','SMART']:
+                    tool_file.write('%s\n' % t)
         tool_file.close()
 
         # download other annotation tools
@@ -282,11 +292,12 @@ def prepare_annoTool(options):
                 shutil.unpack_archive(fLPS_file, anno_path, 'gztar')
                 os.remove(fLPS_file)
             else:
-                print('Moving %s ...' % tool)
-                source_dir = 'annotation_FAS/' + tool + '/'
-                if os.path.exists(os.path.abspath(anno_path + '/' + tool)):
-                    shutil.rmtree(anno_path + '/' + tool)
-                shutil.move(source_dir, anno_path, copy_function=shutil.copytree)
+                if not tool in ('SignalP', 'TMHMM'):
+                    print('Moving %s ...' % tool)
+                    source_dir = 'annotation_FAS/' + tool + '/'
+                    if os.path.exists(os.path.abspath(anno_path + '/' + tool)):
+                        shutil.rmtree(anno_path + '/' + tool)
+                    shutil.move(source_dir, anno_path, copy_function=shutil.copytree)
 
         # make symlink for fLPS (depend on OS system)
         source = os.getcwd() + '/fLPS/bin'
@@ -306,29 +317,30 @@ def prepare_annoTool(options):
                 os.remove(target)
                 os.symlink(source, target)
 
-        # re-compile COILS2
-        coils_path = anno_path + '/COILS2'
-        os.chdir(coils_path)
-        shutil.unpack_archive('ncoils.tar.gz', coils_path, 'gztar')
-        coils_bin = coils_path + '/coils'
-        os.chdir(coils_bin)
-        compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm' + ' > /dev/null 2>&1'
-        try:
-            subprocess.call(compile_cmd, shell=True)
-        except:
-            print('ERROR: Failed to compile COILS2.\nPlease read instruction at %s and do it manually!' % coils_path)
-        COILSDIR = 'export COILSDIR=%s\n' % coils_bin
-        write_coilsdir(COILSDIR)
-        os.chdir(coils_path)
-        if os.path.exists('COILS2'):
-            os.remove('COILS2')
-        os.symlink('coils/ncoils-osf', './COILS2')
-        home = str(Path.home())
-        if platform == 'darwin':
-            os.system('. %s/.bash_profile' % home)
-        else:
-            os.system('. %s/.bashrc' % home)
-        os.chdir(anno_path)
+        if not 'COILS2' in ignoreList:
+            # re-compile COILS2
+            coils_path = anno_path + '/COILS2'
+            os.chdir(coils_path)
+            shutil.unpack_archive('ncoils.tar.gz', coils_path, 'gztar')
+            coils_bin = coils_path + '/coils'
+            os.chdir(coils_bin)
+            compile_cmd = 'cc -O2 -I. -o ncoils-osf ncoils.c read_matrix.c -lm' + ' > /dev/null 2>&1'
+            try:
+                subprocess.call(compile_cmd, shell=True)
+            except:
+                print('ERROR: Failed to compile COILS2.\nPlease read instruction at %s and do it manually!' % coils_path)
+            COILSDIR = 'export COILSDIR=%s\n' % coils_bin
+            write_coilsdir(COILSDIR)
+            os.chdir(coils_path)
+            if os.path.exists('COILS2'):
+                os.remove('COILS2')
+            os.symlink('coils/ncoils-osf', './COILS2')
+            home = str(Path.home())
+            if platform == 'darwin':
+                os.system('. %s/.bash_profile' % home)
+            else:
+                os.system('. %s/.bashrc' % home)
+            os.chdir(anno_path)
         print('----------------------------------')
         # remove temp files
         shutil.rmtree(anno_path + '/annotation_FAS')
@@ -460,6 +472,9 @@ def main():
                           required=True)
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store',
                           default='')
+    optional.add_argument('-i', '--ignore', help='List of tools should be ignored', nargs="*",
+                        choices=['SignalP', 'TMHMM', 'COILS2', 'fLPS', 'SEG'],
+                        action='store', default=[])
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-k', '--keep', help='Keep downloaded source file', action='store_true')
     optional.add_argument('-s', '--savePath', help='Save annotation tool path to config file for FAS',
@@ -473,6 +488,7 @@ def main():
     options = {
         'toolPath': args.toolPath,
         'dtuPath': args.dtuPath,
+        'ignore': args.ignore,
         'force': args.force,
         'keep': args.keep,
         'greedyFasPath': greedyFasPath
