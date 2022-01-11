@@ -27,7 +27,7 @@ with open("README.md", "r") as input:
 
 setup(
     name="greedyFAS",
-    version="1.13.0",
+    version="1.13.1",
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,
@@ -40,7 +40,8 @@ setup(
     install_requires=[
         'biopython',
         'tqdm',
-        'graphviz'
+        'graphviz',
+        'gnureadline'
     ],
     entry_points={
         'console_scripts': ["fas.parseAnno = greedyFAS.annoFAS.annoParserFAS:main",

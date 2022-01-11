@@ -28,7 +28,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import argparse
-import readline
+import gnureadline
 import glob
 from os.path import expanduser
 import ssl
@@ -118,9 +118,9 @@ def get_dtu_path(dtuPathIn):
     else:
         print('Do you want to use TMHMM (v2.0c) and SignalP (v4.1g)? (y/n)')
         if query_yes_no('Source path?'):
-            readline.set_completer_delims(' \t\n;')
-            readline.parse_and_bind('tab: complete')
-            readline.set_completer(complete)
+            gnureadline.set_completer_delims(' \t\n;')
+            gnureadline.parse_and_bind('tab: complete')
+            gnureadline.set_completer(complete)
             dtu_path = input('Please download TMHMM 2.0c and SignalP 4.1g at https://services.healthtech.dtu.dk/ and '
                              'enter path to the downloaded tar files:')
         else:
@@ -464,7 +464,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.13.0'
+    version = '1.13.1'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
