@@ -30,7 +30,7 @@ from greedyFAS.mainFAS import fasInput, greedyFAS
 
 
 def get_options():
-    version = '1.13.1'
+    version = '1.13.2'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -234,6 +234,7 @@ def fas(args, toolpath):
             raise Exception(str(args.weightcorrection) + "is not a valid input for -g [--weightcorrection]")
     if args.ref_proteome and args.weight_constraints:
         option_dict["weight_const"] = True
+        option_dict["constraints"] = fasInput.constraints_in(args.weight_constraints)
     elif args.weight_constraints:
         raise Exception("[--weight_constraints] only works with a reference proteome")
     if 0.0 <= float(args.max_overlap_percentage) <= 1.0:

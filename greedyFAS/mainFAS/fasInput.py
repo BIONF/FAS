@@ -69,7 +69,7 @@ def constraints_in(path):
     i = 1
     if lines[0][0] == "#":
         while lines[i][0] != "#":
-            split = (lines[i].rstrip("\n")).split(" ")
+            split = (lines[i].rstrip("\n")).split("\t")
             if split[1] != "N":
                 constraints[split[0]] = float(split[1])
             i += 1
@@ -78,7 +78,7 @@ def constraints_in(path):
     if lines[i][0] == "#":
         i += 1
         while i < len(lines):
-            split = (lines[i].rstrip("\n")).split(" ")
+            split = (lines[i].rstrip("\n")).split("\t")
             constraints[split[0]] = float(split[1])
             i += 1
     cfile.close()
