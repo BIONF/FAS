@@ -131,6 +131,8 @@ def get_options():
     obscure.add_argument("-w", "--score_weights", nargs=3, default=[0.7, 0.0, 0.3], type=float,
                          help="Defines how the three scores MS, CS and PS are weighted, takes three float arguments, "
                               "sum should be 1.0, the default is 0.7, 0.0, 0.3")
+    obscure.add_argument("--empty_as_1", action='store_true',
+                         help="If both proteins have no features, score 1.0 instead of the default 0.0")
     args = parser.parse_args()
     return args
 
@@ -174,7 +176,8 @@ def fas(args, toolpath):
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
                    "timelimit": args.timelimit, "phyloprofile": args.phyloprofile, "score_weights": [],
                     "tsv": args.tsv, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
-                    "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True
+                    "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True,
+                    "empty_as_1": args.empty_as_1
                    }
     seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']

@@ -97,7 +97,10 @@ def sf_entire_calc_score(path, query_path, weights, search_features, a_s_f, quer
     if option["weight_const"]:
         for i in adjusted_weights:
             weights[i] = tmp_weight[i]
-    return score_ms, score_ps, score_cs, float(final_score), path_weight, common_feature, score_ls
+    if len(path) == 0 and len(query_path) == 0 and option['empty_as_1']:
+        return 1.0, 1.0, 1.0, 1.0, path_weight, common_feature, 1.0
+    else:
+        return score_ms, score_ps, score_cs, float(final_score), path_weight, common_feature, score_ls
 
 
 def sf_cs_score(path, clan_dict, query_clans, features):

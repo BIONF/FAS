@@ -169,6 +169,10 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
         for pair in option['pairwise']:
             query = pair[1]
             protein = pair[0]
+            if query not in query_proteome:
+                raise Exception(query + ' is missing in annotation!')
+            if protein not in seed_proteome:
+                raise Exception(protein + ' is missing in annotation!')
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
             query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
             go_priority, domain_count = tmp_query[7:9]
@@ -182,10 +186,16 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
     else:
         if option["query_id"]:
             querylist = option["query_id"]
+            for query in querylist:
+                if query not in query_proteome:
+                    raise Exception(query + ' is missing in annotation!')
         else:
             querylist = list(query_proteome.keys())
         if option["seed_id"]:
             seedlist = option["seed_id"]
+            for seed in seedlist:
+                if seed not in seed_proteome:
+                    raise Exception(seed + ' is missing in annotation!')
         else:
             seedlist = list(seed_proteome.keys())
         if option['progress']:

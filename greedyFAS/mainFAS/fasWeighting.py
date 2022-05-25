@@ -181,9 +181,12 @@ def w_weight_const_rescale(path, weights, search_features, final, option):
     rescaled_weights = {}
     if final:
         for feature in path:
+            db = feature.split('_')[0]
+            if db == 'coils':
+                db = 'coils2'
             if feature not in option["constraints"]:
-                if feature not in lindict[feature.split('_')[0]]:
-                    lindict[feature.split('_')[0]].append(feature)
+                if feature not in lindict[db]:
+                    lindict[db].append(feature)
         for ftype in option["input_linearized"]:
             if ftype in option["constraints"]:
                 for feature in lindict[ftype]:

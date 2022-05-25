@@ -176,7 +176,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
     data = []
     for spec in jobdict:
         data.append([spec,
-                    {"weight_const": False, "seed_id": None, "query_id": None,
+                    {"weight_const": False, "seed_id": None, "query_id": None, "empty_as_1": False,
                      "priority_mode": True, "priority_threshold": 30, "max_cardinality": 500, "eFeature": 0.001,
                      "cores": 1, "eInstance": 0.01, "e_output": True, "feature_info": None,
                      "bidirectional": bidirectional, "raw": False, "silent": False, "reverse": False,
