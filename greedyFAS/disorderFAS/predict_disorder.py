@@ -80,7 +80,7 @@ def remove_tmp(filepath):
 
 
 def make_tmp_fasta(header, seq, path):
-    with open(path + '/' + header + '.fasta', 'w') as out:
+    with open(path + '/' + header.replace('|', '_') + '.fasta', 'w') as out:
         out.write('>sequence\n' + seq)
 
 
@@ -127,27 +127,27 @@ def run_anno_single(args):
     header, seq, tmppath, aucpred = args
     make_tmp_fasta(header, seq, tmppath)
     try:
-        disorder = run_aucpred(header, tmppath, aucpred)
-        if os.path.exists(tmppath + header + '.fasta'):
-            os.remove(tmppath + header + '.fasta')
+        disorder = run_aucpred(header.replace('|', '_'), tmppath, aucpred)
+        if os.path.exists(tmppath + header.replace('|', '_') + '.fasta'):
+            os.remove(tmppath + header.replace('|', '_') + '.fasta')
         return header, disorder
     except:
-        if os.path.exists(tmppath + header + '.fasta'):
-            os.remove(tmppath + header + '.fasta')
+        if os.path.exists(tmppath + header.replace('|', '_') + '.fasta'):
+            os.remove(tmppath + header.replace('|', '_') + '.fasta')
         return header, None
 
 
 def run_aucpred(header, tmppath, aucpred):
-    cmd = aucpred + ' -i ' + tmppath + header + '.fasta -o ' + tmppath
+    cmd = aucpred + ' -i "' + tmppath + header + '.fasta" -o ' + tmppath
     subprocess.run([cmd], shell=True, capture_output=True, check=True)
     disorder = parse_aucpred(tmppath + header + '.diso_noprof')
     for i in ['.diso_noprof', '.diso_prev']:
-        remove_tmp(tmppath + header + i)
+        remove_tmp(tmppath + header.replace('|', '_') + i)
     return disorder
 
 
 def main():
-    version = '1.14.0'
+    version = '1.14.1'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
