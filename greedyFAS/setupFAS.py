@@ -34,6 +34,7 @@ from os.path import expanduser
 import ssl
 import urllib.request
 import time
+from greedyFAS.disorderFAS import install_aucpred
 
 home = expanduser('~')
 
@@ -212,6 +213,8 @@ def prepare_annoTool(options):
     file = 'annotation_FAS2020d.tar.gz'
     checksum = '1818703744 1108970315 ' + file
 
+    if options['disorder']:
+        install_aucpred.install_auc(options['toolPath'])
     if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
         with open(anno_path+'/annoTools.txt') as checkfile:
             if '#checked' in checkfile.read():
@@ -464,7 +467,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.13.3'
+    version = '1.14.0'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
@@ -482,6 +485,8 @@ def main():
     optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!',
                           action='store_true')
     optional.add_argument('--checkExecutable', help='Check if annotation tools are executable!', action='store_true')
+    optional.add_argument('--disorder', help='Install Disorder annotation, can be installed separately later as well',
+                          action='store_true')
 
     args = parser.parse_args()
     greedyFasPath = os.path.realpath(__file__).replace('/setupFAS.py','')
@@ -491,7 +496,8 @@ def main():
         'ignore': args.ignore,
         'force': args.force,
         'keep': args.keep,
-        'greedyFasPath': greedyFasPath
+        'greedyFasPath': greedyFasPath,
+        'disorder': args.disorder
     }
 
     if args.checkExecutable:
