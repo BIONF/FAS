@@ -65,12 +65,14 @@ def parse_aucpred(infile):
 def prepare_annojobs(infile, tmppath, aucpred):
     annojobs = []
     ids = []
+    i = 0
     for seq in SeqIO.parse(infile, 'fasta'):
         if seq.id in ids:
             raise Exception('Headers in the fasta are not unique.')
         else:
             ids.append(seq.id)
-            annojobs.append([seq.id, str(seq.seq), tmppath, aucpred])
+            annojobs.append([seq.id, str(seq.seq), tmppath, aucpred, 'seq_' + str(i)])
+        i += 1
     return annojobs
 
 
@@ -80,7 +82,7 @@ def remove_tmp(filepath):
 
 
 def make_tmp_fasta(header, seq, path):
-    with open(path + '/' + header.replace('|', '_') + '.fasta', 'w') as out:
+    with open(path + '/' + header + '.fasta', 'w') as out:
         out.write('>sequence\n' + seq)
 
 
@@ -124,16 +126,16 @@ def write_output(out, outpath):
 
 
 def run_anno_single(args):
-    header, seq, tmppath, aucpred = args
-    make_tmp_fasta(header, seq, tmppath)
+    header, seq, tmppath, aucpred, tmpname = args
+    make_tmp_fasta(tmpname, seq, tmppath)
     try:
-        disorder = run_aucpred(header.replace('|', '_'), tmppath, aucpred)
-        if os.path.exists(tmppath + header.replace('|', '_') + '.fasta'):
-            os.remove(tmppath + header.replace('|', '_') + '.fasta')
+        disorder = run_aucpred(tmpname, tmppath, aucpred)
+        if os.path.exists(tmppath + tmpname + '.fasta'):
+            os.remove(tmppath + tmpname + '.fasta')
         return header, disorder
     except:
-        if os.path.exists(tmppath + header.replace('|', '_') + '.fasta'):
-            os.remove(tmppath + header.replace('|', '_') + '.fasta')
+        if os.path.exists(tmppath + tmpname + '.fasta'):
+            os.remove(tmppath + tmpname + '.fasta')
         return header, None
 
 
@@ -142,12 +144,12 @@ def run_aucpred(header, tmppath, aucpred):
     subprocess.run([cmd], shell=True, capture_output=True, check=True)
     disorder = parse_aucpred(tmppath + header + '.diso_noprof')
     for i in ['.diso_noprof', '.diso_prev']:
-        remove_tmp(tmppath + header.replace('|', '_') + i)
+        remove_tmp(tmppath + header + i)
     return disorder
 
 
 def main():
-    version = '1.14.2'
+    version = '1.14.3'
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
