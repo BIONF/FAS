@@ -1,7 +1,6 @@
 # FAS - Feature Architecture Similarity
 [![PyPI version](https://badge.fury.io/py/greedyFAS.svg)](https://badge.fury.io/py/greedyFAS)
 [![GPLv3-license](https://anaconda.org/bionf/hamstr/badges/license.svg)](https://www.gnu.org/licenses/gpl-3.0.de.html)
-[![Build Status](https://travis-ci.com/BIONF/FAS.svg?branch=master)](https://travis-ci.com/BIONF/FAS)
 ![Github Build](https://github.com/BIONF/FAS/workflows/build/badge.svg)
 
 FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-11-417) algorithm. It calculates the so called FAS-score which is a measure of how similar the feature architectures of two proteins are. This is done by combining the Multiplicity Score (MS) and the Positional Score (PS) from FACT. Unlike the original FACT, FAS can resolve feature architectures that have overlapping features by searching for the best overlap-free path. This can be done either extensively or by using the priority mode, a greedy approach. FAS also allows for more options in the weighting of features.
