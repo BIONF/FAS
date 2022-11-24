@@ -43,6 +43,7 @@ from greedyFAS.mainFAS.fasWeighting import w_count_add_domains
 from greedyFAS.mainFAS.fasPathing import pb_region_mapper
 from greedyFAS.mainFAS.fasPathing import pb_region_paths
 from greedyFAS.annoFAS.annoModules import mergeNestedDic
+from pkg_resources import get_distribution
 
 
 # important vars #             ###  var looks ###

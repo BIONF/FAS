@@ -29,6 +29,7 @@ import multiprocessing as mp
 from tqdm import tqdm
 import argparse
 import json
+from pkg_resources import get_distribution
 
 
 def save2json(dict2save, outpath):
@@ -115,7 +116,7 @@ def write_output(out, outpath):
             failed.append(seq[0])
         else:
             fdict[seq[0]] = seq[1]
-            count += len(seq[1]['aucpred']['aucpred_disordered_region']['instance'])           
+            count += len(seq[1]['aucpred']['aucpred_disordered_region']['instance'])
     if not len(failed) == len(out):
         outdict = {'feature': fdict, 'clan': {}, 'count': {'aucpred_disordered_region': count}}
         save2json(outdict, outpath + '_disorder.json')
@@ -149,7 +150,7 @@ def run_aucpred(header, tmppath, aucpred):
 
 
 def main():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

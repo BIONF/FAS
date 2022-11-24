@@ -64,6 +64,11 @@ def checkFileEmpty(file):
     return flag
 
 
+def get_property(prop, project):
+    result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop), open(project + '/__init__.py').read())
+    return result.group(1)
+
+    
 # functions for doing annotation with single tool
 def doFlps(args):
     (seqFile, toolPath, threshold) = args
@@ -351,24 +356,29 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
     return outDict
 
 
-def readClanFile(toolPath):
+def readDatFile(toolPath):
     datFile = '%s/Pfam/Pfam-hmms/Pfam-A.hmm.dat' % toolPath
     try:
         with open(datFile, 'r') as file:
             datFileR = file.read()
             file.close()
             blocks = datFileR.split('//')
-            clanDict = {}
+            pfamDict = {}
             for bl in blocks:
-                if '#=GF CL' in bl:
+                if '#=GF ID' in bl:
                     dom = re.search(r'#=GF ID(.)+', bl).group().split()[-1]
-                    clan = re.search(r'#=GF CL(.)+', bl).group().split()[-1]
-                    clanDict[dom] = clan
-            return clanDict
+                    pfamDict[dom] = {}
+                    if '#=GF CL' in bl:
+                        clan = re.search(r'#=GF CL(.)+', bl).group().split()[-1]
+                    else:
+                        clan = 'NA'
+                    acc = re.search(r'#=GF AC(.)+', bl).group().split()[-1]
+                    pfamDict[dom]['clan'] = clan
+                    pfamDict[dom]['acc'] = acc
+            return pfamDict
     except:
-        print('%s not found or no clans can be found' % datFile)
+        print('%s does not exist or no accession ID can be found' % datFile)
         return
-
 
 # functions for doing annotation for multiple tools
 def getAnnoTools(annoToolFile, toolPath):
@@ -455,7 +465,7 @@ def doAnno(args):
             sys.exit('Error deleting %s/tmp/signalp/%s_%s' % (outPath, outNameTmp, seqIdTmp))
     return final
 
-# function for posprocessing annotation dictionary
+# functions for posprocessing annotation dictionary
 def countFeatures(annoDict):
     out = []
     for prot in list(annoDict.keys()):
@@ -469,15 +479,63 @@ def countFeatures(annoDict):
 
 
 def getClans(toolPath, annoDict):
-    clanDict = readClanFile(toolPath)
+    pfamDict = readDatFile(toolPath)
     outDict = {}
     for prot in list(annoDict.keys()):
         for dom, value in annoDict[prot]['pfam'].items():
-            if dom.replace('pfam_','') in clanDict:
-                outDict[dom] = clanDict[dom.replace('pfam_','')]
+            if dom.replace('pfam_','') in pfamDict:
+                if not pfamDict[dom.replace('pfam_','')]['clan'] == 'NA':
+                    outDict[dom] = pfamDict[dom.replace('pfam_','')]['clan']
     return outDict
 
 
+def getPfamAcc(toolPath, annoDict):
+    pfamDict = readDatFile(toolPath)
+    outDict = {}
+    for prot in list(annoDict.keys()):
+        for dom, value in annoDict[prot]['pfam'].items():
+            if dom.replace('pfam_','') in pfamDict:
+                outDict[dom] = pfamDict[dom.replace('pfam_','')]['acc']
+    return outDict
+
+# get version and used cutoffs of annotation tools
+def getVersions(tools, toolPath, cutoffs):
+    eFeature = cutoffs[0]
+    eInstance = cutoffs[1]
+    eFlps = cutoffs[2]
+    signalpOrg = cutoffs[3]
+    versionDict = {}
+    for tool in tools:
+        versionDict[tool] = {}
+    if 'pfam' in tools:
+        pfamCmd = 'grep "  RELEASE " %s/Pfam/Pfam-hmms/relnotes.txt | rev | cut -d " " -f1 | rev' % toolPath
+        try:
+            pfamVersion = subprocess.run([pfamCmd], shell=True, capture_output=True, check=True)
+            versionDict['pfam']['version'] = pfamVersion.stdout.decode().strip()
+            versionDict['pfam']['evalue'] = (eFeature, eInstance)
+        except:
+            print('Error getting Pfam version! %s' % (pfamVersion))
+    if 'smart' in tools:
+        versionDict['smart']['version'] = 'NA'
+        versionDict['smart']['evalue'] = (eFeature, eInstance)
+    if 'signalp' in tools:
+        signalpCmd = 'head %s/SignalP/signalp-*.readme | grep "INSTALLATION INSTRUCTIONS" | cut -f1 | cut -d " " -f2' % toolPath
+        try:
+            signalpVersion = subprocess.run([signalpCmd], shell=True, capture_output=True, check=True)
+            versionDict['signalp']['version'] = signalpVersion.stdout.decode().strip()
+            versionDict['signalp']['org'] = (signalpOrg)
+        except:
+            print('Error getting SignalP version! %s' % (signalpVersion))
+    if 'tmhmm' in tools:
+        tmhmmCmd = 'head -n1 %s/TMHMM/README' % toolPath
+        try:
+            tmhmmVersion = subprocess.run([tmhmmCmd], shell=True, capture_output=True, check=True)
+            versionDict['tmhmm']['version'] = tmhmmVersion.stdout.decode().strip()
+        except:
+            print('Error getting TMHMM version! %s' % (tmhmmVersion))
+    return(versionDict)
+
+# functions for replacing and extrating annotation from json file
 def replaceAnno(oldAnnoFile, newAnnoDict, redo):
     with open(oldAnnoFile) as f:
         annoDict = json.load(f)

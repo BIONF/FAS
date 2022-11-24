@@ -32,7 +32,7 @@ from greedyFAS.mainFAS import greedyFAS
 from greedyFAS.mainFAS.fasInput import read_json, featuretypes
 from greedyFAS.mainFAS.fasWeighting import w_weight_correction
 from greedyFAS.annoFAS.checkAnno import doAnnoForMissing
-
+from pkg_resources import get_distribution
 
 def main():
     args = get_options()
@@ -303,7 +303,7 @@ def write_phyloprofile(results, out_path, outname, groupdict):
 
 
 def get_options():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

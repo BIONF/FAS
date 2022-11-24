@@ -26,10 +26,10 @@ import json
 from tqdm import tqdm
 from time import sleep
 from greedyFAS.mainFAS.fasInput import read_json
-
+from pkg_resources import get_distribution
 
 def get_options():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

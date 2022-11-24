@@ -26,6 +26,8 @@ import argparse
 from pathlib import Path
 import json
 import re
+from pkg_resources import get_distribution
+
 
 def checkCompleteAnno(featureList, jsonFile, condition):
     with open(jsonFile) as jf:
@@ -55,7 +57,7 @@ def checkCompleteAnno(featureList, jsonFile, condition):
         return(out)
 
 def main():
-    version = '1.14.2'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

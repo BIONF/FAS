@@ -35,6 +35,7 @@ import ssl
 import urllib.request
 import time
 from greedyFAS.disorderFAS import install_aucpred
+from pkg_resources import get_distribution
 
 home = expanduser('~')
 
@@ -467,7 +468,7 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')

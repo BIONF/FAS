@@ -30,12 +30,15 @@ import multiprocessing as mp
 import greedyFAS.annoFAS.annoModules as annoModules
 from tqdm import tqdm
 from shutil import copyfile
+from pkg_resources import get_distribution
 
 home = expanduser('~')
 
 def runAnnoFas(args):
     (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract,
      annoFile, cpus, annoToolFile) = args
+    # get list of cutoffs
+    cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
     # do annotation
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
@@ -49,8 +52,10 @@ def runAnnoFas(args):
             for _ in tqdm(pool.imap_unordered(annoModules.doAnno, annoJobs), total=len(annoJobs)):
                 annoOut.append(_)
             annoDict = annoModules.mergeNestedDic(annoOut)
+            annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
+            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath, cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
             pool.close()
         else:
@@ -59,8 +64,10 @@ def runAnnoFas(args):
             else:
                 print('Extracting annotations...')
                 annoDict = annoModules.extractAnno(seqFile, annoFile)
+                annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
                 annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
                 annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
+                annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath, cutoffs)
                 annoModules.save2json(annoDict, outName, outPath)
     else:
         if not redo == '':
@@ -75,8 +82,10 @@ def runAnnoFas(args):
             redoAnnoDict = annoModules.mergeNestedDic(annoOut)
             # replace old annotations and save to json output
             annoDict = annoModules.replaceAnno(outFile, redoAnnoDict, redo)
+            annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
+            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath, cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
             pool.close()
         else:
@@ -84,7 +93,7 @@ def runAnnoFas(args):
 
 
 def main():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

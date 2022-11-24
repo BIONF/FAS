@@ -24,10 +24,10 @@
 from greedyFAS.mainFAS import fasInput
 import argparse
 import os
-
+from pkg_resources import get_distribution
 
 def get_options():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to create domain input files for phyloprofile "
                                             "without doing a FAS calculation.")

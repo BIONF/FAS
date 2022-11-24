@@ -25,7 +25,7 @@ import argparse
 from greedyFAS.annoFAS.annoModules import mergeNestedDic
 from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.annoFAS.annoModules import save2json
-
+from pkg_resources import get_distribution
 
 def merge_anno(pathlist, outpath, name):
     feature = []
@@ -41,7 +41,7 @@ def merge_anno(pathlist, outpath, name):
 
 
 def main():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
@@ -55,4 +55,3 @@ def main():
                           help="Name of the output json.")
     args = parser.parse_args()
     merge_anno(args.input, args.outPath, args.outName)
-

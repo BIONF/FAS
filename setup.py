@@ -21,13 +21,14 @@
 #######################################################################
 
 from setuptools import setup, find_packages
+import re
 
 with open("README.md", "r") as input:
     long_description = input.read()
 
 setup(
     name="greedyFAS",
-    version="1.14.3",
+    version="1.15.0",
     python_requires='>=3.7.0',
     description="A tool to compare protein feature architectures",
     long_description=long_description,

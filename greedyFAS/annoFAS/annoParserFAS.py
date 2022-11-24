@@ -23,6 +23,7 @@
 
 import argparse
 import json
+from pkg_resources import get_distribution
 
 
 def read_infile_single(ignore_lines, feature_columns, tool_name, path):
@@ -109,7 +110,7 @@ def create_json(args):
 
 
 def main():
-    version = '1.14.2'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

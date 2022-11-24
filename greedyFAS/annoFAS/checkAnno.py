@@ -30,6 +30,8 @@ import shutil
 import multiprocessing as mp
 import json
 import greedyFAS.annoFAS.annoModules as annoModules
+from pkg_resources import get_distribution
+
 
 def getFasToolPath():
     cmd = 'fas.setup -t ~/ -c'
@@ -89,7 +91,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoTo
     shutil.rmtree('%s/tmp' % outPath)
 
 def main():
-    version = '1.14.2'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

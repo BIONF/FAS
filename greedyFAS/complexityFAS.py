@@ -30,10 +30,10 @@ except ModuleNotFoundError:
 from greedyFAS.mainFAS import fasPathing
 from greedyFAS.mainFAS import fasInput
 from greedyFAS.mainFAS import greedyFAS
-
+from pkg_resources import get_distribution
 
 def get_options():
-    version = '1.14.3'
+    version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="This script allows you to assess the complexity (number of paths) of the "
                                             "feature architecture for linearization.")
