@@ -30,6 +30,7 @@ from tqdm import tqdm
 import sys
 from time import sleep
 from greedyFAS.mainFAS.fasInput import read_json
+from greedyFAS.mainFAS.fasInput import check_version
 from greedyFAS.mainFAS.fasOutput import write_domain_out
 from greedyFAS.mainFAS.fasOutput import write_tsv_out
 from greedyFAS.mainFAS.fasOutput import phyloprofile_out
@@ -43,7 +44,6 @@ from greedyFAS.mainFAS.fasWeighting import w_count_add_domains
 from greedyFAS.mainFAS.fasPathing import pb_region_mapper
 from greedyFAS.mainFAS.fasPathing import pb_region_paths
 from greedyFAS.annoFAS.annoModules import mergeNestedDic
-from pkg_resources import get_distribution
 
 
 # important vars #             ###  var looks ###
@@ -74,23 +74,38 @@ def fc_start(option):
     clan_dict = {}
     domain_count = {}
     option["reverse"] = False
+    interprokeys = {}
+    v_warning = False
+    version = None
     # MS_uni set to 0 when no weighting is conducted
     if option["MS_uni"] == 0:
         domain_count = {}
         for path in option["ref_proteome"]:
-            domain_count.update(read_json(path)["count"])
+            proteome = read_json(path)
+            domain_count.update(proteome["count"])
+            version, v_warning = check_version(version, proteome, v_warning)
     proteome_list = []
     for path in option["p_path"]:
         proteome = read_json(path)
         proteome_list.append(proteome["feature"])
         clan_dict.update(proteome["clan"])
+        if 'inteprotID' in proteome:
+            interprokeys.update(proteome['inteprotID'])
+        version, v_warning = check_version(version, proteome, v_warning)
     seed_proteome = mergeNestedDic(proteome_list)
     proteome_list = []
     for path in option["s_path"]:
         proteome = read_json(path)
         proteome_list.append(proteome["feature"])
         clan_dict.update(proteome["clan"])
+        if 'inteprotID' in proteome:
+            interprokeys.update(proteome['inteprotID'])
+        version, v_warning = check_version(version, proteome, v_warning)
     query_proteome = mergeNestedDic(proteome_list)
+    if v_warning:
+        print('##########\nWARNING: There are version discrepancies in the annotation files. This means that there '
+              'might be differences in tool/database versions of the annotation. You should check the annotation files '
+              'with "fas.getAnnoVersion"!\n##########')
     if option["weight_correction"]:
         domain_count = w_weight_correction(option["weight_correction"], domain_count)
     for tool in option["input_linearized"]:
@@ -108,7 +123,7 @@ def fc_start(option):
                 raise Exception(protid + " is not in the query annotation")
     if option["bidirectional"]:
         print("calculating forward scores...")
-        f_results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option)
+        f_results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys)
         if option["MS_uni"] == 0 and option["ref_2"]:
             domain_count_2 = {}
             for path in option["ref_2"]:
@@ -128,21 +143,21 @@ def fc_start(option):
                 pairtmp.append((pair[1], pair[0]))
             option["pairwise"] = pairtmp
         print("calculating backward scores...")
-        r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option)
+        r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option, interprokeys)
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
         if not option['tsv']:
             write_tsv_out(option["outpath"], True, (f_results, r_results))
     else:
         print("calculating forward scores...")
-        results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option)
+        results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys)
         if not option["tsv"]:
             write_tsv_out(option["outpath"], False, (results, None))
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
 
 
-def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
+def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys):
     """Main function,
     manages linearization and scoring, creates the output
     Function calls: w_weighting_constraints(), w_weighting(), su_lin_query_protein(), pb_graphtraversal(),
@@ -181,7 +196,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
             ####
             results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
                                        go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
-                                       domain_out))
+                                       domain_out, interprokeys))
             if option["progress"]:
                 progress.update(1)
     else:
@@ -209,7 +224,7 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option):
             for protein in seedlist:
                 results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths,
                                            query_features, go_priority, a_q_f, clan_dict, query_graph, query_proteome,
-                                           query, query_clans, domain_out))
+                                           query, query_clans, domain_out, interprokeys))
                 if option["progress"]:
                     progress.update(1)
         if option["progress"]:
@@ -244,7 +259,7 @@ def fc_prep_query(query, domain_count, query_proteome, option, clan_dict):
 
 
 def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features, go_priority, a_q_f,
-                clan_dict, tmp_query_graph, query_proteome, query, query_clans, domain_out):
+                clan_dict, tmp_query_graph, query_proteome, query, query_clans, domain_out, interprokeys):
     go_priority_2 = False
     mode = 0
     pathcount = 0
@@ -467,7 +482,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             scale = 1.0
     if option["domain"]:
         write_domain_out(seed_proteome, query_proteome, protein, query, weights, scale, path_tmp, path_tmp_query,
-                             domain_out, option)
+                             domain_out, option, interprokeys)
     if option["raw"]:
         print('#' + '\t' + protein + '\t' + query + '\t' + str(score[3]))
     return protein, query, (score[3], score[0], score[1], score[2], score[6]), mode_out

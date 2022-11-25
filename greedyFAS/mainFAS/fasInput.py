@@ -85,6 +85,20 @@ def constraints_in(path):
     return constraints
 
 
+def check_version(version, proteome, v_warning):
+    if 'version' in proteome:
+        if version and not proteome['version'] == version:
+            v_warning = True
+        elif not version:
+            version = proteome['version']
+    else:
+        if version and not version == 'NA':
+            v_warning = True
+        elif not version:
+            version = 'NA'
+    return version, v_warning
+
+
 def read_pairwise(path):
     with open(path, 'r') as infile:
         pairwise = []

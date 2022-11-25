@@ -23,19 +23,19 @@
 from setuptools import setup, find_packages
 import re
 
-with open("README.md", "r") as input:
+with open('README.md', 'r') as input:
     long_description = input.read()
 
 setup(
-    name="greedyFAS",
-    version="1.15.0",
+    name='greedyFAS',
+    version='1.15.1',
     python_requires='>=3.7.0',
-    description="A tool to compare protein feature architectures",
+    description='A tool to compare protein feature architectures',
     long_description=long_description,
-    long_description_content_type="text/markdown",
-    author="Julian Dosch",
-    author_email="Dosch@bio.uni-frankfurt.de",
-    url="https://github.com/BIONF/FAS",
+    long_description_content_type='text/markdown',
+    author='Julian Dosch',
+    author_email='Dosch@bio.uni-frankfurt.de',
+    url='https://github.com/BIONF/FAS',
     packages=find_packages(),
     package_data={'': ['*']},
     install_requires=[
@@ -47,28 +47,29 @@ setup(
         'pathlib'
     ],
     entry_points={
-        'console_scripts': ["fas.parseAnno = greedyFAS.annoFAS.annoParserFAS:main",
-                            "fas.doAnno = greedyFAS.annoFAS.annoFAS:main",
-                            "fas.checkAnno = greedyFAS.annoFAS.checkAnno:main",
-                            "fas.getProtByAnno = greedyFAS.annoFAS.getProtByAnno:main",
-                            "fas.setup = greedyFAS.setupFAS:main",
-                            "fas.run = greedyFAS.calcFAS:main",
-                            "fas.runFdogFas = greedyFAS.fdogFAS:main",
-                            "fas.calcComplexity = greedyFAS.complexityFAS:main",
-                            "fas.getDomains = greedyFAS.domainFAS:main",
-                            "fas.splitJson = greedyFAS.extractAnnoFAS:main",
-                            "fas.disorder.predict = greedyFAS.disorderFAS.predict_disorder:main",
-                            "fas.disorder.setup = greedyFAS.disorderFAS.install_aucpred:main",
-                            "fas.mergeAnno = greedyFAS.mergeAnno:main"
+        'console_scripts': ['fas.parseAnno = greedyFAS.annoFAS.annoParserFAS:main',
+                            'fas.doAnno = greedyFAS.annoFAS.annoFAS:main',
+                            'fas.checkAnno = greedyFAS.annoFAS.checkAnno:main',
+                            'fas.getProtByAnno = greedyFAS.annoFAS.getProtByAnno:main',
+                            'fas.setup = greedyFAS.setupFAS:main',
+                            'fas.run = greedyFAS.calcFAS:main',
+                            'fas.runFdogFas = greedyFAS.fdogFAS:main',
+                            'fas.calcComplexity = greedyFAS.complexityFAS:main',
+                            'fas.getDomains = greedyFAS.domainFAS:main',
+                            'fas.splitJson = greedyFAS.extractAnnoFAS:main',
+                            'fas.disorder.predict = greedyFAS.disorderFAS.predict_disorder:main',
+                            'fas.disorder.setup = greedyFAS.disorderFAS.install_aucpred:main',
+                            'fas.mergeAnno = greedyFAS.mergeAnno:main',
+                            'fas.getAnnoVersion = greedyFAS.annoFAS.getAnnoVersion:main'
                             ],
     },
-    license="GPL-3.0",
+    license='GPL-3.0',
     classifiers=[
-        "Environment :: Console",
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: End Users/Desktop",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-        "Natural Language :: English",
-        "Programming Language :: Python :: 3",
+        'Environment :: Console',
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: End Users/Desktop',
+        'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+        'Natural Language :: English',
+        'Programming Language :: Python :: 3',
     ],
 )
