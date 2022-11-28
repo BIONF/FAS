@@ -56,7 +56,7 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
         for feature in seed_proteome[seed][tool]:
             interpro = 'NA'
             if feature in interprokeys:
-                interpro = interprokeys[feature]
+                interpro = interprokeys[feature].split('.')[0]
             if feature in seedpath:
                 if option['MS_uni']:
                     weight = uni_weight
@@ -90,7 +90,7 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
             for feature in query_proteome[query][tool]:
                 interpro = 'NA'
                 if feature in interprokeys:
-                    interpro = interprokeys[feature]
+                    interpro = interprokeys[feature].split('.')[0]
                 if feature in seedpath:
                     if option['MS_uni']:
                         weight = uni_weight

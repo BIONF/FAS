@@ -35,7 +35,7 @@ def get_anno_version(path):
                 print(x + ': ' + str(anno['version'][tool][x]))
             print('-----------------------------------')
     else:
-        print('This seems to be a pre 1.15 annotation file. Specific version data is only for annotations with version '
+        print('This seems to be a pre 1.15 annotation file. Specific version data is only for annotations with FAS version '
               '1.15 and higher.')
 
 
