@@ -371,20 +371,20 @@ def checkExecutable(anno_path):
         except:
             sys.exit('Error with fLPS. You can reinstall it by running fas.setup with --force!')
     # test COILS2
-    if 'COILS2' in availTool:
-        coilsCmd = '%s/COILS2/COILS2' % anno_path
-        try:
-            flag = 1
-            p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output3, err3 = p3.communicate()
-            if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
-                flag = 0
-            if '0 sequences' in err3.decode('UTF-8').strip():
-                flag = 0
-            if flag == 1:
-                sys.exit('Error with COILS2. Please restart the terminal and run fas.setup again with --checkExecutable!')
-        except:
-            sys.exit('Error with COILS2. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
+    # if 'COILS2' in availTool:
+    #     coilsCmd = '%s/COILS2/COILS2' % anno_path
+    #     try:
+    #         flag = 1
+    #         p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    #         output3, err3 = p3.communicate()
+    #         if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
+    #             flag = 0
+    #         if '0 sequences' in err3.decode('UTF-8').strip():
+    #             flag = 0
+    #         if flag == 1:
+    #             sys.exit('Error with COILS2. Please restart the terminal and run fas.setup again with --checkExecutable!')
+    #     except:
+    #         sys.exit('Error with COILS2. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
     # test tmhmm
     if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
