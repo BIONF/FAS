@@ -24,6 +24,7 @@
 from Bio import SeqIO
 import subprocess
 import os
+import sys
 from pathlib import Path
 import multiprocessing as mp
 from tqdm import tqdm
@@ -91,10 +92,7 @@ def run_anno(inpath, outpath, tmppath, cpus, aucpred):
     name = ''.join(inpath.split('/')[-1].split('.')[0:-1])
     Path(outpath).mkdir(parents=True, exist_ok=True)
     Path(tmppath + name + '/').mkdir(parents=True, exist_ok=True)
-    if aucpred:
-        joblist = prepare_annojobs(inpath, tmppath + name + '/', aucpred)
-    else:
-        joblist = prepare_annojobs(inpath, tmppath + name + '/', 'AUCpreD.sh')
+    joblist = prepare_annojobs(inpath, tmppath + name + '/', aucpred)
     out = []
     pool = mp.Pool(cpus)
     try:
@@ -167,7 +165,18 @@ def main():
     optional.add_argument("-a", "--aucpred", default=None, type=str, required=False,
                           help="Alternative path to AUCpreD.sh.")
     args = parser.parse_args()
-    run_anno(args.input, args.outPath, args.tmp, args.cpus, args.aucpred)
+    if args.aucpred:
+        toolpath = args.aucpred
+    else:
+        pathconfigFile = os.path.realpath(__file__).replace('disorderFAS/predict_disorder.py', 'pathconfig.txt')
+        if not os.path.exists(pathconfigFile):
+            sys.exit('No pathconfig.txt found. Please run fas.setup (https://github.com/BIONF/FAS/wiki/setup).')
+        with open(pathconfigFile, 'r') as input:
+            toolpath = input.readline().strip() + '/Predict_Property/AUCpreD.sh'
+    if not os.path.exists(toolpath):
+        sys.exit('AUCpreD.sh not found either give a path to the AUCpreD.sh with [-a|--aucpred] or install via '
+                 '"fas.disorder.setup".')
+    run_anno(args.input, args.outPath, args.tmp, args.cpus, toolpath)
 
 
 if __name__ == '__main__':

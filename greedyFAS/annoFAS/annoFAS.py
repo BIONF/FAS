@@ -44,8 +44,9 @@ def runAnnoFas(args):
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
             print('Doing annotation for %s...' % seqFile)
-            annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, annoModules.getAnnoTools(annoToolFile, toolPath),
-                                                   eFlps, signalpOrg, eFeature, eInstance, hmmCores])
+            annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath,
+                                                   annoModules.getAnnoTools(annoToolFile, toolPath), eFlps, signalpOrg,
+                                                   eFeature, eInstance, hmmCores])
             # do annotation and save to json output
             pool = mp.Pool(cpus)
             annoOut = []
@@ -55,25 +56,27 @@ def runAnnoFas(args):
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
-            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath, cutoffs)
+            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
+                                                          cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
             pool.close()
         else:
             if annoFile == '':
-                print('No reference annotaion given! Please specify with --annoFile <path to exising annotation file>')
+                print('No reference annotation given! Please specify with --annoFile <path to exising annotation file>')
             else:
                 print('Extracting annotations...')
                 annoDict = annoModules.extractAnno(seqFile, annoFile)
                 annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
                 annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
                 annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
-                annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath, cutoffs)
+                annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath),
+                                                              toolPath, cutoffs)
                 annoModules.save2json(annoDict, outName, outPath)
     else:
         if not redo == '':
             print('Redoing annotation for %s...' % redo)
-            redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg, eFeature,
-                                                   eInstance, hmmCores])
+            redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg,
+                                                   eFeature, eInstance, hmmCores])
             # redo annotation
             pool = mp.Pool(mp.cpu_count()-1)
             annoOut = []
@@ -85,7 +88,8 @@ def runAnnoFas(args):
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
-            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath, cutoffs)
+            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
+                                                          cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
             pool.close()
         else:
@@ -120,7 +124,8 @@ def main():
                                          'Only one selection allowed!',
                           choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
                           action='store', default='', type=str)
-    optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). --annoFile required for specifying existing annotation file!',
+    optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). '
+                                                  '--annoFile required for specifying existing annotation file!',
                           action='store_true', default='')
     optional.add_argument('-a', '--annoFile', help='Path to existing annotation JSON file',
                           action='store', default='')

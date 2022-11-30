@@ -22,8 +22,7 @@
 
 
 import os
-from sys import platform
-from pathlib import Path
+import sys
 import subprocess
 import argparse
 from os.path import expanduser
@@ -56,21 +55,6 @@ def compile_AUCpreD(path):
     except:
         raise Exception('Failed to compile PredictProperty.'
                         '\nPlease read instruction at %s and do it manually!' % auc_src)
-    AUCDIR = 'export PATH=%s:$PATH\n' % path
-    add_path(AUCDIR)
-
-
-def add_path(path):
-    home = str(Path.home())
-    filename = home + '/.bashrc'
-    if platform == 'darwin':
-        filename = home + '/.bash_profile'
-    with open(filename, "r+") as file:
-        for line in file:
-            if path in line:
-                break
-        else:
-            file.write(path)
 
 
 def install_auc(path):
@@ -92,11 +76,21 @@ def main():
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
-    required = parser.add_argument_group('required arguments')
-    required.add_argument("-p", "--path", default='.', type=str, required=True,
-                          help="install path for PredictProperty")
+    optional = parser.add_argument_group('required arguments')
+    optional.add_argument("-p", "--path", default=None, type=str, required=False,
+                          help="install path for PredictProperty, per default it will be installed in the same "
+                               "directory as the other annotation tools")
     args = parser.parse_args()
-    install_auc(args.path)
+    if args.path:
+        path = args.path
+    else:
+        pathconfigFile = os.path.realpath(__file__).replace('disorderFAS/install_aucpred.py', 'pathconfig.txt')
+        print(pathconfigFile)
+        if not os.path.exists(pathconfigFile):
+            sys.exit('No pathconfig.txt found. Please run fas.setup (https://github.com/BIONF/FAS/wiki/setup).')
+        with open(pathconfigFile, 'r') as input:
+            path = input.readline().strip()
+    install_auc(path)
 
 
 if __name__ == '__main__':

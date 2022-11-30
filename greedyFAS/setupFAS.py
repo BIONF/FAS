@@ -180,8 +180,6 @@ def install_signalp():
             outfile.write(line)
     shutil.move(signalp_path+'/signalp.mod', signalp_path+'/signalp')
     subprocess.call(['chmod', '0755', signalp_path+'/signalp'])
-    # makelink_signalp = 'ln -s -f bin/signalp signalp' # for signalp 5.0
-    # subprocess.call([makelink_signalp], shell=True)
 
 
 def install_tmhmm():
@@ -190,19 +188,6 @@ def install_tmhmm():
     os.chdir('TMHMM')
     makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
     subprocess.call([makelink_tmhmm], shell=True)
-
-
-def write_coilsdir(coilsdir):
-    home = str(Path.home())
-    filename = home + '/.bashrc'
-    if platform == 'darwin':
-        filename = home + '/.bash_profile'
-    with open(filename, "r+") as file:
-        for line in file:
-            if coilsdir in line:
-                break
-        else:
-            file.write(coilsdir)
 
 
 def prepare_annoTool(options):
@@ -333,18 +318,14 @@ def prepare_annoTool(options):
                 subprocess.call(compile_cmd, shell=True)
             except:
                 print('ERROR: Failed to compile COILS2.\nPlease read instruction at %s and do it manually!' % coils_path)
-            COILSDIR = 'export COILSDIR=%s\n' % coils_bin
-            write_coilsdir(COILSDIR)
             os.chdir(coils_path)
             if os.path.exists('COILS2'):
                 os.remove('COILS2')
             os.symlink('coils/ncoils-osf', './COILS2')
-            home = str(Path.home())
-            if platform == 'darwin':
-                os.system('. %s/.bash_profile' % home)
-            else:
-                os.system('. %s/.bashrc' % home)
             os.chdir(anno_path)
+            COILSDIR = 'export COILSDIR=%s\n' % coils_bin
+            with open(anno_path + '/fas.profile', 'w') as outfile:
+                outfile.write(COILSDIR)
         print('----------------------------------')
         # remove temp files
         shutil.rmtree(anno_path + '/annotation_FAS')
@@ -397,17 +378,6 @@ def checkExecutable(anno_path):
             p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output3, err3 = p3.communicate()
             if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
-                flag = 0
-            if err3.decode('UTF-8').strip() == 'error: environment variable COILSDIR must be set':
-                home = str(Path.home())
-                bash_file = '.bashrc'
-                if platform == 'darwin':
-                    bash_file = '.bash_profile'
-                with open(home + '/' + bash_file) as file:
-                    if not 'export COILSDIR' in file.read():
-                        print("PLEASE PUT THE FOLLOWING LINE TO %s/%s:\nexport COILSDIR=%s" %
-                              (home, bash_file, anno_path + '/COILS2/coils'))
-                print('NOTE: THE TERMINAL MUST BE RESTARTED BEFORE USING FAS!!!')
                 flag = 0
             if '0 sequences' in err3.decode('UTF-8').strip():
                 flag = 0
