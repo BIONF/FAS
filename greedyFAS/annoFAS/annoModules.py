@@ -68,7 +68,7 @@ def get_property(prop, project):
     result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop), open(project + '/__init__.py').read())
     return result.group(1)
 
-    
+
 # functions for doing annotation with single tool
 def doFlps(args):
     (seqFile, toolPath, threshold) = args
@@ -355,7 +355,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                                                                                                float(items[4])))
     return outDict
 
-
+# get clan and acc from PFAM dat file
 def readDatFile(toolPath):
     datFile = '%s/Pfam/Pfam-hmms/Pfam-A.hmm.dat' % toolPath
     try:
@@ -518,6 +518,9 @@ def getVersions(tools, toolPath, cutoffs):
     if 'smart' in tools:
         versionDict['smart']['version'] = 'NA'
         versionDict['smart']['evalue'] = (eFeature, eInstance)
+    if 'flps' in tools:
+        versionDict['flps']['version'] = 'NA'
+        versionDict['flps']['evalue'] = eFlps
     if 'signalp' in tools:
         signalpCmd = 'head %s/SignalP/signalp-*.readme | grep "INSTALLATION INSTRUCTIONS" | cut -f1 | cut -d " " -f2' % toolPath
         try:
