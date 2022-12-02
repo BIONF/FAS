@@ -518,9 +518,23 @@ def getVersions(tools, toolPath, cutoffs):
     if 'smart' in tools:
         versionDict['smart']['version'] = 'NA'
         versionDict['smart']['evalue'] = (eFeature, eInstance)
+        smartCmd = 'head %s/SMART/version.txt' % toolPath
+        try:
+            smartVersion = subprocess.run([smartCmd], shell=True, capture_output=True, check=True)
+            if (len(smartVersion.stdout.decode().strip()) > 1):
+                versionDict['smart']['version'] = smartVersion.stdout.decode().strip()
+        except:
+            print('SMART version cannot be identified! %s' % (smartVersion))
     if 'flps' in tools:
-        versionDict['flps']['version'] = 'NA'
+        versionDict['flps']['version'] = '1.0'
         versionDict['flps']['evalue'] = eFlps
+        flpsCmd = 'grep README %s/fLPS/README.first | grep version | cut -d " " -f 4 | sed "s/)//"' % toolPath
+        try:
+            fLPSVersion = subprocess.run([flpsCmd], shell=True, capture_output=True, check=True)
+            if (len(fLPSVersion.stdout.decode().strip()) > 1):
+                versionDict['flps']['version'] = fLPSVersion.stdout.decode().strip()
+        except:
+            print('Error getting fLPS version! %s' % (fLPSVersion))
     if 'signalp' in tools:
         signalpCmd = 'head %s/SignalP/signalp-*.readme | grep "INSTALLATION INSTRUCTIONS" | cut -f1 | cut -d " " -f2' % toolPath
         try:

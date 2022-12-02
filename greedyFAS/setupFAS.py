@@ -190,17 +190,33 @@ def install_tmhmm():
     subprocess.call([makelink_tmhmm], shell=True)
 
 
+def install_smart(smart_path, anno_path):
+    check = glob.glob('%s/hmm/*.HMM' % smart_path)
+    if len(check) < 1:
+        return(0)
+    else:
+        Path(anno_path + '/SMART/SMART-hmms').mkdir(parents=True, exist_ok=True)
+        catCmd = 'cat %s/hmm/*.HMM > %s/SMART/SMART-hmms/SMART.hmm' % (smart_path, anno_path)
+        subprocess.call([catCmd], shell=True)
+        hmmpressCmd = 'hmmpress -f %s/SMART/SMART-hmms/SMART.hmm' % (anno_path)
+        try:
+            subprocess.run([hmmpressCmd], shell=True, check=True)
+        except:
+            print('Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
+        getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
+        subprocess.call([getVersionCmd], shell=True)
+        return(1)
+
 def prepare_annoTool(options):
     anno_path = options['toolPath']
     dtuPathIn = options['dtuPath']
+    smart_path = options['smartPath']
     force = options['force']
     ignoreList = options['ignore']
 
     file = 'annotation_FAS2020d.tar.gz'
     checksum = '1818703744 1108970315 ' + file
 
-    if options['disorder']:
-        install_aucpred.install_auc(options['toolPath'])
     if os.path.exists(os.path.abspath(anno_path+'/annoTools.txt')):
         with open(anno_path+'/annoTools.txt') as checkfile:
             if '#checked' in checkfile.read():
@@ -221,7 +237,7 @@ def prepare_annoTool(options):
         print('Annotation tools will be installed in ')
         print(os.getcwd())
         print('----------------------------------')
-        defaultTools = ['fLPS', 'Pfam', 'SMART', 'COILS2', 'SEG'] #, 'SignalP', 'TMHMM']
+        defaultTools = ['fLPS', 'Pfam', 'COILS2', 'SEG']
         if platform == 'darwin':
             ignoreList.extend(('SEG', 'TMHMM'))
         tools = [tool for tool in defaultTools if tool not in ignoreList]
@@ -250,9 +266,19 @@ def prepare_annoTool(options):
                     os.chdir(anno_path)
                     tools.append('TMHMM')
 
+        # install SMART
+        smart = 0
+        if not smart_path == '':
+            print('Installing SMART...')
+            smart = install_smart(smart_path, anno_path)
+            if smart == 0:
+                print('ERROR: Failed to install SMART from %s' % smart_path)
+
         # close annoTools file
         with open('annoTools.txt', mode='wt') as tool_file:
-            tool_file.write('#linearized\nPfam\nSMART\n#normal\n')
+            tool_file.write('#linearized\nPfam\n#normal\n')
+            if (smart == 1):
+                tool_file.write('#linearized\nPfam\nSMART\n#normal\n')
             for t in tools:
                 if not t in ['Pfam','SMART']:
                     tool_file.write('%s\n' % t)
@@ -260,6 +286,9 @@ def prepare_annoTool(options):
 
         # download other annotation tools
         print('Installing other tools...')
+        if options['disorder']:
+            install_aucpred.install_auc(options['toolPath'])
+
         if os.path.isfile(file):
             checksum_file = subprocess.check_output(['cksum', file]).decode(sys.stdout.encoding).strip()
             if checksum_file == checksum:
@@ -275,11 +304,12 @@ def prepare_annoTool(options):
         for tool in tools:
             if tool == 'fLPS':
                 print('Downloading fLPS ...')
-                fLPS_file = 'fLPS.tar.gz'
+                fLPS_file = 'fLPS2programs.tar' #'fLPS.tar.gz'
                 fLPS_url = 'http://biology.mcgill.ca/faculty/harrison/'
                 download_file(fLPS_url, fLPS_file)
                 shutil.unpack_archive(fLPS_file, anno_path, 'gztar')
                 os.remove(fLPS_file)
+                shutil.move('fLPS2programs', 'fLPS')
             else:
                 if not tool in ('SignalP', 'TMHMM'):
                     print('Moving %s ...' % tool)
@@ -288,23 +318,37 @@ def prepare_annoTool(options):
                         shutil.rmtree(anno_path + '/' + tool)
                     shutil.move(source_dir, anno_path, copy_function=shutil.copytree)
 
-        # make symlink for fLPS (depend on OS system)
-        source = os.getcwd() + '/fLPS/bin'
-        target = os.getcwd() + '/fLPS/fLPS'
-        if platform == 'darwin':
-            source = source + '/mac64/fLPS'
+        # compile and make symlink for fLPS
+        flps_path = anno_path + '/fLPS'
+        os.chdir(flps_path + '/src')
+        makeCmd = 'make'
+        try:
+            subprocess.call([makeCmd], shell=True)
+            source = flps_path + '/src/fLPS2'
+            target = flps_path + '/fLPS'
             try:
                 os.symlink(source, target)
             except FileExistsError:
                 os.remove(target)
                 os.symlink(source, target)
-        else:
-            source = source + '/linux/fLPS'
-            try:
-                os.symlink(source, target)
-            except FileExistsError:
-                os.remove(target)
-                os.symlink(source, target)
+        except:
+            print('ERROR: Failed to compile fLPS.\nPlease try to do it manually at' % flps_path)
+        # source = os.getcwd() + '/fLPS/bin'
+        # target = os.getcwd() + '/fLPS/fLPS'
+        # if platform == 'darwin':
+        #     source = source + '/mac64/fLPS'
+        #     try:
+        #         os.symlink(source, target)
+        #     except FileExistsError:
+        #         os.remove(target)
+        #         os.symlink(source, target)
+        # else:
+        #     source = source + '/linux/fLPS'
+        #     try:
+        #         os.symlink(source, target)
+        #     except FileExistsError:
+        #         os.remove(target)
+        #         os.symlink(source, target)
 
         if not 'COILS2' in ignoreList:
             # re-compile COILS2
@@ -366,25 +410,28 @@ def checkExecutable(anno_path):
         try:
             p2 = subprocess.Popen([flpsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output2, err2 = p2.communicate()
-            if not err2.decode('UTF-8').strip() == 'There is no sequence file. Please supply one.':
+            if not err2.decode('UTF-8').strip() == 'There is no sequence file. Please supply one in FASTA format.': # 'There is no sequence file. Please supply one.':
                 sys.exit('Error with fLPS. You can reinstall it by running fas.setup with --force!')
         except:
             sys.exit('Error with fLPS. You can reinstall it by running fas.setup with --force!')
     # test COILS2
-    # if 'COILS2' in availTool:
-    #     coilsCmd = '%s/COILS2/COILS2' % anno_path
-    #     try:
-    #         flag = 1
-    #         p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    #         output3, err3 = p3.communicate()
-    #         if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
-    #             flag = 0
-    #         if '0 sequences' in err3.decode('UTF-8').strip():
-    #             flag = 0
-    #         if flag == 1:
-    #             sys.exit('Error with COILS2. Please restart the terminal and run fas.setup again with --checkExecutable!')
-    #     except:
-    #         sys.exit('Error with COILS2. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
+    if 'COILS2' in availTool:
+        profileFile = '%s/fas.profile' % anno_path
+        if not os.path.isfile(profileFile):
+            sys.exit('No config file for COILSDIR found. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
+        # coilsCmd = '%s/COILS2/COILS2' % anno_path
+        # try:
+        #     flag = 1
+        #     p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #     output3, err3 = p3.communicate()
+        #     if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
+        #         flag = 0
+        #     if '0 sequences' in err3.decode('UTF-8').strip():
+        #         flag = 0
+        #     if flag == 1:
+        #         sys.exit('Error with COILS2. Please restart the terminal and run fas.setup again with --checkExecutable!')
+        # except:
+        #     sys.exit('Error with COILS2. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
     # test tmhmm
     if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
@@ -444,6 +491,7 @@ def main():
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='',
                           required=True)
+    optional.add_argument('--smartPath', help='Set path to your downloaded SMART folder', action='store', default='')
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store',
                           default='')
     optional.add_argument('-i', '--ignore', help='List of tools should be ignored', nargs="*",
@@ -463,6 +511,7 @@ def main():
     greedyFasPath = os.path.realpath(__file__).replace('/setupFAS.py','')
     options = {
         'toolPath': args.toolPath,
+        'smartPath': args.smartPath,
         'dtuPath': args.dtuPath,
         'ignore': args.ignore,
         'force': args.force,
@@ -498,6 +547,7 @@ def main():
         print('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
         print('You should test fas.doAnno with this command:')
         print('fas.doAnno -i test_annofas.fa -o testFas_output')
+        print('NOTE: For using FAS you need to source %s/fas.profile first!' % args.toolPath) 
         sys.exit()
 
     anno_path = prepare_annoTool(options)
