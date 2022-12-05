@@ -519,6 +519,8 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
         print('Done! Annotation tools can be found in %s' % anno_path)
         print('You should test fas.doAnno with this command:')
         print('fas.doAnno -i test_annofas.fa -o testFas_output')
+        print('NOTE: YOU NEED TO source %s/fas.profile BEFORE USING FAS!' % anno_path)
+        print('Check https://github.com/BIONF/FAS/wiki/setup#add-COILSDIR-to-bashrc-or-bash_profile for more details')
         sys.exit()
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)

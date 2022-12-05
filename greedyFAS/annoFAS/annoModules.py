@@ -92,12 +92,17 @@ def doFlps(args):
                     annoOut[tmp[0]] = {}
                     annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
                     annoOut[tmp[0]]['flps'] = {}
-                if not 'flps_' + tmp[1] + '_' + tmp[7] in annoOut[tmp[0]]['flps']:
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]] = {}
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['evalue'] = float(threshold)
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'] = []
-                annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'].append((int(tmp[3]), int(tmp[4]),
-                                                                                             float(tmp[6])))
+                flps_id = 'flps_' + tmp[1] + '_' + tmp[7]
+                if len(tmp) > 7:
+                    flps_id = 'flps_' + tmp[2] + '_' + tmp[8]
+                if not flps_id in annoOut[tmp[0]]['flps']:
+                    annoOut[tmp[0]]['flps'][flps_id] = {}
+                    annoOut[tmp[0]]['flps'][flps_id]['evalue'] = float(threshold)
+                    annoOut[tmp[0]]['flps'][flps_id]['instance'] = []
+                if len(tmp) > 7:
+                    annoOut[tmp[0]]['flps'][flps_id]['instance'].append((int(tmp[4]), int(tmp[5]), float(tmp[7])))
+                else:
+                    annoOut[tmp[0]]['flps'][flps_id]['instance'].append((int(tmp[3]), int(tmp[4]), float(tmp[6])))
                 annotatedSeq[tmp[0]] = 1
 
     for id in inSeq:
