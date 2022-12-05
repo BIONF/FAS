@@ -84,7 +84,7 @@ def download_data(file, checksum, toolPath):
             print('Extracting %s ...' % file)
             shutil.unpack_archive(file, toolPath, 'gztar')
         else:
-            sys.exit('Downloaded file corrupted!')
+            sys.exit('ERROR: Downloaded file corrupted!')
     else:
         sys.exit('Cannot download annotation tools!')
 
@@ -114,7 +114,7 @@ def query_yes_no(question, default='yes'):
 def get_dtu_path(dtuPathIn):
     if not dtuPathIn == '':
         if not os.path.isdir(dtuPathIn):
-            sys.exit(dtuPathIn + ' not found!')
+            sys.exit('ERROR: ' + dtuPathIn + ' not found!')
         else:
             dtu_path = os.path.abspath(dtuPathIn)
     else:
@@ -133,9 +133,9 @@ def get_dtu_path(dtuPathIn):
         signalp_source = [i for i in files if 'signalp' in i]
         tmhmm_source = [i for i in files if 'tmhmm' in i]
         if not tmhmm_source:
-            sys.exit('TMHMM not found in %s' % dtu_path)
+            sys.exit('ERROR: TMHMM not found in %s' % dtu_path)
         if not signalp_source:
-            sys.exit('signalp-4.1g not found in %s' % dtu_path)
+            sys.exit('ERROR: signalp-4.1g not found in %s' % dtu_path)
         return dtu_path, signalp_source[0], tmhmm_source[0]
     else:
         return 0, 0, 0
@@ -155,7 +155,7 @@ def check_status(toolPath, force, tarfile):
                         try:
                             shutil.rmtree(toolPath)
                         except:
-                            sys.exit('Failed to delete %s. Please manually remove it and run fas.setup again!'
+                            sys.exit('ERROR: Failed to delete %s. Please manually remove it and run fas.setup again!'
                                      % toolPath)
                         if os.path.exists(os.path.abspath(cwd + '/' + tarfile)):
                             shutil.move(cwd + '/' + tarfile, toolPath + '/' + tarfile)
@@ -202,17 +202,51 @@ def install_smart(smart_path, anno_path):
         try:
             subprocess.run([hmmpressCmd], shell=True, check=True)
         except:
-            print('Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
+            print('ERROR: Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
         getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
         subprocess.call([getVersionCmd], shell=True)
         return(1)
 
-def prepare_annoTool(options):
+def install_pfam(pfam_version, anno_path):
+    url = 'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam%s' % pfam_version
+    file = 'Pfam-A.hmm.gz'
+    dat_file = 'Pfam-A.hmm.dat.gz'
+    relnotes_file = 'relnotes.txt'
+    download_file(url, file)
+    download_file(url, dat_file)
+    download_file(url, relnotes_file)
+    if os.path.isfile(file):
+        Path(anno_path + '/Pfam/Pfam-hmms').mkdir(parents=True, exist_ok=True)
+        # move donwloaded file to anno_path/Pfam/Pfam-hmms
+        try:
+            shutil.move(file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, file))
+            shutil.move(dat_file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, dat_file))
+            shutil.move(relnotes_file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, relnotes_file))
+        except:
+            sys.exit('ERROR: Cannot move %s, %s & %s to %s/Pfam/Pfam-hmms' % (file, dat_file, relnotes_file, anno_path))
+        # unzip downloaded files
+        unzipCmd = 'gzip -d %s/Pfam/Pfam-hmms/*.gz' % anno_path
+        try:
+            subprocess.run([unzipCmd], shell=True, check=True)
+        except:
+            sys.exit('ERROR: Cannot upzip gz files in %s/Pfam/Pfam-hmms' % anno_path)
+        # create bin files for Pfam-A.hmm
+        hmmpressCmd = 'hmmpress -f %s/Pfam/Pfam-hmms/Pfam-A.hmm' % (anno_path)
+        try:
+            subprocess.run([hmmpressCmd], shell=True, check=True)
+        except:
+            sys.exit('ERROR: Problem occurred while creating binary files for PFAM at %s/Pfam/Pfam-hmms' % (anno_path))
+    else:
+        sys.exit('ERROR: No Pfam-A.hmm.gz found at %s' % url)
+
+
+def install_annoTool(options):
     anno_path = options['toolPath']
     dtuPathIn = options['dtuPath']
     smart_path = options['smartPath']
     force = options['force']
     ignoreList = options['ignore']
+    pfam_version = options['pfamVersion']
 
     file = 'annotation_FAS2020d.tar.gz'
     checksum = '1818703744 1108970315 ' + file
@@ -317,6 +351,12 @@ def prepare_annoTool(options):
                     if os.path.exists(os.path.abspath(anno_path + '/' + tool)):
                         shutil.rmtree(anno_path + '/' + tool)
                     shutil.move(source_dir, anno_path, copy_function=shutil.copytree)
+
+        # replace PFAM by user-defined version
+        if not pfam_version == '':
+            print('Downloading Pfam version %s...' % pfam_version)
+            shutil.rmtree(anno_path + '/Pfam')
+            install_pfam(pfam_version, anno_path)
 
         # compile and make symlink for fLPS
         flps_path = anno_path + '/fLPS'
@@ -494,6 +534,7 @@ def main():
     optional.add_argument('--smartPath', help='Set path to your downloaded SMART folder', action='store', default='')
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store',
                           default='')
+    optional.add_argument('--pfamVersion', help='Specify your own PFAM version. E.g. 28.0', action='store', default='')
     optional.add_argument('-i', '--ignore', help='List of tools should be ignored', nargs="*",
                         choices=['SignalP', 'TMHMM', 'COILS2', 'fLPS', 'SEG'],
                         action='store', default=[])
@@ -513,6 +554,7 @@ def main():
         'toolPath': args.toolPath,
         'smartPath': args.smartPath,
         'dtuPath': args.dtuPath,
+        'pfamVersion': args.pfamVersion,
         'ignore': args.ignore,
         'force': args.force,
         'keep': args.keep,
@@ -547,10 +589,10 @@ def main():
         print('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
         print('You should test fas.doAnno with this command:')
         print('fas.doAnno -i test_annofas.fa -o testFas_output')
-        print('NOTE: For using FAS you need to source %s/fas.profile first!' % args.toolPath) 
+        print('NOTE: For using FAS you need to source %s/fas.profile first!' % args.toolPath)
         sys.exit()
 
-    anno_path = prepare_annoTool(options)
+    anno_path = install_annoTool(options)
     allRun = checkExecutable(anno_path)
     saveConfigFile(allRun, anno_path, greedyFasPath)
 
