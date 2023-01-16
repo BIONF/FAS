@@ -614,3 +614,4 @@ def updateAnnoFile(jsonFile):
             annoDict['inteprotID'] = getPfamAcc(toolPath, annoDict['feature'])
             annoDict['version'] = getVersions(getAnnoTools('', toolPath), toolPath, cutoffs)
             save2json(annoDict, taxon, annoPath)
+            return('%s.old' % jsonFile)

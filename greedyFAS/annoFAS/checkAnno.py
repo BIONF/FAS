@@ -122,6 +122,7 @@ def main():
     required.add_argument('-o', '--outPath', help='Output directory', action='store', default='', required=True)
     optional.add_argument('-n', '--noAnno', help='Do not annotate missing proteins', action='store_true')
     optional.add_argument('-u', '--update', help='Update data structure of annotation file (not the annotations themselves)', action='store_true')
+    optional.add_argument('--keep', help='Keep old annotaion file', action='store_true')
     optional.add_argument('--silent', help='Turn off terminal output', action='store_true')
     optional.add_argument('--cpus', help='Number of CPUs used for annotation. Default = available cores - 1',
                           action='store', default=0, type=int)
@@ -143,6 +144,7 @@ def main():
         cpus = mp.cpu_count()-1
     noAnno = args.noAnno
     update = args.update
+    keep = args.keep
     silent = args.silent
     annoToolFile = args.annoToolFile
     annoModules.checkFileExist(annoToolFile)
@@ -167,8 +169,10 @@ def main():
         annoModules.printMsg(silent, 'Annotation file updated!')
     elif outdatedCheck == 'inteprotID' or outdatedCheck == 'version':
         if update == True:
-            annoModules.updateAnnoFile(annoFile)
+            oldAnnoFile = annoModules.updateAnnoFile(annoFile)
             annoModules.printMsg(silent, '%s updated!' % annoFile)
+            if keep == False:
+                os.remove(oldAnnoFile)
         else:
             print('WARNING: %s is not updated! Please consider update it with --update option' % annoFile)
     else:
