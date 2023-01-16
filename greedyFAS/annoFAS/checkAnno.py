@@ -33,18 +33,6 @@ import greedyFAS.annoFAS.annoModules as annoModules
 from pkg_resources import get_distribution
 
 
-def getFasToolPath():
-    cmd = 'fas.setup -t ~/ -c'
-    try:
-        flpsOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
-    except:
-        sys.exit('Error running\n%s' % cmd)
-    lines = flpsOut.stdout.decode().split('\n')
-    if 'FAS is ready to run' in lines[0]:
-        return(lines[0].replace('Annotation tools can be found at ','').replace('. FAS is ready to run!',''))
-    else:
-        sys.exit('FAS has not been setup!')
-
 def checkCompleteAnno(seqFile, jsonFile):
     allSeq = []
     allSeqDict = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
@@ -61,8 +49,37 @@ def checkCompleteAnno(seqFile, jsonFile):
         else:
             return()
 
+
+def checkOutdatedAnno(jsonFile):
+    with open(jsonFile) as jf:
+        annoDict = json.load(jf)
+        if not 'inteprotID' in annoDict:
+            return('inteprotID')
+        elif not 'version' in annoDict:
+            return('version')
+        elif 'version' in annoDict:
+            tools = list(annoDict['version'].keys())
+            toolPath = annoModules.getFasToolPath()
+            cutoffs = (0.001, 0.01, 0.0000001, 'euk')
+            currentVer = annoModules.getVersions(tools, toolPath, cutoffs)
+            outdatedTools = []
+            for tool in tools:
+                if 'version' in currentVer[tool]:
+                    if 'version' in annoDict['version'][tool]:
+                        if not annoDict['version'][tool]['version'] == currentVer[tool]['version']:
+                            outdatedTools.append('%s (%s vs %s)' % (tool, annoDict['version'][tool]['version'], currentVer[tool]['version']))
+                    else:
+                        return('version')
+            if len(outdatedTools) > 0:
+                return(', '.join(outdatedTools))
+            else:
+                return('updated')
+        else:
+            return('updated')
+
+
 def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoToolFile):
-    toolPath = getFasToolPath()
+    toolPath = annoModules.getFasToolPath()
     # do annotation for missing proteins
     faFile = '%s/%s_tmp.fa' % (outPath, taxon)
     with open(faFile, 'w') as f:
@@ -90,6 +107,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoTo
     os.remove('%s/%s_tmp.json' % (outPath, taxon))
     shutil.rmtree('%s/tmp' % outPath)
 
+
 def main():
     version = get_distribution('greedyFAS').version
     parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
@@ -103,6 +121,7 @@ def main():
                           required=True)
     required.add_argument('-o', '--outPath', help='Output directory', action='store', default='', required=True)
     optional.add_argument('-n', '--noAnno', help='Do not annotate missing proteins', action='store_true')
+    optional.add_argument('-u', '--update', help='Update data structure of annotation file (not the annotations themselves)', action='store_true')
     optional.add_argument('--silent', help='Turn off terminal output', action='store_true')
     optional.add_argument('--cpus', help='Number of CPUs used for annotation. Default = available cores - 1',
                           action='store', default=0, type=int)
@@ -123,23 +142,39 @@ def main():
     if cpus == 0:
         cpus = mp.cpu_count()-1
     noAnno = args.noAnno
+    update = args.update
     silent = args.silent
     annoToolFile = args.annoToolFile
     annoModules.checkFileExist(annoToolFile)
 
     taxon = annoFile.split('/')[-1].replace('.json', '')
+
+    ### check for missing annotation
     missingAnno = checkCompleteAnno(seqFile, annoFile)
     if len(missingAnno) > 0:
         if noAnno == False:
             doAnnoForMissing(taxon, missingAnno, annoFile, outPath, cpus, silent, annoToolFile)
-            if not silent:
-                print('%s missing proteins of %s has been annotated!' % (len(missingAnno), taxon))
+            annoModules.printMsg(silent, '%s missing proteins of %s has been annotated!' % (len(missingAnno), taxon))
         else:
-            if not silent:
-                print('Annotation for %s proteins of %s are missing!\n%s' % (len(missingAnno), taxon, missingAnno))
+            print('WARNING: Annotation for %s proteins of %s are missing!\n%s' % (len(missingAnno), taxon, missingAnno))
     else:
-        if not silent:
-            print('Annotations found for all %s sequences!' % (taxon))
+        annoModules.printMsg(silent, 'Annotations found for all %s sequences!' % (taxon))
+
+
+    ### check for outdated annotation file
+    outdatedCheck = checkOutdatedAnno(annoFile)
+    if outdatedCheck == 'updated':
+        annoModules.printMsg(silent, 'Annotation file updated!')
+    elif outdatedCheck == 'inteprotID' or outdatedCheck == 'version':
+        if update == True:
+            annoModules.updateAnnoFile(annoFile)
+            annoModules.printMsg(silent, '%s updated!' % annoFile)
+        else:
+            print('WARNING: %s is not updated! Please consider update it with --update option' % annoFile)
+    else:
+        print('WARNING: Annotations from the tools below are outdated. Please consider to re-annotate them!\n%s' % outdatedCheck)
+
+
 
 if __name__ == '__main__':
     main()

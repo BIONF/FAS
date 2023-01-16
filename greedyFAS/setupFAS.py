@@ -373,23 +373,7 @@ def install_annoTool(options):
                 os.symlink(source, target)
         except:
             print('ERROR: Failed to compile fLPS.\nPlease try to do it manually at' % flps_path)
-        # source = os.getcwd() + '/fLPS/bin'
-        # target = os.getcwd() + '/fLPS/fLPS'
-        # if platform == 'darwin':
-        #     source = source + '/mac64/fLPS'
-        #     try:
-        #         os.symlink(source, target)
-        #     except FileExistsError:
-        #         os.remove(target)
-        #         os.symlink(source, target)
-        # else:
-        #     source = source + '/linux/fLPS'
-        #     try:
-        #         os.symlink(source, target)
-        #     except FileExistsError:
-        #         os.remove(target)
-        #         os.symlink(source, target)
-
+            
         if not 'COILS2' in ignoreList:
             # re-compile COILS2
             coils_path = anno_path + '/COILS2'
@@ -459,19 +443,6 @@ def checkExecutable(anno_path):
         profileFile = '%s/fas.profile' % anno_path
         if not os.path.isfile(profileFile):
             sys.exit('No config file for COILSDIR found. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
-        # coilsCmd = '%s/COILS2/COILS2' % anno_path
-        # try:
-        #     flag = 1
-        #     p3 = subprocess.Popen([coilsCmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        #     output3, err3 = p3.communicate()
-        #     if err3.decode('UTF-8').strip() == 'Error reading '+os.getcwd()+'/new.mat':
-        #         flag = 0
-        #     if '0 sequences' in err3.decode('UTF-8').strip():
-        #         flag = 0
-        #     if flag == 1:
-        #         sys.exit('Error with COILS2. Please restart the terminal and run fas.setup again with --checkExecutable!')
-        # except:
-        #     sys.exit('Error with COILS2. Please check https://github.com/BIONF/FAS/wiki/FAQ#Error-with-COILS2!')
     # test tmhmm
     if 'TMHMM' in availTool:
         tmhmmCmd = '%s/TMHMM/decodeanhmm' % anno_path
