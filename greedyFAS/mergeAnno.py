@@ -27,6 +27,7 @@ from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.annoFAS.annoModules import save2json
 from pkg_resources import get_distribution
 
+
 def merge_anno(pathlist, outpath, name):
     feature = []
     main = []
@@ -55,3 +56,7 @@ def main():
                           help="Name of the output json.")
     args = parser.parse_args()
     merge_anno(args.input, args.outPath, args.outName)
+
+
+if __name__ == '__main__':
+    main()

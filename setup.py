@@ -61,7 +61,8 @@ setup(
                             'fas.disorder.predict = greedyFAS.disorderFAS.predict_disorder:main',
                             'fas.disorder.setup = greedyFAS.disorderFAS.install_aucpred:main',
                             'fas.mergeAnno = greedyFAS.mergeAnno:main',
-                            'fas.getAnnoVersion = greedyFAS.annoFAS.getAnnoVersion:main'
+                            'fas.getAnnoVersion = greedyFAS.annoFAS.getAnnoVersion:main',
+                            'fas.overlapStatistics = greedyFAS.getOverlapStats:main'
                             ],
     },
     license='GPL-3.0',
