@@ -69,6 +69,24 @@ def get_property(prop, project):
     return result.group(1)
 
 
+def getFasToolPath():
+    cmd = 'fas.setup -t ~/ -c'
+    try:
+        flpsOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+    except:
+        sys.exit('Error running\n%s' % cmd)
+    lines = flpsOut.stdout.decode().split('\n')
+    if 'FAS is ready to run' in lines[0]:
+        return(lines[0].replace('Annotation tools can be found at ','').replace('. FAS is ready to run!',''))
+    else:
+        sys.exit('FAS has not been setup!')
+
+
+def printMsg(silent, msg):
+    if silent == False:
+        print(msg)
+
+
 # functions for doing annotation with single tool
 def doFlps(args):
     (seqFile, toolPath, threshold) = args
@@ -92,12 +110,17 @@ def doFlps(args):
                     annoOut[tmp[0]] = {}
                     annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
                     annoOut[tmp[0]]['flps'] = {}
-                if not 'flps_' + tmp[1] + '_' + tmp[7] in annoOut[tmp[0]]['flps']:
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]] = {}
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['evalue'] = float(threshold)
-                    annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'] = []
-                annoOut[tmp[0]]['flps']['flps_' + tmp[1] + '_' + tmp[7]]['instance'].append((int(tmp[3]), int(tmp[4]),
-                                                                                             float(tmp[6])))
+                flps_id = 'flps_' + tmp[1] + '_' + tmp[7]
+                if len(tmp) > 7:
+                    flps_id = 'flps_' + tmp[2] + '_' + tmp[8]
+                if not flps_id in annoOut[tmp[0]]['flps']:
+                    annoOut[tmp[0]]['flps'][flps_id] = {}
+                    annoOut[tmp[0]]['flps'][flps_id]['evalue'] = float(threshold)
+                    annoOut[tmp[0]]['flps'][flps_id]['instance'] = []
+                if len(tmp) > 7:
+                    annoOut[tmp[0]]['flps'][flps_id]['instance'].append((int(tmp[4]), int(tmp[5]), float(tmp[7])))
+                else:
+                    annoOut[tmp[0]]['flps'][flps_id]['instance'].append((int(tmp[3]), int(tmp[4]), float(tmp[6])))
                 annotatedSeq[tmp[0]] = 1
 
     for id in inSeq:
@@ -513,28 +536,47 @@ def getVersions(tools, toolPath, cutoffs):
             pfamVersion = subprocess.run([pfamCmd], shell=True, capture_output=True, check=True)
             versionDict['pfam']['version'] = pfamVersion.stdout.decode().strip()
             versionDict['pfam']['evalue'] = (eFeature, eInstance)
-        except:
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode(sys.stdout.encoding))
             print('Error getting Pfam version! %s' % (pfamVersion))
     if 'smart' in tools:
         versionDict['smart']['version'] = 'NA'
         versionDict['smart']['evalue'] = (eFeature, eInstance)
+        smartCmd = 'head %s/SMART/version.txt' % toolPath
+        try:
+            smartVersion = subprocess.run([smartCmd], shell=True, capture_output=True, check=True)
+            if (len(smartVersion.stdout.decode().strip()) > 1):
+                versionDict['smart']['version'] = smartVersion.stdout.decode().strip()
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode(sys.stdout.encoding))
+            print('SMART version cannot be identified! %s' % (smartVersion))
     if 'flps' in tools:
-        versionDict['flps']['version'] = 'NA'
+        versionDict['flps']['version'] = '1.0'
         versionDict['flps']['evalue'] = eFlps
+        flpsCmd = 'grep README %s/fLPS/README.first | grep version | cut -d " " -f 4 | sed "s/)//"' % toolPath
+        try:
+            fLPSVersion = subprocess.run([flpsCmd], shell=True, capture_output=True, check=True)
+            if (len(fLPSVersion.stdout.decode().strip()) > 1):
+                versionDict['flps']['version'] = fLPSVersion.stdout.decode().strip()
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode(sys.stdout.encoding))
+            print('Error getting fLPS version! %s' % (fLPSVersion))
     if 'signalp' in tools:
         signalpCmd = 'head %s/SignalP/signalp-*.readme | grep "INSTALLATION INSTRUCTIONS" | cut -f1 | cut -d " " -f2' % toolPath
         try:
             signalpVersion = subprocess.run([signalpCmd], shell=True, capture_output=True, check=True)
             versionDict['signalp']['version'] = signalpVersion.stdout.decode().strip()
             versionDict['signalp']['org'] = (signalpOrg)
-        except:
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode(sys.stdout.encoding))
             print('Error getting SignalP version! %s' % (signalpVersion))
     if 'tmhmm' in tools:
         tmhmmCmd = 'head -n1 %s/TMHMM/README' % toolPath
         try:
             tmhmmVersion = subprocess.run([tmhmmCmd], shell=True, capture_output=True, check=True)
             versionDict['tmhmm']['version'] = tmhmmVersion.stdout.decode().strip()
-        except:
+        except subprocess.CalledProcessError as e:
+            print(e.output.decode(sys.stdout.encoding))
             print('Error getting TMHMM version! %s' % (tmhmmVersion))
     return(versionDict)
 
@@ -558,3 +600,18 @@ def extractAnno(seqFile, existingAnno):
         annoDict = {}
         annoDict['feature'] = dict((prot, existingDict['feature'][prot]) for prot in list(inSeq.keys()))
         return annoDict
+
+# update old json file to add inteprotIDs and tool versions
+def updateAnnoFile(jsonFile):
+    with open(jsonFile) as f:
+        annoDict = json.load(f)
+        if not "inteprotID" in annoDict:
+            toolPath = getFasToolPath()
+            cutoffs = (0.001, 0.01, 0.0000001, 'euk')
+            taxon = jsonFile.split('/')[-1].replace('.json', '')
+            annoPath = jsonFile.replace('%s.json' % taxon, '')
+            shutil.move('%s' % jsonFile, '%s.old' % jsonFile)
+            annoDict['inteprotID'] = getPfamAcc(toolPath, annoDict['feature'])
+            annoDict['version'] = getVersions(getAnnoTools('', toolPath), toolPath, cutoffs)
+            save2json(annoDict, taxon, annoPath)
+            return('%s.old' % jsonFile)
