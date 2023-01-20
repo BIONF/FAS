@@ -416,8 +416,9 @@ def checkExecutable(anno_path):
     # test pfam and smart
     if not os.path.isfile(anno_path + '/Pfam/Pfam-hmms/Pfam-A.hmm'):
         sys.exit('Pfam hmm file not found. Please run fas.setup with --force!')
-    if not os.path.isfile(anno_path + '/SMART/SMART-hmms/SMART.hmm'):
-        sys.exit('SMART hmm file not found. Please run fas.setup with --force!')
+    if 'SMART' in availTool:
+        if not os.path.isfile(anno_path + '/SMART/SMART-hmms/SMART.hmm'):
+            sys.exit('SMART hmm file not found. Please run fas.setup with --force!')
     # test seg
     if 'SEG' in availTool:
         segCmd = '%s/SEG/seg' % anno_path
