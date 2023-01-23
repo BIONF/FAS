@@ -111,6 +111,14 @@ def query_yes_no(question, default='yes'):
                              '(or "y" or "n").\n')
 
 
+def check_conda_env():
+    """ Return if a conda env is currently using """
+    if 'CONDA_DEFAULT_ENV' in os.environ:
+        if not os.environ['CONDA_DEFAULT_ENV'] == 'base':
+            return(True)
+    return(False)
+
+
 def get_dtu_path(dtuPathIn):
     if not dtuPathIn == '':
         if not os.path.isdir(dtuPathIn):
@@ -240,6 +248,20 @@ def install_pfam(pfam_version, anno_path):
         sys.exit('ERROR: No Pfam-A.hmm.gz found at %s' % url)
 
 
+def check_hmmer():
+    try:
+        subprocess.check_output(['which hmmsearch'], shell = True, stderr = subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        if check_conda_env() == True:
+            conda_install_cmd = 'conda install -c bioconda hmmer -y'
+            try:
+                subprocess.call([conda_install_cmd], shell = True)
+            except:
+                sys.exit('\033[91mERROR: Cannot install hmmer using this command\n%s\033[0m' % conda_install_cmd)
+        else:
+            sys.exit('\033[91mERROR: Please install HMMER before using FAS (http://hmmer.org/documentation.html)\033[0m')
+
+
 def install_annoTool(options):
     anno_path = options['toolPath']
     dtuPathIn = options['dtuPath']
@@ -247,6 +269,7 @@ def install_annoTool(options):
     force = options['force']
     ignoreList = options['ignore']
     pfam_version = options['pfamVersion']
+    check_hmmer()
 
     file = 'annotation_FAS2020d.tar.gz'
     checksum = '1818703744 1108970315 ' + file
@@ -373,7 +396,7 @@ def install_annoTool(options):
                 os.symlink(source, target)
         except:
             print('ERROR: Failed to compile fLPS.\nPlease try to do it manually at' % flps_path)
-            
+
         if not 'COILS2' in ignoreList:
             # re-compile COILS2
             coils_path = anno_path + '/COILS2'
