@@ -148,21 +148,20 @@ def anno(annojobs, args, toolpath):
     if cpus == 0:
         cpus = mp.cpu_count()-1
     for annojob in annojobs:
-        name = ''.join(annojob.split('/')[-1].split('.')[:-1])
+        name = '.'.join(annojob.split('/')[-1].split('.')[:-1])
         outpath = os.path.abspath(args.annotation_dir)
         annotate = True
         seqfile = annojob
-        if os.path.isdir(args.annotation_dir + '/' + name + '.json'):
+        print('Check annotation for "' + name + '"...')
+        if os.path.exists(os.path.abspath(args.annotation_dir + '/' + name + '.json')):
             print('Annotation for "' + name + '" already exists.')
             if args.force:
                 print('Overwriting...')
                 annoModules.checkFileExist(seqfile)
             else:
-                print('Skipping annotation...')
                 annotate = False
         else:
             annoModules.checkFileExist(seqfile)
-            print('Check annotation for "' + name + '"...')
         if annotate:
             annoFAS.runAnnoFas(
                 [seqfile, outpath, toolpath, args.force, name, eflps, signalporg, efeature, einstance, hmmcores, '',
@@ -180,12 +179,12 @@ def fas(args, toolpath):
                     "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True,
                     "empty_as_1": args.empty_as_1
                    }
-    seedname = ''.join(args.seed.split('/')[-1].split('.')[:-1])
+    seedname = '.'.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
-    queryname = ''.join(args.query.split('/')[-1].split('.')[:-1])
+    queryname = '.'.join(args.query.split('/')[-1].split('.')[:-1])
     option_dict["s_path"] = [args.annotation_dir + '/' + queryname + '.json']
     if args.ref_proteome:
-        name = ''.join(args.ref_proteome.split('/')[-1].split('.')[:-1])
+        name = '.'.join(args.ref_proteome.split('/')[-1].split('.')[:-1])
         option_dict["ref_proteome"] = [args.annotation_dir + '/' + name + '.json']
     else:
         option_dict["ref_proteome"] = None
@@ -194,7 +193,7 @@ def fas(args, toolpath):
     if option_dict["cores"] == 0:
         option_dict["cores"] = mp.cpu_count()-1
     if args.ref_2:
-        r2name = ''.join(args.ref_2.split('/')[-1].split('.')[:-1])
+        r2name = '.'.join(args.ref_2.split('/')[-1].split('.')[:-1])
         option_dict["ref_2"] = [args.annotation_dir + '/' + r2name + '.json']
     else:
         option_dict["ref_2"] = None
