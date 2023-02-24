@@ -36,7 +36,7 @@ export PATH=$HOME/.local/bin:$PATH
 # Usage
 
 ## Download and install annotation tools
-Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://pfam.xfam.org/), [SMART](http://smart.embl-heidelberg.de/), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](https://mendel.imp.ac.at/METHODS/seg.server.html), [COILS](https://mybiosoftware.com/coils-2-2-prediction-coiled-coil-regions-proteins.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/). To get these tools and make a configuration file for FAS, please use the `setupFAS` function:
+Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://www.ebi.ac.uk/interpro/download/Pfam/), [SMART](https://software.embl-em.de/software/18), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](https://mendel.imp.ac.at/METHODS/seg.server.html), [COILS](https://mybiosoftware.com/coils-2-2-prediction-coiled-coil-regions-proteins.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/). To get these tools and make a configuration file for FAS, please use the `setupFAS` function:
 ```
 fas.setup -t /directory/where/you/want/to/save/annotation/tools
 ```
@@ -44,7 +44,7 @@ Inside the output directory you will find a file called *annoTools.txt* that con
 
 *Please read our [wiki page of setupFAS](https://github.com/BIONF/FAS/wiki/setupFAS) for other use-cases, such as how to use your old annotation tools with the new FAS, etc.*
 
-__*NOTE: we provide compiled code only for Pfam, SMART, COILS and SEG. fLPS will be automatically downloaded and installed. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM version 2.0c and SignalP version 4.1g, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
+__*NOTE: we provide compiled code only for PFAM, COILS and SEG. fLPS will be automatically downloaded and installed. For SMART, you need to download it from [EMBLEM](https://software.embl-em.de/software/18) and give the path to `fas.setup`. For TMHMM and SignalP, you can decide if you want to include those two tools to the annotation step (recommended) or ignore them. For using TMHMM version 2.0c and SignalP version 4.1g, you need to request a license from the authors at https://services.healthtech.dtu.dk, and save the downloaded files in the same directory. FAS will do the rest for you ;-)*__
 
 __*NOTE2: SignalP 5.0b is not supported yet!!!*__
 
