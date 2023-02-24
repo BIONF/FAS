@@ -28,17 +28,13 @@ import plotly.graph_objects as go
 from pkg_resources import get_distribution
 
 
-def get_stats(annotation_path, tool1, tool2, threshold):
+def get_stats(annotation_path, tool1, tool2, threshold, svg):
     with open(annotation_path, 'r') as infile:
         in_dict = json.loads(infile.read())
     statistics = count_overlaps(in_dict['feature'], tool1, tool2, threshold)
-    fig = make_subplots(rows=3, cols=2, subplot_titles=('# Overlapping Feature Types (' + tool1 + ')',
-                                                        '# Overlapping Feature Types (' + tool2 + ')',
-                                                        '# Instance Overlaps from Overlapping Types (' + tool1 + ')',
-                                                        '# Instance Overlaps from Overlapping Types (' + tool2 + ')',
-                                                        '# Instance Overlaps from All Types (' + tool1 + ')',
-                                                        '# Instance Overlaps from All Types (' + tool2 + ')',
-                                                        ),
+    fig = make_subplots(rows=3, cols=2,
+                        column_titles=[tool1, tool2],
+                        row_titles=['Domains', 'Domain Instances (overlap)', 'Domain Instances (all)'],
                         specs=[[{'type': 'domain'}, {'type': 'domain'}],
                                [{'type': 'domain'}, {'type': 'domain'}],
                                [{'type': 'domain'}, {'type': 'domain'}]])
@@ -73,6 +69,9 @@ def get_stats(annotation_path, tool1, tool2, threshold):
         row=3, col=2
     )
     fig.show()
+    if svg:
+        out = '.'.join(annotation_path.split('.')[0:-1])
+        fig.write_image(file=out + "_Overlap_Statistics.svg", width=800, height=800)
 
 
 def count_overlaps(proteome, t1, t2, threshold):
@@ -152,8 +151,10 @@ def main():
     optional.add_argument("-t", "--threshold", default=0.8, type=float, required=False,
                           help="Threshold for overlap size in comparison to feature lengths. The overlap must at least "
                                "reach the given fraction [0.0 to 1.0] of both feature lengths to be considered.")
+    optional.add_argument("-s", "--svg", action="store_true",
+                          help="Save as .svg. Will be saved in same directory as input.")
     args = parser.parse_args()
-    get_stats(args.input, args.class1, args.class2, args.threshold)
+    get_stats(args.input, args.class1, args.class2, args.threshold, args.svg)
 
 
 if __name__ == '__main__':
