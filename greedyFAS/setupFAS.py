@@ -185,6 +185,9 @@ def install_signalp():
         for line in infile:
             if 'ENV{SIGNALP} = ' in line:
                 line = '    $ENV{SIGNALP} = "%s";\n' % signalp_path
+            if 'uname -m' in line:
+                if 'Debian' in os.uname()[3]:
+                    line = 'my $architecture = \"i686\";\n'
             outfile.write(line)
     shutil.move(signalp_path+'/signalp.mod', signalp_path+'/signalp')
     subprocess.call(['chmod', '0755', signalp_path+'/signalp'])
@@ -193,6 +196,8 @@ def install_signalp():
 def install_tmhmm():
     shutil.move('tmhmm-2.0c', 'TMHMM')
     machine = os.uname()[4]
+    if 'Debian' in os.uname()[3]:
+        machine = 'i686'
     os.chdir('TMHMM')
     makelink_tmhmm = 'ln -s -f bin/decodeanhmm.Linux_%s decodeanhmm' % machine
     subprocess.call([makelink_tmhmm], shell=True)
