@@ -21,6 +21,9 @@
 #######################################################################
 
 
+from os.path import abspath
+
+
 def write_tsv_out(outpath, bidirectional, results):
     out = open(outpath + '.tsv', 'w')
     outdict = {}
@@ -148,3 +151,17 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, results):
         except KeyError:
             raise Exception(pair[1] + ' not in mapping file')
     out.close()
+
+
+def write_metadata(path, args, commandline, version):
+    paths = ['seed', 'query', 'annotation_dir', 'out_dir', 'toolPath', 'ref_proteome', 'ref_2', 'weight_constraints',
+             'pairwise', 'featuretypes', 'phyloprofile']
+    with open(path, 'w') as out:
+        out.write('# Metadata file generated automatically by FAS\nFAS_version: '
+                  + version + '\n' + 'command_line: ' + commandline + '\n')
+        arguments = vars(args)
+        for argument in arguments:
+            if argument in paths and arguments[argument]:
+                out.write(argument + ': ' + abspath(arguments[argument]) + '\n')
+            else:
+                out.write(argument + ': ' + str(arguments[argument]) + '\n')

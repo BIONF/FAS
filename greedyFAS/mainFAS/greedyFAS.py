@@ -1028,7 +1028,6 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 if mode == 1:
                     best_priority_bridger = ("NONE", (0.0, 0.0, 0.0, 0.0, 0.0, False))
                     for next_vertex in p_candidates:
-                        # baustelle: fixed: path elongation without additives
                         score = sf_calc_score(path + [next_vertex], protein, weights, search_features, query_features,
                                               seed_proteome, clan_dict, query_clans, option)
                         if score[3] >= best_priority_bridger[1][3]:
@@ -1062,7 +1061,7 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 p_stack.append(path + [best_priority_bridger[0]])
 
             elif mode == 0:
-                # some kind of greedy strategy: if feature type (p priority) not found
+                # greedy strategy: if feature type (p priority) not found
                 best_partial_path = ("NONE", (0.0, 0.0, 0.0, 0.0, 0.0, False))
                 for next_vertex in search_graph[vertex]:
                     path_ad = path + list(a_s_f.keys())

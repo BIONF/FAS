@@ -27,7 +27,7 @@ from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
 def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
                   option):
     """Used to be main Scoring function, starts the functions for the scores and calculates the complete FAS score,
-    only used during priority mode to make greedy decisions
+    used durin query linearization when priority mode is enabled (linearized query versus full seed)
 
     :param path: Path to score
     :param protein: protein id
@@ -428,3 +428,4 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
             final_ls_score += ls_scores[f_score] / count[f_score] * scale
 
     return float(final_score), float(final_ls_score)
+
