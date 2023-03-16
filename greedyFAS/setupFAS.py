@@ -218,7 +218,7 @@ def install_smart(smart_path, anno_path):
             print('ERROR: Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
         getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
         subprocess.call([getVersionCmd], shell=True)
-        return(1)
+        return 1
 
 def install_pfam(pfam_version, anno_path):
     url = 'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam%s' % pfam_version
@@ -388,11 +388,15 @@ def install_annoTool(options):
 
         # compile and make symlink for fLPS
         flps_path = anno_path + '/fLPS'
+        shutil.rmtree(anno_path + '/fLPS/bin')
         os.chdir(flps_path + '/src')
         makeCmd = 'make'
+        os.mkdir(anno_path + '/fLPS/bin')
         try:
             subprocess.call([makeCmd], shell=True)
-            source = flps_path + '/src/fLPS2'
+            for i in ['CompositionMaker', 'DomainFilter', 'fLPS2']:
+                shutil.move(flps_path + '/src/' + i, flps_path + '/bin/' + i)
+            source = flps_path + '/bin/fLPS2'
             target = flps_path + '/fLPS'
             try:
                 os.symlink(source, target)
@@ -402,7 +406,7 @@ def install_annoTool(options):
         except:
             print('ERROR: Failed to compile fLPS.\nPlease try to do it manually at' % flps_path)
 
-        if not 'COILS2' in ignoreList:
+        if 'COILS2' not in ignoreList:
             # re-compile COILS2
             coils_path = anno_path + '/COILS2'
             os.chdir(coils_path)
