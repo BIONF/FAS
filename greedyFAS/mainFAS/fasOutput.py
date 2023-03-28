@@ -45,6 +45,86 @@ def write_tsv_out(outpath, bidirectional, results):
     out.close()
 
 
+def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, scale, seedpath, querypath, out, option,
+                         interprokeys):
+    tools = option['input_linearized'] + option['input_normal']
+    if option['reverse']:
+        groupname = query
+    else:
+        groupname = seed
+    for tool in tools:
+        for feature in seed_proteome[seed][tool]:
+            interpro = 'NA'
+            if feature in interprokeys:
+                interpro = interprokeys[feature].split('.')[0]
+            if feature in seedpath:
+                if feature in weights['weights']:
+                    weight = round(weights['weights'][feature] * scale, 4)
+                else:
+                    weight = round(weights['default'] * scale, 4)
+                for instance in seed_proteome[seed][tool][feature]['instance']:
+                    if (instance[0], instance[1]) in seedpath[feature]:
+                        inpath = 'Y'
+                    else:
+                        inpath = 'N'
+                    if option['reverse']:
+                        out.write(groupname + '#' + seed + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
+                                  + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\t'
+                                  + str(weight) + '\t' + inpath + '\t' + interpro + '\n')
+                    else:
+                        out.write(groupname + '#' + query + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
+                                  + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\t'
+                                  + str(weight) + '\t' + inpath + '\t' + interpro + '\n')
+            else:
+                for instance in seed_proteome[seed][tool][feature]['instance']:
+                    if option['reverse']:
+                        out.write(groupname + '#' + seed + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
+                                  + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\tNA\tN\t'
+                                  + interpro + '\n')
+                    else:
+                        out.write(groupname + '#' + query + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
+                                  + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\tNA\tN\t'
+                                  + interpro + '\n')
+    if not seed == query:
+        for tool in tools:
+            for feature in query_proteome[query][tool]:
+                interpro = 'NA'
+                if feature in interprokeys:
+                    interpro = interprokeys[feature].split('.')[0]
+                if feature in seedpath:
+                    if feature in weights['weights']:
+                        weight = round(weights['weights'][feature] * scale, 4)
+                    else:
+                        weight = round(weights['default'] * scale, 4)
+                else:
+                    weight = 'NA'
+                if feature in querypath:
+                    for instance in query_proteome[query][tool][feature]['instance']:
+                        if (instance[0], instance[1]) in querypath[feature]:
+                            inpath = 'Y'
+                        else:
+                            inpath = 'N'
+                        if option['reverse']:
+                            out.write(groupname + '#' + seed + '\t' + query + '\t' +
+                                      str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
+                                      + '\t' + str(instance[1]) + '\t' + str(weight) + '\t' + inpath + '\t' + interpro
+                                      + '\n')
+                        else:
+                            out.write(groupname + '#' + query + '\t' + query + '\t' +
+                                      str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
+                                      + '\t' + str(instance[1]) + '\t' + str(weight) + '\t' + inpath + '\t' + interpro
+                                      + '\n')
+                else:
+                    for instance in query_proteome[query][tool][feature]['instance']:
+                        if option['reverse']:
+                            out.write(groupname + '#' + seed + '\t' + query + '\t' +
+                                      str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
+                                      + '\t' + str(instance[1]) + '\t' + str(weight) + '\tN\t' + interpro + '\n')
+                        else:
+                            out.write(groupname + '#' + query + '\t' + query + '\t' +
+                                      str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
+                                      + '\t' + str(instance[1]) + '\t' + str(weight) + '\tN\t' + interpro + '\n')
+
 def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale, seedpath, querypath, out, option,
                      interprokeys):
     tools = option['input_linearized'] + option['input_normal']
@@ -146,8 +226,8 @@ def phyloprofile_out(outpath, bidirectional, mapping_file, results):
             outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2][0])
     for pair in outdict:
         try:
-            out.write(pair[0] + '\t' + map[pair[1]] + '\t' + pair[1] + '\t' + str(outdict[pair][0]) + '\t'
-                      + str(outdict[pair][1]) + '\n')
+            out.write(pair[0] + '\t' + map[pair[1]] + '\t' + pair[1] + '\t' + f'{outdict[pair][0]:.4}' + '\t'
+                      + f'{outdict[pair][1]:.4}' + '\n')
         except KeyError:
             raise Exception(pair[1] + ' not in mapping file')
     out.close()

@@ -1,30 +1,5 @@
-#!/bin/env python
-
-#######################################################################
-# Copyright (C) 2019 Julian Dosch
-#
-# This file is part of FAS.
-#
-#  FAS is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  FAS is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with FAS.  If not, see <http://www.gnu.org/licenses/>.
-#
-#######################################################################
-
-
-from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
-
-
-def sf_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
+# done
+def fad_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
                   option):
     """Used to be main Scoring function, starts the functions for the scores and calculates the complete FAS score,
     used durin query linearization when priority mode is enabled (linearized query versus full seed)
@@ -40,28 +15,18 @@ def sf_calc_score(path, protein, weights, search_features, query_features, seed_
     :param option: dictionary that contains the main option variables of FAS
     :return: score_ms, score_ps, score_cs, final_score
     """
-    adjusted_weights = {}
-    tmp_weight = {}
-    if option["weight_const"]:
-        adjusted_weights = w_weight_const_rescale(path, weights, search_features, False, option)
-        tmp_weight = {}
-        for i in adjusted_weights:
-            tmp_weight[i] = weights[i]
-            weights[i] = adjusted_weights[i]
-    score_cs = round(sf_cs_score(path, clan_dict, query_clans, query_features), 4)
-    tmp = sf_ms_score(path, protein, seed_proteome, query_features, option)
+    score_cs = round(fad_cs_score(path, clan_dict, query_clans, query_features), 4)
+    tmp = fad_ms_score(path, protein, seed_proteome, query_features, option)
     score_ms = round(tmp[0], 4)
     score_ps = round(
-        sf_ps_score(path, tmp[2], protein, query_features, seed_proteome, option), 4)
+        fad_ps_score(path, tmp[2], protein, query_features, seed_proteome, option), 4)
     final_score = ((score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1])
                    + (score_ps * option["score_weights"][2]))
-    if option["weight_const"]:
-        for i in adjusted_weights:
-            weights[i] = tmp_weight[i]
     return score_ms, score_ps, score_cs, final_score
 
 
-def sf_entire_calc_score(path, query_path, weights, search_features, a_s_f, query_features, a_q_f, clan_dict, option):
+# done
+def fad_entire_calc_score(path, query_path, weights, search_features, a_s_f, query_features, a_q_f, clan_dict, option):
     """Main Scoring function, starts the functions for the scores and calculates the complete FAS score
 
     :param path: Path to score
@@ -75,35 +40,23 @@ def sf_entire_calc_score(path, query_path, weights, search_features, a_s_f, quer
     :param option: dictionary that contains the main option variables of FAS
     :return: score_ms, score_ps, score_cs, final_score, path_weight, common_feature, score_ls
     """
-    adjusted_weights = {}
-    tmp_weight = {}
-    if option["weight_const"]:
-        adjusted_weights = w_weight_const_rescale(path, weights, search_features, False, option)
-        tmp_weight = {}
-        for i in adjusted_weights:
-            tmp_weight[i] = weights[i]
-            weights[i] = adjusted_weights[i]
-    score_cs = round(sf_entire_cs_score(path, query_path, query_features, clan_dict, search_features), 4)
-    tmp = sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features, a_q_f, weights, option)
+    score_cs = round(fad_entire_cs_score(path, query_path, query_features, clan_dict, search_features), 4)
+    tmp = fad_entire_ms_score(path, query_path, search_features, a_s_f, query_features, a_q_f, weights, option)
     score_ms = round(tmp[0], 4)
+    scale = tmp[2]
     path_weight = tmp[3]
     common_feature = tmp[4]
-    ps_tmp = sf_entire_ps_score(path, tmp[2], query_path, search_features, a_s_f, query_features, a_q_f, weights,
-                                option)
+    ps_tmp = fad_entire_ps_score(path, tmp[2], query_path, search_features, a_s_f, query_features, a_q_f, weights,
+                                 option)
     score_ps = round(ps_tmp[0], 4)
     score_ls = round(ps_tmp[1], 4)
     final_score = ((score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1])
                    + (score_ps * option["score_weights"][2]))
-    if option["weight_const"]:
-        for i in adjusted_weights:
-            weights[i] = tmp_weight[i]
-    if len(path) == 0 and len(query_path) == 0 and option['empty_as_1']:
-        return 1.0, 1.0, 1.0, 1.0, path_weight, common_feature, 1.0
-    else:
-        return score_ms, score_ps, score_cs, float(final_score), path_weight, common_feature, score_ls
+    return score_ms, score_ps, score_cs, float(final_score), path_weight, common_feature, score_ls, scale
 
 
-def sf_cs_score(path, clan_dict, query_clans, features):
+# done
+def fad_cs_score(path, clan_dict, query_clans, features):
     """Calculates clan score
 
     :param path: Path to score
@@ -115,7 +68,7 @@ def sf_cs_score(path, clan_dict, query_clans, features):
 
     counter = 0.0
     path_clans = {}
-    score = 0.0
+    p_score = 0.0
 
     # counting clans in path
     # path_clans: contains counts for clans in path
@@ -130,16 +83,16 @@ def sf_cs_score(path, clan_dict, query_clans, features):
     for clan in path_clans:
         counter += 1.0
         if clan in query_clans:
-            score += float(path_clans[clan] * query_clans[clan])\
-                     / float(max(path_clans[clan], query_clans[clan]) * max(path_clans[clan], query_clans[clan]))
+            p_score += 1 - min(float(path_clans[clan] * query_clans[clan]) / float(path_clans[clan] * path_clans[clan]), 1.0)
     if counter == 0:
         score = 0.0
     else:
-        score = score / counter
+        score = 1.0 - p_score / counter
     return float(score)
 
 
-def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_features):
+# done
+def fad_entire_cs_score(path, query_path, query_features, clan_dict, search_features):
     """calculates clan score
 
     :param query_path:
@@ -153,8 +106,8 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
     counter = 0.0
     s_clans = {}  # clans from path
     q_clans = {}  # clans from query_path
+    p_score = 0.0
 
-    score = 0.0
     for i in path:
         if i in search_features:
             feature = search_features[i]
@@ -175,16 +128,16 @@ def sf_entire_cs_score(path, query_path, query_features, clan_dict, search_featu
     for clan in s_clans:
         counter += 1.0
         if clan in q_clans:
-            score += float(s_clans[clan] * q_clans[clan]) / float(
-                max(s_clans[clan], q_clans[clan]) * max(s_clans[clan], q_clans[clan]))
+            p_score += 1.0 - min(float(s_clans[clan] * q_clans[clan]) / float(s_clans[clan] * s_clans[clan]), 1.0)
     if counter == 0:
         score = 0.0
     else:
-        score = score / counter
+        score = 1.0 - p_score / counter
     return float(score)
 
 
-def sf_ms_score(path, protein, proteome, features, option):
+# done
+def fad_ms_score(path, protein, proteome, features, option):
     """Calculates multiplicity score, only used for priority mode now
 
     :param path : Path to score
@@ -197,7 +150,7 @@ def sf_ms_score(path, protein, proteome, features, option):
     domains = {}
     scale = 0
     scores = []
-    final_score = 0.0
+    final_score = 1.0
     tools = option["input_linearized"] + option["input_normal"]
     for i in path:
         feature = features[i]
@@ -219,22 +172,23 @@ def sf_ms_score(path, protein, proteome, features, option):
                 if e_feature:
                     s_length = 0
                     for instance in proteome[protein][tool][feature]["instance"]:
-                        e_instance = False
                         try:
                             if instance[2] <= option["eInstance"]:
                                 s_length += 1
                         except TypeError:
                             s_length += 1
-                    p_score = min(float(domains[feature] * s_length) / float(domains[feature] * domains[feature]), 1.0)
+                    p_score = 1 - min(float(domains[feature] * s_length) / float(domains[feature]
+                                                                                 * domains[feature]), 1.0)
         scores.append((feature, p_score))
     if scale > 0:
         scale = 1.0 / float(scale)
     for score in scores:
-        final_score += score[1] * scale
+        final_score -= score[1] * scale
     return float(final_score), domains, scale
 
 
-def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
+# done
+def fad_entire_ms_score(path, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
     """Calculates multiplicity score
 
     :param path: Path to score
@@ -251,7 +205,7 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
     query_domains = {}
     scale = 0
     scores = []
-    final_score = 0.0
+    final_score = 1.0
     final_weight = 0.0
     main_features_s = {}
     main_features_q = []
@@ -288,29 +242,33 @@ def sf_entire_ms_score(path, query_path, search_features, a_s_f, query_features,
         except KeyError:
             pass
     for feature in search_domains:
-        if option["MS_uni"] == 0:
-            scale += weights[feature]
+        if feature in weights['weights']:
+            scale += weights['weights'][feature]
         else:
-            scale += 1
+            scale += weights['default']
         if feature in query_domains:
             s_length = query_domains[feature]
-            p_score = min(float(search_domains[feature] * s_length) /
-                          float(search_domains[feature] * search_domains[feature]), 1.0)
+            p_score = 1 - min(float(search_domains[feature] * s_length) /
+                              float(search_domains[feature] * search_domains[feature]), 1.0)
             scores.append((feature, p_score))
         else:
-            scores.append((feature, 0.0))
-    if scale > 0:
+            scores.append((feature, 1.0))
+    if scale > 1.0:
         scale = 1.0 / float(scale)
+    else:
+        scale = 1.0
     for score in scores:
-        if option["MS_uni"] == 0:
-            final_score += score[1] * scale * weights[score[0]]
-            final_weight += weights[score[0]]
+        if score[0] in weights['weights']:
+            weight = weights['weights'][score[0]]
         else:
-            final_score += score[1] * scale
+            weight = weights['default']
+        final_score -= score[1] * scale * weight
+        final_weight += weight
     return float(final_score), search_domains, scale, final_weight, common_feature
 
 
-def sf_ps_score(path, scale, protein, features, seed_proteome, option):
+#done
+def fad_ps_score(path, scale, protein, features, seed_proteome, option):
     """Calculates positional score
 
     :param path: Path to score
@@ -321,10 +279,10 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
     :return: final_score (PS)
     """
     count = {}
-    final_score = 0.0
+    final_score = 1.0
     scores = {}
     tools = option["input_linearized"] + option["input_normal"]
-    best_match = 0.0
+    min_distance = 1.0
     for i in path:
         feature = features[i]
         for tool in tools:
@@ -336,7 +294,7 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
                 except TypeError:
                     e_feature = True
                 if e_feature:
-                    best_match = 0.0
+                    min_distance = 1.0
                     if not feature[0] in scores:
                         scores[feature[0]] = 0.0
                         count[feature[0]] = 0
@@ -350,19 +308,20 @@ def sf_ps_score(path, scale, protein, features, seed_proteome, option):
                         if e_instance:
                             pos = (float(instance[0]) + float(instance[1])) / 2.0 / float(
                                 seed_proteome[protein]["length"])
-                            match = 1.0 - float(abs(feature[1]) - pos)
-                            if best_match < match:
-                                best_match = match
-                scores[feature[0]] += best_match
+                            distance = float(abs(feature[1]) - pos)
+                            if min_distance < distance:
+                                min_distance = distance
+                scores[feature[0]] += min_distance
                 count[feature[0]] += 1
 
     for f_score in scores:
-        final_score += scores[f_score] / count[f_score] * scale
+        final_score -= scores[f_score] / count[f_score] * scale
     return float(final_score)
 
 
-def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
-    """Calculates positional score
+#done
+def fad_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
+    """Calculates positional score FAD variant
 
     :param path: Path to score
     :param scale: contains scaling factor for each weight or number of feature types for uniform weighting
@@ -376,8 +335,8 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
     :return: final_score (PS), final_ls_score
     """
     count = {}
-    final_score = 0.0
-    final_ls_score = 0.0
+    final_score = 1.0
+    final_ls_score = 1.0
     scores = {}
     ls_scores = {}
     local_query_protein = {}
@@ -401,30 +360,29 @@ def sf_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_fe
         else:
             feature = a_s_f[i]
         if feature[0] in local_query_protein:
-            best_match = 0.0
+            min_distance = 1.0
             if not feature[0] in scores:
                 count[feature[0]] = 0
                 scores[feature[0]] = 0.0
                 ls_scores[feature[0]] = 0.0
             for instance in local_query_protein[feature[0]]:
-                match = 1.0 - float(abs(feature[1] - instance[0]))
-                if best_match < match:
-                    best_match = match
+                distance = float(abs(feature[1] - instance[0]))
+                if min_distance > distance:
+                    min_distance = distance
                     if instance[1] <= (feature[3] - feature[2]):
-                        ls = float(instance[1]) / float(feature[3] - feature[2] + 1.0)
+                        ls = 1 - float(instance[1]) / float(feature[3] - feature[2] + 1.0)
                     else:
-                        ls = float(feature[3] - feature[2] + 1.0) / float(instance[1])
+                        ls = 1 - float(feature[3] - feature[2] + 1.0) / float(instance[1])
 
-            scores[feature[0]] += best_match
+            scores[feature[0]] += min_distance
             ls_scores[feature[0]] += ls
             count[feature[0]] += 1
 
     for f_score in scores:
-        if option["MS_uni"] == 0:
-            final_score += scores[f_score] / count[f_score] * scale * weights[f_score]
-            final_ls_score += ls_scores[f_score] / count[f_score] * scale * weights[f_score]
+        if f_score in weights['weights']:
+            weight = weights['weights'][f_score]
         else:
-            final_score += scores[f_score] / count[f_score] * scale
-            final_ls_score += ls_scores[f_score] / count[f_score] * scale
-
+            weight = weights['default']
+        final_score -= scores[f_score] / count[f_score] * scale * weight
+        final_ls_score -= ls_scores[f_score] / count[f_score] * scale * weight
     return float(final_score), float(final_ls_score)

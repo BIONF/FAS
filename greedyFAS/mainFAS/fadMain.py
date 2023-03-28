@@ -29,20 +29,11 @@ from copy import deepcopy
 from tqdm import tqdm
 import sys
 from time import sleep
-from greedyFAS.mainFAS.fasInput import read_json
-from greedyFAS.mainFAS.fasInput import check_version
-from greedyFAS.mainFAS.fasOutput import write_domain_out
-from greedyFAS.mainFAS.fasOutput import write_tsv_out
-from greedyFAS.mainFAS.fasOutput import phyloprofile_out
-from greedyFAS.mainFAS.fasScoring import sf_calc_score
-from greedyFAS.mainFAS.fasScoring import sf_entire_calc_score
-from greedyFAS.mainFAS.fasWeighting import w_weight_const_rescale
-from greedyFAS.mainFAS.fasWeighting import w_weight_correction
-from greedyFAS.mainFAS.fasWeighting import w_weighting
-from greedyFAS.mainFAS.fasWeighting import w_weighting_constraints
-from greedyFAS.mainFAS.fasWeighting import w_count_add_domains
-from greedyFAS.mainFAS.fasPathing import pb_region_mapper
-from greedyFAS.mainFAS.fasPathing import pb_region_paths
+from greedyFAS.mainFAS.greedyFAS import su_search_protein
+from greedyFAS.mainFAS.fasInput import read_json, check_version
+from greedyFAS.mainFAS.fasOutput import write_domain_out_fad, write_tsv_out, phyloprofile_out
+from greedyFAS.mainFAS.fadScoring import fad_calc_score, fad_entire_calc_score
+from greedyFAS.mainFAS.fasPathing import pb_region_mapper, pb_region_paths
 from greedyFAS.annoFAS.annoModules import mergeNestedDic
 
 
@@ -56,9 +47,8 @@ from greedyFAS.annoFAS.annoModules import mergeNestedDic
 # query_features = {}          #{("F_0", ("domain_name", "POSITION", "Start", "Stop" ))}
 # a_q_f = {}                   # additional query features [non linearized]
 # query_protein = {}           #{("domain_name", ["POSITION_1", "POSITION_2"])}
-# query_clans = {}             #{("clan", "INSTANCES")}
-# weights = {}                 #{("domain_name", "weight")}
-# domain_count = {}            #{("domain", "COUNT")}
+# query_clans = {}             #{"clan": "INSTANCES"}
+# weights = {}                 #{"domain_name": "weight"}
 
 
 # flow control functions
@@ -68,21 +58,17 @@ def fc_start(option):
     """Overhead function,
     this function manages the individual functions that read the input files and prepares the data for the main script.
 
-    :param option: dictionary that contains the main option variables of FAS
+    :param option: dictionary that contains the main option variables of FAD
     """
     clan_dict = {}
-    domain_count = {}
     option["reverse"] = False
     interprokeys = {}
     v_warning = False
     version = None
-    # MS_uni set to 0 when no weighting is conducted
-    if option["MS_uni"] == 0:
-        domain_count = {}
-        for path in option["ref_proteome"]:
-            proteome = read_json(path)
-            domain_count.update(proteome["count"])
-            version, v_warning = check_version(version, proteome, v_warning)
+    if option['weight_path']:
+        weights = read_json(option['weight_path'])
+    else:
+        weights = {'weights': {}, 'default': 0.5}
     proteome_list = []
     for path in option["p_path"]:
         proteome = read_json(path)
@@ -105,8 +91,6 @@ def fc_start(option):
         print('##########\nWARNING: There are version discrepancies in the annotation files. This means that there '
               'might be differences in tool/database versions of the annotation. You should check the annotation files '
               'with "fas.getAnnoVersion"!\n##########')
-    if option["weight_correction"]:
-        domain_count = w_weight_correction(option["weight_correction"], domain_count)
     for tool in option["input_linearized"]:
         if tool not in seed_proteome[list(seed_proteome)[0]]:
             raise Exception(tool + " is missing in the seed annotation")
@@ -122,16 +106,7 @@ def fc_start(option):
                 raise Exception(protid + " is not in the query annotation")
     if option["bidirectional"]:
         print("calculating forward scores...")
-        f_results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys)
-        if option["MS_uni"] == 0 and option["ref_2"]:
-            domain_count_2 = {}
-            for path in option["ref_2"]:
-                domain_count_2.update(read_json(path)["count"])
-            if option["weight_correction"]:
-                domain_count_2 = w_weight_correction(option["weight_correction"], domain_count_2)
-            option['ref_proteome'] = option['ref_2']
-        else:
-            domain_count_2 = domain_count
+        f_results = fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys)
         id_tmp = option["seed_id"]
         option["reverse"] = True
         option["seed_id"] = option["query_id"]
@@ -142,28 +117,28 @@ def fc_start(option):
                 pairtmp.append((pair[1], pair[0]))
             option["pairwise"] = pairtmp
         print("calculating backward scores...")
-        r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option, interprokeys)
+        r_results = fc_main(weights, query_proteome, seed_proteome, clan_dict, option, interprokeys)
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
         if not option['tsv']:
             write_tsv_out(option["outpath"], True, (f_results, r_results))
     else:
         print("calculating forward scores...")
-        results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys)
+        results = fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys)
         if not option["tsv"]:
             write_tsv_out(option["outpath"], False, (results, None))
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
 
 
-def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys):
+def fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys):
     """Main function,
     manages linearization and scoring, creates the output
     Function calls: w_weighting_constraints(), w_weighting(), su_lin_query_protein(), pb_graphtraversal(),
                     pb_entire_graphtraversal_priority(),
                     sf_entire_calc_score(), pb_entire_main_nongreedy(), w_weight_const_rescale()
 
-    :param domain_count: dictionary that contains the (adjusted) counts of each feature in the reference proteome
+    :param weighting: dictionary that contains the weights for each feature
     :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
     :param query_proteome: dictionary that contains the feature architecture of all query proteins
     :param clan_dict: dictionary that maps features to clans
@@ -188,12 +163,12 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
                 raise Exception(query + ' is missing in annotation!')
             if protein not in seed_proteome:
                 raise Exception(protein + ' is missing in annotation!')
-            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
-            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
-            go_priority, domain_count = tmp_query[7:9]
+            tmp_query = fc_prep_query(query, query_proteome, option, clan_dict)
+            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict, go_priority\
+                = tmp_query[0:8]
 
             ####
-            results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
+            results.append(fc_main_sub(protein, weights, seed_proteome, option, all_query_paths, query_features,
                                        go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
                                        domain_out, interprokeys))
             if option["progress"]:
@@ -216,12 +191,12 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
         if option['progress']:
             progress = tqdm(total=len(querylist)*len(seedlist), file=sys.stdout)
         for query in querylist:
-            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
-            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
-            go_priority, domain_count = tmp_query[7:9]
+            tmp_query = fc_prep_query(query, query_proteome, option, clan_dict)
+            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict, go_priority\
+                = tmp_query[0:8]
 
             for protein in seedlist:
-                results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths,
+                results.append(fc_main_sub(protein, weights, seed_proteome, option, all_query_paths,
                                            query_features, go_priority, a_q_f, clan_dict, query_graph, query_proteome,
                                            query, query_clans, domain_out, interprokeys))
                 if option["progress"]:
@@ -233,10 +208,8 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
     return results
 
 
-def fc_prep_query(query, domain_count, query_proteome, option, clan_dict):
+def fc_prep_query(query, query_proteome, option, clan_dict):
     go_priority = False
-    if option["MS_uni"] == 0:
-        domain_count = w_count_add_domains(query, domain_count, query_proteome)
     lin_query_set, query_features, a_q_f, query_clans, clan_dict = su_lin_query_protein(
         query, query_proteome, clan_dict, option)
     tmp_query_graph, path_number = pb_region_paths(pb_region_mapper(
@@ -254,21 +227,15 @@ def fc_prep_query(query, domain_count, query_proteome, option, clan_dict):
     else:
         all_query_paths = "NOPRIORITY"
     return tmp_query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict, \
-        go_priority, domain_count
+        go_priority
 
 
-def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features, go_priority, a_q_f,
+def fc_main_sub(protein, weights, seed_proteome, option, all_query_paths, query_features, go_priority, a_q_f,
                 clan_dict, tmp_query_graph, query_proteome, query, query_clans, domain_out, interprokeys):
     go_priority_2 = False
     mode = 0
     pathcount = 0
-    weights = None
     unsolved = True
-    if option["MS_uni"] == 0:
-        if option["weight_const"]:
-            weights, domain_count = w_weighting_constraints(protein, domain_count, seed_proteome, option)
-        else:
-            weights, domain_count = w_weighting(protein, domain_count, seed_proteome, option)
     search_protein, search_features, a_s_f = su_search_protein(protein, seed_proteome, option)
     search_protein = tuple(search_protein)
     max_fixture = ([], (0.0, 0.0, 0.0, 0.0, 0, 0, False), [], protein)
@@ -285,7 +252,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
         if int(len(search_features)) == 0:
             path = list(a_s_f.keys())
             query_architecture = list(a_q_f.keys())
-            score_w = sf_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
+            score_w = fad_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
                                            query_features, a_q_f, clan_dict, option)
             mode = 0
         else:
@@ -306,7 +273,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
     elif seed_proteome[protein] == query_proteome[query]:
         path = list(a_s_f.keys()) + list(search_features.keys())
         query_architecture = list(a_q_f.keys()) + list(query_features.keys())
-        score_w = sf_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
+        score_w = fad_entire_calc_score(path, query_architecture, weights, search_features, a_s_f,
                                        query_features, a_q_f, clan_dict, option)
         mode = 0
         max_fixture = (path, score_w, query_architecture, protein)
@@ -341,7 +308,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                     # get score for a_s_f and query_path directly
                     path = list(a_s_f.keys())
                     query_path_ad = jobpath + list(a_q_f.keys())
-                    score_w = sf_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
+                    score_w = fad_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
 
                     # check for max scoring fixture of path and query_path
@@ -400,7 +367,7 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
                 # get score for a_s_f and query_path directly
                 path = list(a_s_f.keys())
                 query_path_ad = query_path + list(a_q_f.keys())
-                score_w = sf_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
+                score_w = fad_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
                                                query_features, a_q_f, clan_dict, option)
             else:
                 # case M2.2.2 graph(query)-graph(search)
@@ -451,22 +418,12 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             best_query_path.append((a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
     path_tmp = {}
     path_tmp_query = {}
-    scale = 0
-    if option["weight_const"] == 1:
-        path_tmp2 = []
-        for feature in best_template_path:
-            if feature[0] not in path_tmp2:
-                path_tmp2.append(feature[0])
-        adjusted_weights = w_weight_const_rescale(path_tmp2, weights, search_features, True, option)
-        for adj_feature in adjusted_weights:
-            weights[adj_feature] = adjusted_weights[adj_feature]
+    scale = max_fixture[1][6]
     for feature in best_template_path:
         if feature[0] in path_tmp:
             path_tmp[feature[0]].append((feature[2], feature[3]))
         else:
             path_tmp[feature[0]] = [(feature[2], feature[3])]
-            if option["MS_uni"] == 0:
-                scale += weights[feature[0]]
     for feature in best_query_path:
         if feature[0] in path_tmp_query:
             path_tmp_query[feature[0]].append((feature[2], feature[3]))
@@ -474,13 +431,8 @@ def fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, q
             path_tmp_query[feature[0]] = [(feature[2], feature[3])]
 
     # unweighted case
-    if option["MS_uni"] == 0:
-        if scale > 0:
-            scale = 1.0 / float(scale)
-        else:
-            scale = 1.0
     if option["domain"]:
-        write_domain_out(seed_proteome, query_proteome, protein, query, weights, scale, path_tmp, path_tmp_query,
+        write_domain_out_fad(seed_proteome, query_proteome, protein, query, weights, scale, path_tmp, path_tmp_query,
                              domain_out, option, interprokeys)
     if option["raw"]:
         print('#' + '\t' + protein + '\t' + query + '\t' + str(score[3]))
@@ -581,74 +533,6 @@ def su_lin_query_protein(protein_id, query_proteome, clan_dict, option):
     return lin_query_protein, query_features, a_q_f, query_clans, clan_dict
 
 
-def su_search_protein(protein_id, seed_proteome, option):
-    """Initializes variables for the current seed protein
-
-    :param option: dictionary that contains the main option variables of FAS
-    :param protein_id: String that contains the identifier of the seed protein
-    :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
-    :return: search_protein, search_features, a_s_f (additional [not linearized] seed features)
-    """
-    search_features = {}
-    search_protein = []
-    a_s_f = {}
-    tmp = []
-    i = 0
-
-    for tool in option["input_linearized"]:
-        for feature in seed_proteome[protein_id][tool]:
-            e_feature = False
-            try:
-                if seed_proteome[protein_id][tool][feature]["evalue"] <= option["eFeature"]:
-                    e_feature = True
-            except TypeError:
-                e_feature = True
-            if e_feature:
-                for instance in seed_proteome[protein_id][tool][feature]["instance"]:
-                    e_instance = False
-                    try:
-                        if instance[2] <= option["eInstance"]:
-                            e_instance = True
-                    except TypeError:
-                        e_instance = True
-                    if e_instance:
-                        position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
-                            seed_proteome[protein_id]["length"])
-                        position = round(position, 4)
-                        key = "F_" + str(i)
-                        search_features[key] = (feature, position, instance[0], instance[1])
-                        tmp.append((key, instance[1]))
-                        i += 1
-    for tool in option["input_normal"]:
-        for feature in seed_proteome[protein_id][tool]:
-            e_feature = False
-            try:
-                if seed_proteome[protein_id][tool][feature]["evalue"] <= option["eFeature"]:
-                    e_feature = True
-            except TypeError:
-                e_feature = True
-            if e_feature:
-                for instance in seed_proteome[protein_id][tool][feature]["instance"]:
-                    e_instance = False
-                    try:
-                        if instance[2] <= option["eInstance"]:
-                            e_instance = True
-                    except TypeError:
-                        e_instance = True
-                    if e_instance:
-                        position = ((float(instance[0]) + float(instance[1])) / 2.0) / float(
-                            seed_proteome[protein_id]["length"])
-                        position = round(position, 4)
-                        key = "O_" + str(i)
-                        a_s_f[key] = (feature, position, instance[0], instance[1])
-                        i += 1
-    # sort  instances
-    tmp2 = sorted(tmp, key=itemgetter(1))
-    for x in tmp2:
-        search_protein.append(x[0])
-    return tuple(search_protein), search_features, a_s_f
-
-
 # Path-building Functions # <pb>
 # Used for the Pfam/Smart domains (default)
 def pb_create_jobs(graph, option):
@@ -705,8 +589,8 @@ def pb_graph_traversal_sub(protein, search_features, weights, query_features, se
             # get score for a_s_f and query_path directly
             path = list(a_s_f.keys())
             query_path_ad = query_path + list(a_q_f.keys())
-            score_w = sf_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
-                                           query_features, a_q_f, clan_dict, option)
+            score_w = fad_entire_calc_score(path, query_path_ad, weights, search_features, a_s_f,
+                                            query_features, a_q_f, clan_dict, option)
         else:
             # case M2.2.2 graph(query)-graph(search)
             # regular traversal of graph based on search_protein
@@ -870,7 +754,7 @@ def pb_entire_graphtraversal(search_graph, query_path, search_features, weights,
                 if next_vertex == "END":
                     path_ad = path + list(a_s_f.keys())
                     query_path_ad = query_path + list(a_q_f.keys())
-                    score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
+                    score_w = fad_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
                     if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
                        score_w[3] >= best_path[1][3]:
@@ -889,7 +773,7 @@ def pb_entire_graphtraversal(search_graph, query_path, search_features, weights,
                 if next_vertex == "END":
                     path_ad = path + list(a_s_f.keys())
                     query_path_ad = query_path + list(a_q_f.keys())
-                    score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
+                    score_w = fad_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
                                                    query_features, a_q_f, clan_dict, option)
                     if (score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3]) or \
                        score_w[3] >= best_path[1][3]:
@@ -989,8 +873,8 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 else:
                     path_ad = path + list(a_s_f.keys())
                     query_path_ad = query_path + list(a_q_f.keys())
-                    score_w = sf_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
-                                                   query_features, a_q_f, clan_dict, option)
+                    score_w = fad_entire_calc_score(path_ad, query_path_ad, weights, search_features, a_s_f,
+                                                    query_features, a_q_f, clan_dict, option)
                     if ((score_w[4] >= best_path[1][4] and score_w[3] == best_path[1][3])
                             or score_w[3] >= best_path[1][3]):
                         best_path = (path_ad, score_w, query_path_ad)
@@ -1010,10 +894,12 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 if mode == 1:
                     best_priority_bridger = ("NONE", (0.0, 0.0, 0.0, 0.0, 0.0, False))
                     for next_vertex in p_candidates:
-                        score = sf_calc_score(path + [next_vertex], protein, weights, search_features, query_features,
-                                              seed_proteome, clan_dict, query_clans, option)
+                        ############ changed
+                        score = fad_entire_calc_score(list(search_features.keys()) + list(a_s_f.keys()),
+                                                      path + [next_vertex], weights, search_features, a_s_f,
+                                                      query_features, a_q_f, clan_dict, option)
                         if score[3] >= best_priority_bridger[1][3]:
-                            best_priority_bridger = (next_vertex, score)
+                            best_priority_bridger = (next_vertex, score[0:4])
                     v_stack.append(best_priority_bridger[0])
                     p_stack.append(path + [best_priority_bridger[0]])
                 elif mode == 0:
@@ -1022,8 +908,8 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                     for next_vertex in p_candidates:
                         path_ad = path + list(a_s_f.keys())
                         query_path_ad = query_path + list(a_q_f.keys())
-                        score_w = sf_entire_calc_score(path_ad + [next_vertex], query_path_ad, weights,
-                                                       search_features, a_s_f, query_features, a_q_f, clan_dict, option)
+                        score_w = fad_entire_calc_score(path_ad + [next_vertex], query_path_ad, weights,
+                                                        search_features, a_s_f, query_features, a_q_f, clan_dict, option)
                         if (score_w[4] >= best_partial_path[1][4] and score_w[3] == best_partial_path[1][3]) \
                            or score_w[3] >= best_partial_path[1][3]:
                             best_partial_path = (next_vertex, score_w)
@@ -1035,8 +921,10 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
             if mode == 1:
                 best_priority_bridger = ("NONE", (0.0, 0.0, 0.0, 0.0, 0.0, False))
                 for next_vertex in search_graph[vertex]:
-                    score = sf_calc_score(path + [next_vertex], protein, weights, search_features, query_features,
-                                          seed_proteome, clan_dict, query_clans, option)
+                    ############## changed
+                    score = fad_entire_calc_score(list(search_features.keys()) + list(a_s_f.keys()),
+                                                  path + [next_vertex], weights, search_features, a_s_f,
+                                                  query_features, a_q_f, clan_dict, option)
                     if score[3] >= best_priority_bridger[1][3]:
                         best_priority_bridger = (next_vertex, score)
                 v_stack.append(best_priority_bridger[0])
@@ -1048,7 +936,7 @@ def pb_entire_graphtraversal_priority(search_graph, priority, query_path, mode, 
                 for next_vertex in search_graph[vertex]:
                     path_ad = path + list(a_s_f.keys())
                     query_path_ad = query_path + list(a_s_f.keys())
-                    score_w = sf_entire_calc_score(path_ad + [next_vertex], query_path_ad, weights, search_features,
+                    score_w = fad_entire_calc_score(path_ad + [next_vertex], query_path_ad, weights, search_features,
                                                    a_s_f, query_features, a_q_f, clan_dict, option)
                     if (score_w[4] >= best_partial_path[1][4] and score_w[3] == best_partial_path[1][3]) or \
                        score_w[3] >= best_partial_path[1][3]:

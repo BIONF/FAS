@@ -28,7 +28,7 @@ with open('README.md', 'r') as input:
 
 setup(
     name='greedyFAS',
-    version='1.16.8',
+    version='1.16.9',
     python_requires='>=3.7.0',
     description='A tool to compare protein feature architectures',
     long_description=long_description,
@@ -62,7 +62,8 @@ setup(
                             'fas.disorder.setup = greedyFAS.disorderFAS.install_aucpred:main',
                             'fas.mergeAnno = greedyFAS.mergeAnno:main',
                             'fas.getAnnoVersion = greedyFAS.annoFAS.getAnnoVersion:main',
-                            'fas.overlapStatistics = greedyFAS.getOverlapStats:main'
+                            'fas.overlapStatistics = greedyFAS.getOverlapStats:main',
+                            'fad.run = greedyFAS.calcFAD:main'
                             ],
     },
     license='GPL-3.0',
