@@ -133,9 +133,8 @@ def fad_entire_ms_score(path, query_path, search_features, a_s_f, query_features
         else:
             scale += weights['default']
         if feature in query_domains:
-            s_length = query_domains[feature]
-            p_score = 1 - min(float(search_domains[feature] * s_length) /
-                              float(search_domains[feature] * search_domains[feature]), 1.0)
+            p_score = 1.0 - min(float(search_domains[feature] * query_domains[feature]) /
+                                float(search_domains[feature] * search_domains[feature]), 1.0)
             scores.append((feature, p_score))
         else:
             scores.append((feature, 1.0))
@@ -212,10 +211,9 @@ def fad_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_f
             ls_scores[feature[0]] += ls
             count[feature[0]] += 1
         else:
-            scores[feature[0]] += 1.0
-            ls_scores[feature[0]] += 1.0
-            count[feature[0]] += 1
-
+            scores[feature[0]] = 1.0
+            ls_scores[feature[0]] = 1.0
+            count[feature[0]] = 1
     for f_score in scores:
         if f_score in weights['weights']:
             weight = weights['weights'][f_score]

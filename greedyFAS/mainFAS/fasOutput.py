@@ -125,6 +125,7 @@ def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, sc
                                       str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
                                       + '\t' + str(instance[1]) + '\t' + str(weight) + '\tN\t' + interpro + '\n')
 
+
 def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale, seedpath, querypath, out, option,
                      interprokeys):
     tools = option['input_linearized'] + option['input_normal']

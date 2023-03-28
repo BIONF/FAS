@@ -32,7 +32,7 @@ from time import sleep
 from greedyFAS.mainFAS.greedyFAS import su_search_protein
 from greedyFAS.mainFAS.fasInput import read_json, check_version
 from greedyFAS.mainFAS.fasOutput import write_domain_out_fad, write_tsv_out, phyloprofile_out
-from greedyFAS.mainFAS.fadScoring import fad_calc_score, fad_entire_calc_score
+from greedyFAS.mainFAS.fadScoring import fad_entire_calc_score
 from greedyFAS.mainFAS.fasPathing import pb_region_mapper, pb_region_paths
 from greedyFAS.annoFAS.annoModules import mergeNestedDic
 
@@ -418,7 +418,7 @@ def fc_main_sub(protein, weights, seed_proteome, option, all_query_paths, query_
             best_query_path.append((a_q_f[feature][0], a_q_f[feature][1], a_q_f[feature][2], a_q_f[feature][3]))
     path_tmp = {}
     path_tmp_query = {}
-    scale = max_fixture[1][6]
+    scale = max_fixture[1][7]
     for feature in best_template_path:
         if feature[0] in path_tmp:
             path_tmp[feature[0]].append((feature[2], feature[3]))
