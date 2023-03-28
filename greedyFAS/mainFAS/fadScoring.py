@@ -1,31 +1,4 @@
 # done
-def fad_calc_score(path, protein, weights, search_features, query_features, seed_proteome, clan_dict, query_clans,
-                  option):
-    """Used to be main Scoring function, starts the functions for the scores and calculates the complete FAS score,
-    used durin query linearization when priority mode is enabled (linearized query versus full seed)
-
-    :param path: Path to score
-    :param protein: protein id
-    :param weights: feature weights
-    :param query_features: all features to be linearized in the query protein
-    :param search_features: all features to be linearized in the seed protein
-    :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
-    :param clan_dict: dictionary that maps features to clans
-    :param query_clans: (Pfam)-clans of the current query protein
-    :param option: dictionary that contains the main option variables of FAS
-    :return: score_ms, score_ps, score_cs, final_score
-    """
-    score_cs = round(fad_cs_score(path, clan_dict, query_clans, query_features), 4)
-    tmp = fad_ms_score(path, protein, seed_proteome, query_features, option)
-    score_ms = round(tmp[0], 4)
-    score_ps = round(
-        fad_ps_score(path, tmp[2], protein, query_features, seed_proteome, option), 4)
-    final_score = ((score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1])
-                   + (score_ps * option["score_weights"][2]))
-    return score_ms, score_ps, score_cs, final_score
-
-
-# done
 def fad_entire_calc_score(path, query_path, weights, search_features, a_s_f, query_features, a_q_f, clan_dict, option):
     """Main Scoring function, starts the functions for the scores and calculates the complete FAS score
 
@@ -53,42 +26,6 @@ def fad_entire_calc_score(path, query_path, weights, search_features, a_s_f, que
     final_score = ((score_ms * option["score_weights"][0]) + (score_cs * option["score_weights"][1])
                    + (score_ps * option["score_weights"][2]))
     return score_ms, score_ps, score_cs, float(final_score), path_weight, common_feature, score_ls, scale
-
-
-# done
-def fad_cs_score(path, clan_dict, query_clans, features):
-    """Calculates clan score
-
-    :param path: Path to score
-    :param clan_dict: dictionary that maps features to clans
-    :param query_clans: Clans in the query
-    :param features: features (seed or query) [dict]
-    :return: score (PS)
-    """
-
-    counter = 0.0
-    path_clans = {}
-    p_score = 0.0
-
-    # counting clans in path
-    # path_clans: contains counts for clans in path
-    for i in path:
-        feature = features[i]
-
-        if feature[0] in clan_dict:
-            if clan_dict[feature[0]] in path_clans:
-                path_clans[clan_dict[feature[0]]] += 1
-            else:
-                path_clans[clan_dict[feature[0]]] = 1
-    for clan in path_clans:
-        counter += 1.0
-        if clan in query_clans:
-            p_score += 1 - min(float(path_clans[clan] * query_clans[clan]) / float(path_clans[clan] * path_clans[clan]), 1.0)
-    if counter == 0:
-        score = 0.0
-    else:
-        score = 1.0 - p_score / counter
-    return float(score)
 
 
 # done
@@ -134,57 +71,6 @@ def fad_entire_cs_score(path, query_path, query_features, clan_dict, search_feat
     else:
         score = 1.0 - p_score / counter
     return float(score)
-
-
-# done
-def fad_ms_score(path, protein, proteome, features, option):
-    """Calculates multiplicity score, only used for priority mode now
-
-    :param path : Path to score
-    :param protein : protein id
-    :param proteome : seed_proteome is a dictionary that contains the feature architecture of all seed proteins
-    :param features : features (seed or query) [dict]
-    :param option : specifies the behavior of the MS calculation
-    :return: final_score (MS), search_domains, scale
-    """
-    domains = {}
-    scale = 0
-    scores = []
-    final_score = 1.0
-    tools = option["input_linearized"] + option["input_normal"]
-    for i in path:
-        feature = features[i]
-        if feature[0] in domains:
-            domains[feature[0]] += 1
-        else:
-            domains[feature[0]] = 1
-    for feature in domains:
-        scale += 1
-        p_score = 0.0
-        for tool in tools:
-            if feature in proteome[protein][tool]:
-                e_feature = False
-                try:
-                    if proteome[protein][tool][feature]["evalue"] <= option["eFeature"]:
-                        e_feature = True
-                except TypeError:
-                    e_feature = True
-                if e_feature:
-                    s_length = 0
-                    for instance in proteome[protein][tool][feature]["instance"]:
-                        try:
-                            if instance[2] <= option["eInstance"]:
-                                s_length += 1
-                        except TypeError:
-                            s_length += 1
-                    p_score = 1 - min(float(domains[feature] * s_length) / float(domains[feature]
-                                                                                 * domains[feature]), 1.0)
-        scores.append((feature, p_score))
-    if scale > 0:
-        scale = 1.0 / float(scale)
-    for score in scores:
-        final_score -= score[1] * scale
-    return float(final_score), domains, scale
 
 
 # done
@@ -268,58 +154,6 @@ def fad_entire_ms_score(path, query_path, search_features, a_s_f, query_features
 
 
 #done
-def fad_ps_score(path, scale, protein, features, seed_proteome, option):
-    """Calculates positional score
-
-    :param path: Path to score
-    :param scale: contains scaling factor for each weight or number of feature types for uniform weighting
-    :param protein: protein id
-    :param features: features (seed or query) [dict]
-    :param seed_proteome: dictionary that contains the feature architecture of all seed proteins
-    :return: final_score (PS)
-    """
-    count = {}
-    final_score = 1.0
-    scores = {}
-    tools = option["input_linearized"] + option["input_normal"]
-    min_distance = 1.0
-    for i in path:
-        feature = features[i]
-        for tool in tools:
-            if feature[0] in seed_proteome[protein][tool]:
-                e_feature = False
-                try:
-                    if seed_proteome[protein][tool][feature[0]]["evalue"] <= option["eFeature"]:
-                        e_feature = True
-                except TypeError:
-                    e_feature = True
-                if e_feature:
-                    min_distance = 1.0
-                    if not feature[0] in scores:
-                        scores[feature[0]] = 0.0
-                        count[feature[0]] = 0
-                    for instance in seed_proteome[protein][tool][feature[0]]["instance"]:
-                        e_instance = False
-                        try:
-                            if instance[2] <= option["eInstance"]:
-                                e_instance = True
-                        except TypeError:
-                            e_instance = True
-                        if e_instance:
-                            pos = (float(instance[0]) + float(instance[1])) / 2.0 / float(
-                                seed_proteome[protein]["length"])
-                            distance = float(abs(feature[1]) - pos)
-                            if min_distance < distance:
-                                min_distance = distance
-                scores[feature[0]] += min_distance
-                count[feature[0]] += 1
-
-    for f_score in scores:
-        final_score -= scores[f_score] / count[f_score] * scale
-    return float(final_score)
-
-
-#done
 def fad_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_features, a_q_f, weights, option):
     """Calculates positional score FAD variant
 
@@ -376,6 +210,10 @@ def fad_entire_ps_score(path, scale, query_path, search_features, a_s_f, query_f
 
             scores[feature[0]] += min_distance
             ls_scores[feature[0]] += ls
+            count[feature[0]] += 1
+        else:
+            scores[feature[0]] += 1.0
+            ls_scores[feature[0]] += 1.0
             count[feature[0]] += 1
 
     for f_score in scores:
