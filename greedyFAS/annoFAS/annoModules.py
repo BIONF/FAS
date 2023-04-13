@@ -495,7 +495,7 @@ def countFeatures(annoDict):
         for toolName in list(annoDict[prot].keys()):
             if not toolName == 'length':
                 for feat, value in annoDict[prot][toolName].items():
-                    out.extend([feat] * len(value))
+                    out.extend([feat] * len(annoDict[prot][toolName][feat]['instance']))
     out.sort()
     count = collections.Counter(out)
     return dict(count)
