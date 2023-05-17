@@ -43,7 +43,7 @@ def runAnnoFas(args):
     cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
     # check for length files
     missing_len_files = []
-    tools = getAnnoTools(annoToolFile, toolPath)
+    tools = annoModules.getAnnoTools(annoToolFile, toolPath)
     if 'pfam' in tools:
         if not os.path.exists(os.path.abspath(f'{toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')):
             missing_len_files.append('PFAM')
