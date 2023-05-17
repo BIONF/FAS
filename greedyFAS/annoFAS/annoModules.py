@@ -533,10 +533,12 @@ def getPfamAcc(toolPath, annoDict):
     return outDict
 
 
-def getPhmmLength(toolPath, annoDict):
+def getPhmmLength(toolPath, annoDict, toolList):
     outDict = {}
-    pfam_len = read_file_to_dict(f'{toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')
-    smart_len = read_file_to_dict(f'{toolPath}/SMART/SMART-hmms/SMART.hmm.length')
+    if 'pfam' in toolList:
+        pfam_len = read_file_to_dict(f'{toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')
+    if 'smart' in toolList:
+        smart_len = read_file_to_dict(f'{toolPath}/SMART/SMART-hmms/SMART.hmm.length')
     for prot in list(annoDict.keys()):
         if 'pfam' in annoDict[prot]:
             for dom, value in annoDict[prot]['pfam'].items():
