@@ -43,11 +43,11 @@ def runAnnoFas(args):
     cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
     # check for length files
     missing_len_files = []
-    tools = annoModules.getAnnoTools(annoToolFile, toolPath)
-    if 'pfam' in tools:
+    toolList = annoModules.getAnnoTools(annoToolFile, toolPath)
+    if 'pfam' in toolList:
         if not os.path.exists(os.path.abspath(f'{toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')):
             missing_len_files.append('PFAM')
-    if 'smart' in tools:
+    if 'smart' in toolList:
         if not os.path.exists(os.path.abspath(f'{toolPath}/SMART/SMART-hmms/SMART.hmm.length')):
             missing_len_files.append('SMART')
     if len(missing_len_files) > 0:
@@ -75,7 +75,7 @@ def runAnnoFas(args):
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
-            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'])
+            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
             annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
                                                           cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
@@ -88,6 +88,7 @@ def runAnnoFas(args):
                 annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
                 annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
                 annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
+                annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
                 annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath),
                                                               toolPath, cutoffs)
                 annoModules.save2json(annoDict, outName, outPath)
@@ -112,7 +113,7 @@ def runAnnoFas(args):
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
-            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'])
+            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
             annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
                                                           cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
@@ -124,6 +125,7 @@ def updateAnno(outPath, outName, toolPath, annoToolFile, eFeature, eInstance, eF
     oldAnnoFile = f'{outPath}/{outName}.json'
     annoModules.checkFileExist(oldAnnoFile)
     cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
+    toolList = annoModules.getAnnoTools(annoToolFile, toolPath)
     with open(oldAnnoFile, 'r') as f:
         annoDict = json.load(f)
         f.close()
@@ -132,7 +134,7 @@ def updateAnno(outPath, outName, toolPath, annoToolFile, eFeature, eInstance, eF
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
                                                           cutoffs)
-            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'])
+            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
             annoModules.save2json(annoDict, outName, outPath)
 
 
