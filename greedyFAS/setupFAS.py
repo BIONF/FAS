@@ -218,6 +218,8 @@ def install_smart(smart_path, anno_path):
             print('ERROR: Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
         getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
         subprocess.call([getVersionCmd], shell=True)
+        # write length file
+        write_phmm_length(anno_path, 'SMART')
         return 1
 
 def install_pfam(pfam_version, anno_path):
@@ -252,6 +254,19 @@ def install_pfam(pfam_version, anno_path):
     else:
         sys.exit('ERROR: No Pfam-A.hmm.gz found at %s' % url)
 
+
+def write_phmm_length(anno_path, tool_name):
+    hmm_file_name = f'{tool_name}-A.hmm'
+    if tool_name == 'SMART':
+        hmm_file_name = f'{tool_name}.hmm'
+    hmm_file = f'{anno_path}/{tool_name}/{tool_name}-hmms/{hmm_file_name}'
+    with open(f'{anno_path}/{tool_name}/{tool_name}-hmms/{hmm_file_name}.length', 'w') as len_f:
+        with open(hmm_file, 'r') as file:
+            for l in [line.rstrip() for line in file]:
+                if l.startswith('NAME'):
+                    id = l.split()[1].strip()
+                if l.startswith('LENG'):
+                    len_f.write(f'{id}\t{l.split()[1].strip()}\n')
 
 def check_hmmer():
     try:
@@ -385,6 +400,8 @@ def install_annoTool(options):
             print('Downloading Pfam version %s...' % pfam_version)
             shutil.rmtree(anno_path + '/Pfam')
             install_pfam(pfam_version, anno_path)
+        # write length file for PFAM
+        write_phmm_length(anno_path, 'Pfam')
 
         # compile and make symlink for fLPS
         flps_path = anno_path + '/fLPS'
@@ -551,6 +568,7 @@ def main():
     optional.add_argument('-c', '--check', help='Check if FAS ready to run. NO real tool path need to be given!',
                           action='store_true')
     optional.add_argument('--checkExecutable', help='Check if annotation tools are executable!', action='store_true')
+    optional.add_argument('--addLength', help='Create length files for PFAM and SMART', action='store_true')
     optional.add_argument('--disorder', help='Install Disorder annotation, can be installed separately later as well',
                           action='store_true')
 
@@ -597,6 +615,19 @@ def main():
         print('fas.doAnno -i test_annofas.fa -o testFas_output')
         print('NOTE: For using FAS you need to source %s/fas.profile first!' % args.toolPath)
         sys.exit()
+
+    if args.addLength:
+        if not os.path.exists(os.path.abspath(args.toolPath+'/annoTools.txt')):
+            sys.exit('ERROR: %s not found' % (args.toolPath+'/annoTools.txt'))
+        else:
+            if not os.path.exists(os.path.abspath(f'{args.toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')):
+                print(f'Creating length file for PFAM...')
+                write_phmm_length(args.toolPath, 'Pfam')
+            if not os.path.exists(os.path.abspath(f'{args.toolPath}/SMART/SMART-hmms/SMART.hmm.length')):
+                print(f'Creating length file for SMART...')
+                write_phmm_length(args.toolPath, 'SMART')
+            sys.exit()
+
 
     anno_path = install_annoTool(options)
     allRun = checkExecutable(anno_path)

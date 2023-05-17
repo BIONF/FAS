@@ -64,6 +64,18 @@ def checkFileEmpty(file):
     return flag
 
 
+def read_file_to_dict(file):
+    """ Read a file with 2 columns {id}\t{val} and return a dictionary"""
+    if os.path.exists(file):
+        dict = {}
+        with open(file, 'r') as f:
+            for l in [line.rstrip() for line in f]:
+                dict[l.split()[0]] = l.split()[1].strip()
+        return(dict)
+    else:
+        sys.exit('%s not found' % file)
+
+
 def get_property(prop, project):
     result = re.search(r'{}\s*=\s*[\'"]([^\'"]*)[\'"]'.format(prop), open(project + '/__init__.py').read())
     return result.group(1)
@@ -346,18 +358,12 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
     hmmResults = hmmOut.split('//')
     for result in hmmResults:
         if len(result.split('\n')) > 3:
-            if 'No hits detected that satisfy reporting thresholds' in result:
-                query = re.search(r'Query:(.)+', result).group().split()[1]
-                seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=', '').replace(']', '')
-                outDict[query] ={}
-                outDict[query]['length'] = int(seqLen)
-                outDict[query][toolName] = {}
-            else:
-                query = re.search(r'Query:(.)+', result).group().split()[1]
-                seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=', '').replace(']', '')
-                outDict[query] ={}
-                outDict[query]['length'] = int(seqLen)
-                outDict[query][toolName] = {}
+            query = re.search(r'Query:(.)+', result).group().split()[1]
+            seqLen = re.search(r'Query:(.)+', result).group().split()[2].replace('[L=', '').replace(']', '')
+            outDict[query] ={}
+            outDict[query]['length'] = int(seqLen)
+            outDict[query][toolName] = {}
+            if not 'No hits detected that satisfy reporting thresholds' in result:
                 tmp = result.split('Domain annotation for each model:')
                 for line in tmp[0].split('\n'):
                     if re.search('^\d+', line.lstrip()):
@@ -371,11 +377,14 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                         dom = line.strip().split()[1]
                     if re.search('^\d+', line.lstrip()):
                         items = line.lstrip().split()
-                        if toolName+'_'+dom in outDict[query][toolName]:
+                        if toolName + '_' + dom in outDict[query][toolName]:
                             if float(items[4]) <= eInstance:
-                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]),
-                                                                                               int(items[13]),
-                                                                                               float(items[4])))
+                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]), # envfrom
+                                                                                               int(items[13]), # envto
+                                                                                               float(items[4]), # c-Evalue
+                                                                                               float(items[2]), # bit-score
+                                                                                               int(items[6]), # hmmfrom
+                                                                                               int(items[7]))) # hmmto
     return outDict
 
 # get clan and acc from PFAM dat file
@@ -396,8 +405,10 @@ def readDatFile(toolPath):
                     else:
                         clan = 'NA'
                     acc = re.search(r'#=GF AC(.)+', bl).group().split()[-1]
+                    len = re.search(r'#=GF ML(.)+', bl).group().split()[-1]
                     pfamDict[dom]['clan'] = clan
                     pfamDict[dom]['acc'] = acc
+                    pfamDict[dom]['length'] = len
             return pfamDict
     except:
         print('%s does not exist or no accession ID can be found' % datFile)
@@ -520,6 +531,23 @@ def getPfamAcc(toolPath, annoDict):
             if dom.replace('pfam_','') in pfamDict:
                 outDict[dom] = pfamDict[dom.replace('pfam_','')]['acc']
     return outDict
+
+
+def getPhmmLength(toolPath, annoDict):
+    outDict = {}
+    pfam_len = read_file_to_dict(f'{toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')
+    smart_len = read_file_to_dict(f'{toolPath}/SMART/SMART-hmms/SMART.hmm.length')
+    for prot in list(annoDict.keys()):
+        if 'pfam' in annoDict[prot]:
+            for dom, value in annoDict[prot]['pfam'].items():
+                if dom.replace('pfam_','') in pfam_len:
+                    outDict[dom] = pfam_len[dom.replace('pfam_','')]
+        if 'smart' in annoDict[prot]:
+            for dom, value in annoDict[prot]['smart'].items():
+                if dom.replace('smart_','') in smart_len:
+                    outDict[dom] = smart_len[dom.replace('smart_','')]
+    return outDict
+
 
 # get version and used cutoffs of annotation tools
 def getVersions(tools, toolPath, cutoffs):

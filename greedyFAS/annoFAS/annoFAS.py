@@ -31,6 +31,8 @@ import greedyFAS.annoFAS.annoModules as annoModules
 from tqdm import tqdm
 from shutil import copyfile
 from pkg_resources import get_distribution
+import json
+import shutil
 
 home = expanduser('~')
 
@@ -39,6 +41,14 @@ def runAnnoFas(args):
      annoFile, cpus, annoToolFile) = args
     # get list of cutoffs
     cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
+    # check for length files
+    missing_len_files = []
+    if not os.path.exists(os.path.abspath(f'{toolPath}/Pfam/Pfam-hmms/Pfam-A.hmm.length')):
+        missing_len_files.append('PFAM')
+    if not os.path.exists(os.path.abspath(f'{toolPath}/SMART/SMART-hmms/SMART.hmm.length')):
+        missing_len_files.append('SMART')
+    if len(missing_len_files) > 0:
+        sys.exit(f'Length files are missing for {missing_len_files}! Please run fas.setup with --addLength option to create those files.')
     # do annotation
     outFile = outPath+'/'+outName+'.json'
     if annoModules.checkFileEmpty(outFile) == True or force:
@@ -48,18 +58,24 @@ def runAnnoFas(args):
                                                    annoModules.getAnnoTools(annoToolFile, toolPath), eFlps, signalpOrg,
                                                    eFeature, eInstance, hmmCores])
             # do annotation and save to json output
-            pool = mp.Pool(cpus)
             annoOut = []
-            for _ in tqdm(pool.imap_unordered(annoModules.doAnno, annoJobs), total=len(annoJobs)):
-                annoOut.append(_)
+            if cpus == 1:
+                for job in annoJobs:
+                    result = annoModules.doAnno(job)
+                    annoOut.append(result)
+            else:
+                pool = mp.Pool(cpus)
+                for _ in tqdm(pool.imap_unordered(annoModules.doAnno, annoJobs), total=len(annoJobs)):
+                    annoOut.append(_)
+                pool.close()
             annoDict = annoModules.mergeNestedDic(annoOut)
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
+            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'])
             annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
                                                           cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
-            pool.close()
         else:
             if annoFile == '':
                 print('No reference annotation given! Please specify with --annoFile <path to exising annotation file>')
@@ -78,22 +94,43 @@ def runAnnoFas(args):
             redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg,
                                                    eFeature, eInstance, hmmCores])
             # redo annotation
-            pool = mp.Pool(mp.cpu_count()-1)
-            annoOut = []
-            for _ in tqdm(pool.imap_unordered(annoModules.doAnno, redoJobs), total=len(redoJobs)):
-                annoOut.append(_)
+            if cpus == 1:
+                for job in redoJobs:
+                    result = annoModules.doAnno(job)
+                    annoOut.append(result)
+            else:
+                pool = mp.Pool(cpus)
+                for _ in tqdm(pool.imap_unordered(annoModules.doAnno, redoJobs), total=len(redoJobs)):
+                    annoOut.append(_)
+                pool.close()
             redoAnnoDict = annoModules.mergeNestedDic(annoOut)
             # replace old annotations and save to json output
             annoDict = annoModules.replaceAnno(outFile, redoAnnoDict, redo)
             annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
+            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'])
             annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
                                                           cutoffs)
             annoModules.save2json(annoDict, outName, outPath)
-            pool.close()
         else:
             print(outFile + ' already exists!')
+
+
+def updateAnno(outPath, outName, toolPath, annoToolFile, eFeature, eInstance, eFlps, signalpOrg):
+    oldAnnoFile = f'{outPath}/{outName}.json'
+    annoModules.checkFileExist(oldAnnoFile)
+    cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
+    with open(oldAnnoFile, 'r') as f:
+        annoDict = json.load(f)
+        f.close()
+        if not 'length' in annoDict:
+            shutil.move(f'{oldAnnoFile}', f'{oldAnnoFile}.old')
+            annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
+            annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
+                                                          cutoffs)
+            annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'])
+            annoModules.save2json(annoDict, outName, outPath)
 
 
 def main():
@@ -124,6 +161,8 @@ def main():
                                          'Only one selection allowed!',
                           choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
                           action='store', default='', type=str)
+    optional.add_argument('--update', help='Update annotation json file to add more info e.g. inteprotID, pHMM length, tool versions',
+                          action='store_true', default='')
     optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). '
                                                   '--annoFile required for specifying existing annotation file!',
                           action='store_true', default='')
@@ -179,6 +218,12 @@ def main():
             sys.exit('No existing annotation file given for extraction! Please specify it using --annoFile')
 
     annoToolFile = args.annoToolFile
+
+    # run update anno file
+    if args.update:
+        updateAnno(outPath, outName, toolPath, annoToolFile, eFeature, eInstance, eFlps, signalpOrg)
+        sys.exit()
+
     # run annoFAS
     start = time.time()
     print('PID ' + str(os.getpid()))
