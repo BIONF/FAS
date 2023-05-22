@@ -69,8 +69,8 @@ def write_domain_file(path, idlist, outpath, tools, groupname):
                                 phmm_info = phmm_info + str(proteome['length'][feature]) + '\n'
                             else:
                                 phmm_info = phmm_info + 'NA\n'
-                        out.write(groupname + "#" + pid + "\t" + pid + "\t" + str(proteome[pid]["length"]) + "\t"
-                                  + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tNA"
+                        out.write(groupname + "#" + pid + "\t" + pid + "\t" + str(proteome["feature"][pid]["length"])
+                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tNA"
                                   + phmm_info)
 
 
