@@ -65,7 +65,7 @@ def write_domain_file(path, idlist, outpath, tools, groupname):
                         if len(instance) > 3:
                             phmm_info = str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
                                         + str(instance[5]) + '\t'
-                            if feature in seed_proteome['length']:
+                            if feature in proteome['length']:
                                 phmm_info = phmm_info + str(proteome['length'][feature]) + '\n'
                             else:
                                 phmm_info = phmm_info + 'NA\n'
