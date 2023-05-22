@@ -175,8 +175,11 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
         seed_proteome = tmp_data["feature"]
     clan_dict = tmp_data["clan"]
     interprokeys = {}
+    phmm = {}
     if 'inteprotID' in tmp_data:
         interprokeys.update(tmp_data['inteprotID'])
+    if 'length' in tmp_data:
+        phmm.update(tmp_data['length'])
     data = []
     for spec in jobdict:
         data.append([spec,
@@ -189,7 +192,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
                      "pairwise": jobdict[spec], "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
                      "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0,
                      "ref_proteome": [spec + '.json'], "progress": False},
-                     seed_proteome, seed_weight, weight_dir, clan_dict, fasta, tmp_path, interprokeys])
+                     seed_proteome, seed_weight, weight_dir, clan_dict, fasta, tmp_path, interprokeys, phmm])
     jobpool = multiprocessing.Pool(processes=cores)
     results = []
     for _ in tqdm(jobpool.imap_unordered(run_fas, data), total=len(jobdict)):
@@ -233,13 +236,16 @@ def run_fas(data):
         for i in missing:
             query_proteome[i] = tmp_data["feature"][i]
     interprokeys = data[8]
+    phmm = data[9]
     if 'inteprotID' in tmp_data:
         interprokeys.update(tmp_data['inteprotID'])
+    if 'length' in tmp_data:
+        phmm.update(tmp_data['length'])
     clan_dict = data[5]
     clan_dict.update(tmp_data["clan"])
     seed_proteome = data[2]
     weight = w_weight_correction("loge", tmp_data["count"])
-    f_results = greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[1], interprokeys)
+    f_results = greedyFAS.fc_main(weight, seed_proteome, query_proteome, clan_dict, data[1], interprokeys, phmm)
     outdata = {}
     for result in f_results:
         outdata[result[0], result[1]] = (result[2][0], 0.0)
@@ -249,7 +255,7 @@ def run_fas(data):
         for pair in data[1]['pairwise']:
             pairtmp.append((pair[1], pair[0]))
         data[1]['pairwise'] = pairtmp
-        r_results = greedyFAS.fc_main(data[3], query_proteome, seed_proteome, clan_dict, data[1], interprokeys)
+        r_results = greedyFAS.fc_main(data[3], query_proteome, seed_proteome, clan_dict, data[1], interprokeys, phmm)
         for result in r_results:
             outdata[result[1], result[0]] = (outdata[result[1], result[0]][0], result[2][0])
     return outdata, data[0]
