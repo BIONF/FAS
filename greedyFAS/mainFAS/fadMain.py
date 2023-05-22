@@ -63,6 +63,7 @@ def fc_start(option):
     clan_dict = {}
     option["reverse"] = False
     interprokeys = {}
+    phmm = {}
     v_warning = False
     version = None
     if option['weight_path']:
@@ -76,6 +77,8 @@ def fc_start(option):
         clan_dict.update(proteome["clan"])
         if 'inteprotID' in proteome:
             interprokeys.update(proteome['inteprotID'])
+        if 'length' in proteome:
+            phmm.update(proteome['length'])
         version, v_warning = check_version(version, proteome, v_warning)
     seed_proteome = mergeNestedDic(proteome_list)
     proteome_list = []
@@ -85,6 +88,8 @@ def fc_start(option):
         clan_dict.update(proteome["clan"])
         if 'inteprotID' in proteome:
             interprokeys.update(proteome['inteprotID'])
+        if 'length' in proteome:
+            phmm.update(proteome['length'])
         version, v_warning = check_version(version, proteome, v_warning)
     query_proteome = mergeNestedDic(proteome_list)
     if v_warning:
@@ -106,7 +111,7 @@ def fc_start(option):
                 raise Exception(protid + " is not in the query annotation")
     if option["bidirectional"]:
         print("calculating forward scores...")
-        f_results = fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys)
+        f_results = fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm)
         id_tmp = option["seed_id"]
         option["reverse"] = True
         option["seed_id"] = option["query_id"]
@@ -117,24 +122,24 @@ def fc_start(option):
                 pairtmp.append((pair[1], pair[0]))
             option["pairwise"] = pairtmp
         print("calculating backward scores...")
-        r_results = fc_main(weights, query_proteome, seed_proteome, clan_dict, option, interprokeys)
+        r_results = fc_main(weights, query_proteome, seed_proteome, clan_dict, option, interprokeys, phmm)
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
         if not option['tsv']:
             write_tsv_out(option["outpath"], True, (f_results, r_results))
     else:
         print("calculating forward scores...")
-        results = fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys)
+        results = fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm)
         if not option["tsv"]:
             write_tsv_out(option["outpath"], False, (results, None))
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
 
 
-def fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys):
+def fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm):
     """Main function,
     manages linearization and scoring, creates the output
-    Function calls: w_weighting_constraints(), w_weighting(), su_lin_query_protein(), pb_graphtraversal(),
+    Function calls: su_lin_query_protein(), pb_graphtraversal(),
                     pb_entire_graphtraversal_priority(),
                     sf_entire_calc_score(), pb_entire_main_nongreedy(), w_weight_const_rescale()
 
@@ -153,6 +158,8 @@ def fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprok
             domain_out = open(option["outpath"] + "_reverse.domains", "w")
         else:
             domain_out = open(option["outpath"] + "_forward.domains", "w")
+        domain_out.write('# pairID\torthoID\tseqLen\tfeature\tfStart\tfEnd\tfWeight\tfPath\tinterProID\te-value'
+                         + '\tbitScore\tpStart\tpEnd\tpLen\n')
     if option['pairwise']:
         if option['progress']:
             progress = tqdm(total=len(option['pairwise']), file=sys.stdout)
@@ -170,7 +177,7 @@ def fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprok
             ####
             results.append(fc_main_sub(protein, weights, seed_proteome, option, all_query_paths, query_features,
                                        go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
-                                       domain_out, interprokeys))
+                                       domain_out, interprokeys, phmm))
             if option["progress"]:
                 progress.update(1)
     else:
@@ -198,7 +205,7 @@ def fc_main(weights, seed_proteome, query_proteome, clan_dict, option, interprok
             for protein in seedlist:
                 results.append(fc_main_sub(protein, weights, seed_proteome, option, all_query_paths,
                                            query_features, go_priority, a_q_f, clan_dict, query_graph, query_proteome,
-                                           query, query_clans, domain_out, interprokeys))
+                                           query, query_clans, domain_out, interprokeys, phmm))
                 if option["progress"]:
                     progress.update(1)
         if option["progress"]:
@@ -231,7 +238,7 @@ def fc_prep_query(query, query_proteome, option, clan_dict):
 
 
 def fc_main_sub(protein, weights, seed_proteome, option, all_query_paths, query_features, go_priority, a_q_f,
-                clan_dict, tmp_query_graph, query_proteome, query, query_clans, domain_out, interprokeys):
+                clan_dict, tmp_query_graph, query_proteome, query, query_clans, domain_out, interprokeys, phmm):
     go_priority_2 = False
     mode = 0
     pathcount = 0
@@ -433,7 +440,7 @@ def fc_main_sub(protein, weights, seed_proteome, option, all_query_paths, query_
     # unweighted case
     if option["domain"]:
         write_domain_out_fad(seed_proteome, query_proteome, protein, query, weights, scale, path_tmp, path_tmp_query,
-                             domain_out, option, interprokeys)
+                             domain_out, option, interprokeys, phmm)
     if option["raw"]:
         print('#' + '\t' + protein + '\t' + query + '\t' + str(score[3]))
     return protein, query, (score[3], score[0], score[1], score[2], score[6]), mode_out

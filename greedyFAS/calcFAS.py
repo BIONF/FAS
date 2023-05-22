@@ -91,7 +91,7 @@ def get_options():
                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                              " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
                              "templates")
-    inargs.add_argument("-d", "--featuretypes", default=None, type=str,
+    inargs.add_argument("-d", "--featuretypes", default='', type=str,
                         help="inputfile that contains the tools/databases used to predict features. Please look at the "
                              "FAS wiki pages for templates of the the featuretypes input file")
     inargs.add_argument("--extra_annotation", default=None, nargs='*', type=str,

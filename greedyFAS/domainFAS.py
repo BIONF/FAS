@@ -55,12 +55,23 @@ def get_options():
 def write_domain_file(path, idlist, outpath, tools, groupname):
     proteome = fasInput.read_json(path)["feature"]
     with open(outpath, 'w') as out:
+        out.write('# pairID\torthoID\tseqLen\tfeature\tfStart\tfEnd\tfWeight\tfPath\tinterProID\te-value\tbitScore'
+                  + '\tpStart\tpEnd\tpLen\n')
         for pid in idlist:
             for tool in tools:
                 for feature in proteome[pid][tool]:
                     for instance in proteome[pid][tool][feature]["instance"]:
-                        out.write(groupname + "#" + pid + "\t" + pid + "\t" + str(proteome[pid]["length"]) +
-                                  "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tN\n")
+                        phmm_info = 'NA\tNA\tNA\tNA\tNA\n'
+                        if len(instance) > 3:
+                            phmm_info = str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
+                                        + str(instance[5]) + '\t'
+                            if feature in seed_proteome['length']:
+                                phmm_info = phmm_info + str(proteome['length'][feature]) + '\n'
+                            else:
+                                phmm_info = phmm_info + 'NA\n'
+                        out.write(groupname + "#" + pid + "\t" + pid + "\t" + str(proteome[pid]["length"]) + "\t"
+                                  + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tNA"
+                                  + phmm_info)
 
 
 def main():
