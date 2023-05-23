@@ -263,26 +263,17 @@ def run_fas(data):
 
 def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_spec, groupdict):
     out_f = open(out_path + outname + "_forward.domains", "w")
+    out_f.write('# pairID\torthoID\tseqLen\tfeature\tfStart\tfEnd\tfWeight\tfPath\tinterProID\te-value\tbitScore'
+                + '\tpStart\tpEnd\tpLen\n')
     out_r = None
     if bidirectional:
         out_r = open(out_path + outname + "_reverse.domains", "w")
+        out_r.write('# pairID\torthoID\tseqLen\tfeature\tfStart\tfEnd\tfWeight\tfPath\tinterProID\te-value\tbitScore'
+                    + '\tpStart\tpEnd\tpLen\n')
     for spec in jobdict:
         with open(tmp_path + "/" + spec + "_forward.domains", "r") as infile:
             for line in infile.readlines():
-                cells = line.split("\t")
-                s_id, q_id = cells[0].split("#")
-                for seed in groupdict[s_id]:
-                    if q_id in groupdict[s_id][seed]:
-                        if not cells[1] == q_id:
-                            p_id = seed_spec + "|" + cells[1]
-                        else:
-                            p_id = spec + "|" + cells[1] + "|" + groupdict[s_id][seed][q_id]
-                        out_f.write(seed + "#" + seed + "|" + spec + "|" + q_id + "|" + groupdict[s_id][seed][q_id] +
-                                    "\t" + seed + "|" + p_id + "\t" + "\t".join(cells[2:]))
-        os.remove(tmp_path + "/" + spec + "_forward.domains")
-        if bidirectional:
-            with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
-                for line in infile.readlines():
+                if not line[0] == '#':
                     cells = line.split("\t")
                     s_id, q_id = cells[0].split("#")
                     for seed in groupdict[s_id]:
@@ -291,8 +282,24 @@ def join_domain_out(jobdict, tmp_path, out_path, bidirectional, outname, seed_sp
                                 p_id = seed_spec + "|" + cells[1]
                             else:
                                 p_id = spec + "|" + cells[1] + "|" + groupdict[s_id][seed][q_id]
-                            out_r.write(seed + "#" + seed + "|" + spec + "|" + q_id + "|" + groupdict[s_id][seed][q_id]
+                            out_f.write(seed + "#" + seed + "|" + spec + "|" + q_id + "|" + groupdict[s_id][seed][q_id]
                                         + "\t" + seed + "|" + p_id + "\t" + "\t".join(cells[2:]))
+        os.remove(tmp_path + "/" + spec + "_forward.domains")
+        if bidirectional:
+            with open(tmp_path + "/" + spec + "_reverse.domains", "r") as infile:
+                for line in infile.readlines():
+                    if not line[0] == '#':
+                        cells = line.split("\t")
+                        s_id, q_id = cells[0].split("#")
+                        for seed in groupdict[s_id]:
+                            if q_id in groupdict[s_id][seed]:
+                                if not cells[1] == q_id:
+                                    p_id = seed_spec + "|" + cells[1]
+                                else:
+                                    p_id = spec + "|" + cells[1] + "|" + groupdict[s_id][seed][q_id]
+                                out_r.write(seed + "#" + seed + "|" + spec + "|" + q_id + "|"
+                                            + groupdict[s_id][seed][q_id] + "\t" + seed + "|" + p_id + "\t"
+                                            + "\t".join(cells[2:]))
             os.remove(tmp_path + "/" + spec + "_reverse.domains")
     out_f.close()
     if bidirectional:
