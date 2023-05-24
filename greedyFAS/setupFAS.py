@@ -424,7 +424,7 @@ def install_annoTool(options):
     check_hmmer()
 
 
-    tools = check_installed_tools(anno_path, ignoreList, reinstall, force, greedyFasPath)
+    tools = check_installed_tools(anno_path, ignoreList, reinstall, force, options['greedyFasPath'])
 
     # do install anno tools
     current_dir = os.getcwd()
