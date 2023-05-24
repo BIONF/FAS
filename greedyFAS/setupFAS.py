@@ -378,7 +378,7 @@ def check_hmmer():
 
 def check_installed_tools(anno_path, ignoreList, reinstall, force, greedyFasPath):
         # list of annotation tools
-        defaultTools = ['Pfam', 'SMART', 'fLPS', 'COILS2', 'SEG']
+        defaultTools = ['Pfam', 'fLPS', 'COILS2', 'SEG']
         if platform == 'darwin':
             ignoreList.extend(('SEG', 'TMHMM'))
         tools = [tool for tool in defaultTools if tool not in ignoreList]
@@ -437,13 +437,13 @@ def install_annoTool(options):
         print(os.getcwd())
         print('----------------------------------')
         # install TMHMM and SignalP
-        if not ('TMHMM' in ignoreList and 'SignalP' in ignoreList):
-            (dtu_path, signalp_source, tmhmm_source) = get_dtu_path(dtuPathIn)
-        else:
-            dtu_path = 0
-        if not dtu_path == 0:
-            if not 'SignalP' in ignoreList:
-                if len(reinstall) == 0 or 'SignalP' in reinstall:
+        if len(reinstall) == 0 or 'SignalP' in reinstall or 'TMHMM' in reinstall:
+            if not ('TMHMM' in ignoreList and 'SignalP' in ignoreList):
+                (dtu_path, signalp_source, tmhmm_source) = get_dtu_path(dtuPathIn)
+            else:
+                dtu_path = 0
+            if not dtu_path == 0:
+                if not 'SignalP' in ignoreList:
                     print('==> Installing SignalP...')
                     if not os.path.isdir(anno_path + '/SignalP'):
                         shutil.unpack_archive(dtu_path + '/' + signalp_source, anno_path, 'gztar')
@@ -451,8 +451,7 @@ def install_annoTool(options):
                     os.chdir(anno_path)
                     if not 'SignalP' in tools:
                         tools.append('SignalP')
-            if not 'TMHMM' in ignoreList:
-                if len(reinstall) == 0 or 'TMHMM' in reinstall:
+                if not 'TMHMM' in ignoreList:
                     if not platform == 'darwin':
                         print('==> Installing TMHMM...')
                         if not os.path.isdir(anno_path + '/TMHMM'):
@@ -467,6 +466,11 @@ def install_annoTool(options):
             if not smart_path == '':
                 print('==> Installing SMART...')
                 install_smart(smart_path, anno_path)
+                if not 'SMART' in tools:
+                    tools.append('SMART')
+            else:
+                if 'SMART' in reinstall:
+                    sys.exit('ERROR: You must provide your downloaded SMART data. Check https://github.com/BIONF/FAS/wiki/setup for more details!')
 
         # install PFAM
         if len(reinstall) == 0 or 'Pfam' in reinstall:
