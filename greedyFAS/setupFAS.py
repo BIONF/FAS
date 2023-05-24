@@ -376,7 +376,7 @@ def check_hmmer():
             sys.exit('\033[91mERROR: Please install HMMER before using FAS (http://hmmer.org/documentation.html)\033[0m')
 
 
-def check_installed_tools(anno_path, ignoreList, reinstall, force):
+def check_installed_tools(anno_path, ignoreList, reinstall, force, greedyFasPath):
         # list of annotation tools
         defaultTools = ['Pfam', 'SMART', 'fLPS', 'COILS2', 'SEG']
         if platform == 'darwin':
@@ -405,7 +405,7 @@ def check_installed_tools(anno_path, ignoreList, reinstall, force):
                                         tools.append(r_tool)
                         else:
                             print('Annotation tools already found at %s' % anno_path)
-                            if not os.path.exists(os.path.abspath(options['greedyFasPath']+'/pathconfig.txt')):
+                            if not os.path.exists(os.path.abspath(greedyFasPath + '/pathconfig.txt')):
                                 print('If you want to add %s to config file of FAS, please rerun this function with --savePath!'
                                       % anno_path)
                             print('If you want to re-install them, rerun this function with --force!')
@@ -424,7 +424,7 @@ def install_annoTool(options):
     check_hmmer()
 
 
-    tools = check_installed_tools(anno_path, ignoreList, reinstall, force)
+    tools = check_installed_tools(anno_path, ignoreList, reinstall, force, greedyFasPath)
 
     # do install anno tools
     current_dir = os.getcwd()
