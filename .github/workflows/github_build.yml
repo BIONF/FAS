@@ -38,21 +38,31 @@ jobs:
     - name: Test
       run: |
         pwd
+        echo "*** INSTALL FAS..."
         pip install .
+        echo "*** DOWNLOAD DEPENDENCIES AND SETUP FAS..."
         wget https://github.com/BIONF/data4travis/raw/main/dtu/signalp-4.1g.Linux.tar.gz &> /dev/null
         wget https://github.com/BIONF/data4travis/raw/main/dtu/tmhmm-2.0c.Linux.tar.gz &> /dev/null
         wget https://applbio.biologie.uni-frankfurt.de/download/hamstr_qfo/annotation_FAS2020d.tar.gz &> /dev/null
         fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
         less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
         mv annoTools.txt.mod annoTools.txt
+        echo "*** TEST FAS.DOANNO..."
         fas.doAnno -i test_annofas.fa -o anno_output
+        echo "*** TEST FAS.RUN..."
         fas.run -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
+        echo "*** TEST FAS.CHECKANNO..."
         fas.checkAnno -s greedyFAS/annoFAS/test_annofas.fa -a anno_output/test_annofas.json -o tmp
+        echo "*** TEST FAS.GETPROTBYANNO..."
         fas.getProtByAnno -a anno_output/test_annofas.json -f G-alpha
+        echo "*** TEST FAS.CALCCOMPLEXITY..."
         fas.calcComplexity -i anno_output/test_annofas.json
+        echo "*** TEST FAS.GETDOMAINS..."
         fas.getDomains -j anno_output/test_annofas.json -p A0A1S4GN31 -o A0A1S4GN31.domains
+        echo "*** TEST FAS.SPLITJSON..."
         echo "A0A1W5C929" > id.txt
         fas.splitJson -x id.txt -i anno_output/test_annofas.json -o anno_output/out.json
+        echo "*** TEST FAS.RUNFDOGFAS..."
         wget https://github.com/BIONF/data4travis/raw/main/fas_test.tar.gz &> /dev/null
         tar -xf fas_test.tar.gz
         fas.runFdogFas -i test.extended.fa -w annotation_dir
