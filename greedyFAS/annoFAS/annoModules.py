@@ -442,24 +442,23 @@ def getAnnoTools(annoToolFile, toolPath):
 
 
 def createAnnoJobs(args):
-    (outName, outPath, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
+    (outName, outPath, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores, pid) = args
     annoJobs = []
     for s in SeqIO.parse(seqFile, 'fasta'):
         annoJobs.append([s.id, s.seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature,
-                         eInstance, hmmCores])
+                         eInstance, hmmCores, pid])
     return annoJobs
 
 def doAnno(args):
-    (seqId, seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores) = args
+    (seqId, seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores, pid) = args
     # create temp fasta file
-    pid = os.getpid()
-    Path(f'{outPath}/{pid}').mkdir(parents = True, exist_ok = True)
+    Path(f'{outPath}/tmp/{pid}').mkdir(parents = True, exist_ok = True)
     outNameTmp = outName.replace("|","_")
     seqIdTmp = seqId.replace("|","_").replace(".","_")
-    tmpFile = open(f'{outPath}/{pid}/{outNameTmp}_{seqIdTmp}.fa', 'w') #outPath+'/tmp/'+outNameTmp+'_'+seqIdTmp+'.fa', 'w')
+    seqFile = f'{outPath}/tmp/{pid}/{outNameTmp}_{seqIdTmp}.fa'
+    tmpFile = open(seqFile, 'w')
     tmpFile.write(str('>' + seqId + '\n' + seq))
     tmpFile.close()
-    seqFile = f'{outPath}/{pid}/{outNameTmp}_{seqIdTmp}.fa' # outPath+'/tmp/'+outNameTmp+'_'+seqIdTmp+'.fa'
     # run annotation
     annoList = []
     final = {}

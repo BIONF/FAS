@@ -39,6 +39,7 @@ home = expanduser('~')
 def runAnnoFas(args):
     (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract,
      annoFile, cpus, annoToolFile) = args
+    pid = os.getpid()
     # get list of cutoffs
     cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
     # check for length files
@@ -54,14 +55,14 @@ def runAnnoFas(args):
         sys.exit(f'Length files are missing for {missing_len_files}! Please run fas.setup with --addLength option to create those files.')
     # do annotation
     outFile = outPath+'/'+outName+'.json'
+    annoOut = []
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
             print('Doing annotation for %s...' % seqFile)
             annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath,
                                                    annoModules.getAnnoTools(annoToolFile, toolPath), eFlps, signalpOrg,
-                                                   eFeature, eInstance, hmmCores])
+                                                   eFeature, eInstance, hmmCores, pid])
             # do annotation and save to json output
-            annoOut = []
             if cpus == 1:
                 for job in annoJobs:
                     result = annoModules.doAnno(job)
@@ -96,8 +97,7 @@ def runAnnoFas(args):
         if not redo == '':
             print('Redoing annotation for %s...' % redo)
             redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg,
-                                                   eFeature, eInstance, hmmCores])
-            annoOut = []
+                                                   eFeature, eInstance, hmmCores, pid])
             # redo annotation
             if cpus == 1:
                 for job in redoJobs:

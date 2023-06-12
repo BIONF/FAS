@@ -50,6 +50,8 @@ jobs:
         fas.doAnno -i test_annofas.fa -o anno_output
         echo "*** TEST FAS.RUN..."
         fas.run -s greedyFAS/annoFAS/test_annofas.fa -q greedyFAS/annoFAS/test_annofas.fa -a anno_output -o fas_output
+        echo "*** TEST FAS.DOANNO REDO..."
+        fas.doAnno -i test_annofas.fa -o anno_output --redo pfam
         echo "*** TEST FAS.CHECKANNO..."
         fas.checkAnno -s greedyFAS/annoFAS/test_annofas.fa -a anno_output/test_annofas.json -o tmp
         echo "*** TEST FAS.GETPROTBYANNO..."
