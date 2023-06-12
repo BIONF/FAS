@@ -97,6 +97,7 @@ def runAnnoFas(args):
             print('Redoing annotation for %s...' % redo)
             redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg,
                                                    eFeature, eInstance, hmmCores])
+            annoOut = []
             # redo annotation
             if cpus == 1:
                 for job in redoJobs:
