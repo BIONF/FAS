@@ -365,6 +365,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
             outDict[query][toolName] = {}
             if not 'No hits detected that satisfy reporting thresholds' in result:
                 tmp = result.split('Domain annotation for each model:')
+                flag_instance = {} # check if any instance exceeds the cutoff
                 for line in tmp[0].split('\n'):
                     if re.search('^\d+', line.lstrip()):
                         items = line.lstrip().split()
@@ -372,19 +373,24 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                             outDict[query][toolName][toolName+'_'+items[8]] = {}
                             outDict[query][toolName][toolName+'_'+items[8]]['evalue'] = float(items[0])
                             outDict[query][toolName][toolName+'_'+items[8]]['instance'] = []
+                            flag_instance[toolName+'_'+items[8]] = 0
                 for line in tmp[1].split('\n'):
                     if line.startswith('>>'):
                         dom = line.strip().split()[1]
                     if re.search('^\d+', line.lstrip()):
-                        items = line.lstrip().split()
+                        items2 = line.lstrip().split()
                         if toolName + '_' + dom in outDict[query][toolName]:
-                            if float(items[4]) <= eInstance:
-                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items[12]), # envfrom
-                                                                                               int(items[13]), # envto
-                                                                                               float(items[4]), # c-Evalue
-                                                                                               float(items[2]), # bit-score
-                                                                                               int(items[6]), # hmmfrom
-                                                                                               int(items[7]))) # hmmto
+                            if float(items2[4]) <= eInstance:
+                                flag_instance[toolName+'_'+dom] = 1
+                                outDict[query][toolName][toolName+'_'+dom]['instance'].append((int(items2[12]), # envfrom
+                                                                                               int(items2[13]), # envto
+                                                                                               float(items2[4]), # c-Evalue
+                                                                                               float(items2[2]), # bit-score
+                                                                                               int(items2[6]), # hmmfrom
+                                                                                               int(items2[7]))) # hmmto
+                for i in flag_instance:
+                    if flag_instance[i] == 0:
+                        del outDict[query][toolName][i]
     return outDict
 
 # get clan and acc from PFAM dat file
