@@ -280,8 +280,10 @@ def write_phmm_length(anno_path, tool_name):
 
 def install_coils(anno_path):
     if not os.path.islink('%s/COILS2/COILS2' % anno_path):
-        url = 'http://ftp.ebi.ac.uk/pub/software/unix/coils-2.2/'
-        file = 'ncoils.tar.gz'
+        # url = 'http://ftp.ebi.ac.uk/pub/software/unix/coils-2.2/'
+        # file = 'ncoils.tar.gz'
+        url = 'http://www.russelllab.org/coils/'
+        file = 'coils.tar.gz'
         download_file(url, file)
         if os.path.isfile(file):
             coils_path = anno_path + '/COILS2'
