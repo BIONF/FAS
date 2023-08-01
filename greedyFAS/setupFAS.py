@@ -35,6 +35,7 @@ import ssl
 import urllib.request
 import time
 from greedyFAS.disorderFAS import install_aucpred
+import greedyFAS.annoFAS.annoModules as annoModules
 from pkg_resources import get_distribution
 
 home = expanduser('~')
@@ -203,47 +204,60 @@ def install_tmhmm():
 
 
 def install_smart(smart_path, anno_path):
-    check = glob.glob('%s/hmm/*.HMM' % smart_path)
+    hmmExt = 'HMM'
+    check = glob.glob(f'{smart_path}/hmm/*.{hmmExt}')
     if len(check) < 1:
-        sys.exit('ERROR: Failed to install SMART from %s' % smart_path)
+        hmmExt = 'hmm'
+        check = glob.glob(f'{smart_path}/hmm/*.{hmmExt}')
+        if len(check) < 1:
+            sys.exit('ERROR: Failed to install SMART from %s' % smart_path)
+    if not os.path.exists('%s/SMART/SMART-hmms/SMART.hmm.length' % anno_path):
+        Path(anno_path + '/SMART/SMART-hmms').mkdir(parents=True, exist_ok=True)
+        catCmd = f'cat {smart_path}/hmm/*.{hmmExt} > {anno_path}/SMART/SMART-hmms/SMART.{hmmExt}'
+        subprocess.call([catCmd], shell=True)
+        hmmpressCmd = 'hmmpress -f %s/SMART/SMART-hmms/SMART.hmm' % (anno_path)
+        try:
+            subprocess.run([hmmpressCmd], shell=True, check=True)
+        except:
+            sys.exit('ERROR: Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
+        getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
+        subprocess.call([getVersionCmd], shell=True)
+        # write length file
+        write_phmm_length(anno_path, 'SMART')
     else:
-        if not os.path.exists('%s/SMART/SMART-hmms/SMART.hmm.length' % anno_path):
-            Path(anno_path + '/SMART/SMART-hmms').mkdir(parents=True, exist_ok=True)
-            catCmd = 'cat %s/hmm/*.HMM > %s/SMART/SMART-hmms/SMART.hmm' % (smart_path, anno_path)
-            subprocess.call([catCmd], shell=True)
-            hmmpressCmd = 'hmmpress -f %s/SMART/SMART-hmms/SMART.hmm' % (anno_path)
-            try:
-                subprocess.run([hmmpressCmd], shell=True, check=True)
-            except:
-                sys.exit('ERROR: Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
-            getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
-            subprocess.call([getVersionCmd], shell=True)
-            # write length file
-            write_phmm_length(anno_path, 'SMART')
-        else:
-            print('WARNING: SMART is already installed!')
+        print('WARNING: SMART is already installed!')
 
 
-def install_pfam(pfam_version, anno_path):
+def install_pfam(pfam_version, pfam_path, anno_path):
     if not os.path.exists('%s/Pfam/Pfam-hmms/Pfam-A.hmm.length' % anno_path):
-        url = 'https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/'
-        if not pfam_version == '':
-            url = 'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam%s' % pfam_version
         file = 'Pfam-A.hmm.gz'
         dat_file = 'Pfam-A.hmm.dat.gz'
         relnotes_file = 'relnotes.txt'
-        download_file(url, file)
-        download_file(url, dat_file)
-        download_file(url, relnotes_file)
+        if not pfam_path:
+            url = 'https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/'
+            if pfam_version:
+                url = 'https://ftp.ebi.ac.uk/pub/databases/Pfam/releases/Pfam%s' % pfam_version
+            download_file(url, file)
+            download_file(url, dat_file)
+            download_file(url, relnotes_file)
+        else:
+            annoModules.checkFileExist(f'{pfam_path}/{file}')
+            annoModules.checkFileExist(f'{pfam_path}/{dat_file}')
+            annoModules.checkFileExist(f'{pfam_path}/{relnotes_file}')
         if os.path.isfile(file):
             Path(anno_path + '/Pfam/Pfam-hmms').mkdir(parents=True, exist_ok=True)
             # move donwloaded file to anno_path/Pfam/Pfam-hmms
             try:
-                shutil.move(file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, file))
-                shutil.move(dat_file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, dat_file))
-                shutil.move(relnotes_file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, relnotes_file))
+                if not pfam_path:
+                    shutil.move(file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, file))
+                    shutil.move(dat_file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, dat_file))
+                    shutil.move(relnotes_file, '%s/Pfam/Pfam-hmms/%s' % (anno_path, relnotes_file))
+                else:
+                    shutil.copy(f'{pfam_path}/{file}', f'{anno_path}/Pfam/Pfam-hmms/{file}')
+                    shutil.copy(f'{pfam_path}/{dat_file}', f'{anno_path}/Pfam/Pfam-hmms/{dat_file}')
+                    shutil.copy(f'{pfam_path}/{relnotes_file}', f'{anno_path}/Pfam/Pfam-hmms/{relnotes_file}')
             except:
-                sys.exit('ERROR: Cannot move %s, %s & %s to %s/Pfam/Pfam-hmms' % (file, dat_file, relnotes_file, anno_path))
+                sys.exit('ERROR: Cannot move/copy %s, %s & %s to %s/Pfam/Pfam-hmms' % (file, dat_file, relnotes_file, anno_path))
             # unzip downloaded files
             unzipCmd = 'gzip -d %s/Pfam/Pfam-hmms/*.gz' % anno_path
             try:
@@ -423,6 +437,7 @@ def install_annoTool(options):
     ignoreList = options['ignore']
     reinstall = options['reinstall']
     pfam_version = options['pfamVersion']
+    pfam_path = options['pfamPath']
     check_hmmer()
 
 
@@ -476,11 +491,13 @@ def install_annoTool(options):
 
         # install PFAM
         if len(reinstall) == 0 or 'Pfam' in reinstall:
-            if not pfam_version == '':
+            if pfam_path:
+                print('==> Installing PFAM from %s...' % pfam_path)
+            elif pfam_version:
                 print('==> Installing PFAM version %s...' % pfam_version)
             else:
                 print('==> Installing PFAM latest version...')
-            install_pfam(pfam_version, anno_path)
+            install_pfam(pfam_version, pfam_path, anno_path)
 
         # install fLPS, COILS2 and SEG
         if len(reinstall) == 0 or 'fLPS' in reinstall:
@@ -623,7 +640,8 @@ def main():
     optional.add_argument('--smartPath', help='Set path to your downloaded SMART folder', action='store', default='')
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store',
                           default='')
-    optional.add_argument('--pfamVersion', help='Specify your own PFAM version. E.g. 28.0', action='store', default='')
+    optional.add_argument('--pfamVersion', help='Specify PFAM version. E.g.: 35.0', action='store', default='')
+    optional.add_argument('--pfamPath', help='Set path to your downloaded PFAM folder', action='store', default='')
     optional.add_argument('-i', '--ignore', help='List of tools should be ignored, e.g. SEG COILS2', nargs="*",
                         choices=['SignalP', 'TMHMM', 'COILS2', 'fLPS', 'SEG'],
                         action='store', default=[])
@@ -647,6 +665,7 @@ def main():
         'smartPath': args.smartPath,
         'dtuPath': args.dtuPath,
         'pfamVersion': args.pfamVersion,
+        'pfamPath': args.pfamPath,
         'ignore': args.ignore,
         'force': args.force,
         'reinstall': args.reinstall,
