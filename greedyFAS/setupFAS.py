@@ -34,6 +34,8 @@ from os.path import expanduser
 import ssl
 import urllib.request
 import time
+import multiprocessing as mp
+from tqdm import tqdm
 from greedyFAS.disorderFAS import install_aucpred
 import greedyFAS.annoFAS.annoModules as annoModules
 from pkg_resources import get_distribution
@@ -203,17 +205,65 @@ def install_tmhmm():
     subprocess.call([makelink_tmhmm], shell=True)
 
 
+def correct_aln(args):
+    (aln_file, anno_path) = args
+    tmp = {}
+    file_name = aln_file.split('/')[-1].split('.')[0]
+    Path(anno_path + '/SMART/aln').mkdir(parents = True, exist_ok = True)
+    with open(aln_file, 'r') as f:
+        for l in [line.rstrip() for line in f]:
+            if not l.startswith('CLUSTAL') and not l.startswith(' ') and len(l) > 0:
+                if not l.startswith('>'):
+                    id = l.split()[0].replace('.', '_')
+                    if len(l.split()) > 1:
+                        if not id in tmp:
+                            tmp[id] = l.split()[1].strip()
+                        else:
+                            tmp[id] += l.split()[1].strip()
+                else:
+                    break
+    if not len(tmp) > 0:
+        if not os.path.exists(f'{anno_path}/SMART/aln/{file_name}.aln'):
+            os.symlink(aln_file, f'{anno_path}/SMART/aln/{file_name}.aln')
+    else:
+        with open(f'{anno_path}/SMART/aln/{file_name}.aln', 'w') as o:
+            for i in tmp:
+                o.write(f'>{i}\n{tmp[i]}\n')
+
+
+def create_phmm(args):
+    (aln_file, anno_path) = args
+    file_name = aln_file.split('/')[-1].split('.')[0]
+    Path(anno_path + '/SMART/hmm').mkdir(parents = True, exist_ok = True)
+    if os.path.exists(f'{anno_path}/SMART/aln/{file_name}.aln'):
+        try:
+            hmmbuildCmd = f'hmmbuild {anno_path}/SMART/hmm/{file_name}.hmm {anno_path}/SMART/aln/{file_name}.aln > /dev/null 2>&1'
+            subprocess.run([hmmbuildCmd], shell=True, check=True)
+        except:
+            print(f'ERROR: Problem occurred while creating HMM profile for {aln_file}!')
+
+
 def install_smart(smart_path, anno_path):
-    hmmExt = 'HMM'
-    check = glob.glob(f'{smart_path}/hmm/*.{hmmExt}')
-    if len(check) < 1:
-        hmmExt = 'hmm'
-        check = glob.glob(f'{smart_path}/hmm/*.{hmmExt}')
-        if len(check) < 1:
-            sys.exit('ERROR: Failed to install SMART from %s' % smart_path)
+    aln_files = glob.glob(f'{smart_path}/aln/*.aln')
+    if len(aln_files) < 1:
+        sys.exit(f'ERROR: Cannot find aln files in {smart_path}')
     if not os.path.exists('%s/SMART/SMART-hmms/SMART.hmm.length' % anno_path):
+        # create profile hmms from aln files
+        aln_jobs = []
+        hmm_jobs = []
+        for aln in aln_files:
+            aln_jobs.append([aln, anno_path])
+            hmm_jobs.append([aln, anno_path])
+        cpus = mp.cpu_count()-1
+        pool = mp.Pool(cpus)
+        for _ in tqdm(pool.imap_unordered(correct_aln, aln_jobs), total = len(aln_jobs)):
+            pass
+        for _ in tqdm(pool.imap_unordered(create_phmm, hmm_jobs), total = len(hmm_jobs)):
+            pass
+        pool.close()
+        # create hmm database for hmmscan
         Path(anno_path + '/SMART/SMART-hmms').mkdir(parents=True, exist_ok=True)
-        catCmd = f'cat {smart_path}/hmm/*.{hmmExt} > {anno_path}/SMART/SMART-hmms/SMART.{hmmExt}'
+        catCmd = f'cat {anno_path}/SMART/hmm/*.hmm > {anno_path}/SMART/SMART-hmms/SMART.hmm'
         subprocess.call([catCmd], shell=True)
         hmmpressCmd = 'hmmpress -f %s/SMART/SMART-hmms/SMART.hmm' % (anno_path)
         try:
@@ -224,6 +274,9 @@ def install_smart(smart_path, anno_path):
         subprocess.call([getVersionCmd], shell=True)
         # write length file
         write_phmm_length(anno_path, 'SMART')
+        # remove temp folders (aln and hmm)
+        shutil.rmtree(f'{anno_path}/SMART/aln')
+        shutil.rmtree(f'{anno_path}/SMART/hmm')
     else:
         print('WARNING: SMART is already installed!')
 

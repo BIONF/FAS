@@ -28,7 +28,7 @@ with open('README.md', 'r') as input:
 
 setup(
     name='greedyFAS',
-    version='1.17.9',
+    version='1.17.10',
     python_requires='>=3.7.0',
     description='A tool to compare protein feature architectures',
     long_description=long_description,
