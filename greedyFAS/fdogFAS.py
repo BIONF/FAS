@@ -176,8 +176,8 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
     clan_dict = tmp_data["clan"]
     interprokeys = {}
     phmm = {}
-    if 'inteprotID' in tmp_data:
-        interprokeys.update(tmp_data['inteprotID'])
+    if 'interproID' in tmp_data:
+        interprokeys.update(tmp_data['interproID'])
     if 'length' in tmp_data:
         phmm.update(tmp_data['length'])
     data = []
@@ -237,8 +237,8 @@ def run_fas(data):
             query_proteome[i] = tmp_data["feature"][i]
     interprokeys = data[8]
     phmm = data[9]
-    if 'inteprotID' in tmp_data:
-        interprokeys.update(tmp_data['inteprotID'])
+    if 'interproID' in tmp_data:
+        interprokeys.update(tmp_data['interproID'])
     if 'length' in tmp_data:
         phmm.update(tmp_data['length'])
     clan_dict = data[5]

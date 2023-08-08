@@ -53,8 +53,8 @@ def checkCompleteAnno(seqFile, jsonFile):
 def checkOutdatedAnno(jsonFile):
     with open(jsonFile) as jf:
         annoDict = json.load(jf)
-        if not 'inteprotID' in annoDict:
-            return('inteprotID')
+        if not 'interproID' in annoDict:
+            return('interproID')
         elif not 'version' in annoDict:
             return('version')
         elif 'version' in annoDict:
@@ -169,7 +169,7 @@ def main():
     outdatedCheck = checkOutdatedAnno(annoFile)
     if outdatedCheck == 'updated':
         annoModules.printMsg(silent, 'Annotation file updated!')
-    elif outdatedCheck == 'inteprotID' or outdatedCheck == 'version':
+    elif outdatedCheck == 'interproID' or outdatedCheck == 'version':
         if update == True:
             oldAnnoFile = annoModules.updateAnnoFile(annoFile)
             annoModules.printMsg(silent, '%s updated!' % annoFile)

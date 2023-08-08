@@ -89,8 +89,8 @@ def fc_start(option):
         proteome = read_json(path)
         proteome_list.append(proteome["feature"])
         clan_dict.update(proteome["clan"])
-        if 'inteprotID' in proteome:
-            interprokeys.update(proteome['inteprotID'])
+        if 'interproID' in proteome:
+            interprokeys.update(proteome['interproID'])
         if 'length' in proteome:
             phmm.update(proteome['length'])
         version, v_warning = check_version(version, proteome, v_warning)
@@ -100,8 +100,8 @@ def fc_start(option):
         proteome = read_json(path)
         proteome_list.append(proteome["feature"])
         clan_dict.update(proteome["clan"])
-        if 'inteprotID' in proteome:
-            interprokeys.update(proteome['inteprotID'])
+        if 'interproID' in proteome:
+            interprokeys.update(proteome['interproID'])
         if 'length' in proteome:
             phmm.update(proteome['length'])
         version, v_warning = check_version(version, proteome, v_warning)

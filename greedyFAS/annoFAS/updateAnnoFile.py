@@ -4,6 +4,7 @@
 # Copyright (C) 2022 Vinh Tran
 #
 #  This file is part of FAS.
+#  Update annotation file with InterPro Acc, phmm length and tool versions
 #
 #  FAS is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -57,7 +58,7 @@ def main():
         annoModules.updateAnnoFile(annoFile)
         annoModules.printMsg(silent, '%s updated successfully!' % annoFile)
     except:
-        print('ERROR: Cannot update %s! You can check with fas.checkData or contact us!' % annoFile)
+        print('ERROR: Cannot update %s! You can check with fas.checkAnno or contact us!' % annoFile)
 
 if __name__ == '__main__':
     main()

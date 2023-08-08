@@ -637,17 +637,21 @@ def extractAnno(seqFile, existingAnno):
         annoDict['feature'] = dict((prot, existingDict['feature'][prot]) for prot in list(inSeq.keys()))
         return annoDict
 
-# update old json file to add inteprotIDs and tool versions
+# update old json file to add interproIDs and tool versions
 def updateAnnoFile(jsonFile):
     with open(jsonFile) as f:
         annoDict = json.load(f)
-        if not "inteprotID" in annoDict:
-            toolPath = getFasToolPath()
+        toolPath = getFasToolPath()
+        taxon = jsonFile.split('/')[-1].replace('.json', '')
+        annoPath = jsonFile.replace('%s.json' % taxon, '')
+        toolList = getAnnoTools("", toolPath)
+        shutil.move('%s' % jsonFile, '%s.old' % jsonFile)
+        if not "interproID" in annoDict:
+            annoDict['interproID'] = getPfamAcc(toolPath, annoDict['feature'])
+        if not 'version' in annoDict:
             cutoffs = (0.001, 0.01, 0.0000001, 'euk')
-            taxon = jsonFile.split('/')[-1].replace('.json', '')
-            annoPath = jsonFile.replace('%s.json' % taxon, '')
-            shutil.move('%s' % jsonFile, '%s.old' % jsonFile)
-            annoDict['inteprotID'] = getPfamAcc(toolPath, annoDict['feature'])
             annoDict['version'] = getVersions(getAnnoTools('', toolPath), toolPath, cutoffs)
-            save2json(annoDict, taxon, annoPath)
-            return('%s.old' % jsonFile)
+        if not 'length' in annoDict:
+            annoDict['length'] = getPhmmLength(toolPath, annoDict['feature'], toolList)
+        save2json(annoDict, taxon, annoPath)
+        return('%s.old' % jsonFile)

@@ -73,7 +73,7 @@ def runAnnoFas(args):
                     annoOut.append(_)
                 pool.close()
             annoDict = annoModules.mergeNestedDic(annoOut)
-            annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
+            annoDict['interproID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
             annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
@@ -86,7 +86,7 @@ def runAnnoFas(args):
             else:
                 print('Extracting annotations...')
                 annoDict = annoModules.extractAnno(seqFile, annoFile)
-                annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
+                annoDict['interproID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
                 annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
                 annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
                 annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
@@ -111,7 +111,7 @@ def runAnnoFas(args):
             redoAnnoDict = annoModules.mergeNestedDic(annoOut)
             # replace old annotations and save to json output
             annoDict = annoModules.replaceAnno(outFile, redoAnnoDict, redo)
-            annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
+            annoDict['interproID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
             annoDict['clan'] = annoModules.getClans(toolPath, annoDict['feature'])
             annoDict['count'] = annoModules.countFeatures(annoDict['feature'])
             annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
@@ -130,13 +130,15 @@ def updateAnno(outPath, outName, toolPath, annoToolFile, eFeature, eInstance, eF
     with open(oldAnnoFile, 'r') as f:
         annoDict = json.load(f)
         f.close()
-        if not 'length' in annoDict:
-            shutil.move(f'{oldAnnoFile}', f'{oldAnnoFile}.old')
-            annoDict['inteprotID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
+        shutil.move(f'{oldAnnoFile}', f'{oldAnnoFile}.old')
+        if not 'interproID' in annoDict:
+            annoDict['interproID'] = annoModules.getPfamAcc(toolPath, annoDict['feature'])
+        if not 'version' in annoDict:
             annoDict['version'] = annoModules.getVersions(annoModules.getAnnoTools(annoToolFile, toolPath), toolPath,
                                                           cutoffs)
+        if not 'length' in annoDict:
             annoDict['length'] = annoModules.getPhmmLength(toolPath, annoDict['feature'], toolList)
-            annoModules.save2json(annoDict, outName, outPath)
+        annoModules.save2json(annoDict, outName, outPath)
 
 
 def main():
@@ -167,7 +169,7 @@ def main():
                                          'Only one selection allowed!',
                           choices=['flps', 'tmhmm', 'signalp', 'coils2', 'seg', 'smart', 'pfam'],
                           action='store', default='', type=str)
-    optional.add_argument('--update', help='Update annotation json file to add more info e.g. inteprotID, pHMM length, tool versions',
+    optional.add_argument('--update', help='Update annotation json file to add more info e.g. interproID, pHMM length, tool versions',
                           action='store_true', default='')
     optional.add_argument('-e', '--extract', help='Path to save the extracted annotation for input sequence(s). '
                                                   '--annoFile required for specifying existing annotation file!',
