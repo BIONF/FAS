@@ -71,11 +71,11 @@ def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, sc
                         phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
                                     + str(instance[5]) + '\t'
                     else:
-                        phmm_info= '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                        phmm_info= '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                     if feature in phmm:
                         phmm_info = phmm_info + str(phmm[feature]) + '\n'
                     else:
-                        phmm_info = phmm_info + '\tNA\n'
+                        phmm_info = phmm_info + 'NA\n'
 
                     if option['reverse']:
                         out.write(groupname + '#' + seed + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
@@ -91,11 +91,11 @@ def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, sc
                         phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
                                     + str(instance[5]) + '\t'
                     else:
-                        phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                        phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                     if feature in phmm:
                         phmm_info = phmm_info + str(phmm[feature]) + '\n'
                     else:
-                        phmm_info = phmm_info + '\tNA\n'
+                        phmm_info = phmm_info + 'NA\n'
                     if option['reverse']:
                         out.write(groupname + '#' + seed + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
                                   + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\tNA\tN\t'
@@ -127,11 +127,11 @@ def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, sc
                             phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) \
                                         + '\t' + str(instance[5]) + '\t'
                         else:
-                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                         if feature in phmm:
                             phmm_info = phmm_info + str(phmm[feature]) + '\n'
                         else:
-                            phmm_info = phmm_info + '\tNA\n'
+                            phmm_info = phmm_info + 'NA\n'
                         if option['reverse']:
                             out.write(groupname + '#' + seed + '\t' + query + '\t' +
                                       str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
@@ -148,11 +148,11 @@ def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, sc
                             phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4])\
                                         + '\t' + str(instance[5]) + '\t'
                         else:
-                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                         if feature in phmm:
                             phmm_info = phmm_info + str(phmm[feature]) + '\n'
                         else:
-                            phmm_info = phmm_info + '\tNA\n'
+                            phmm_info = phmm_info + 'NA\n'
                         if option['reverse']:
                             out.write(groupname + '#' + seed + '\t' + query + '\t' +
                                       str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
@@ -194,11 +194,11 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
                         phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
                                     + str(instance[5]) + '\t'
                     else:
-                        phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                        phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                     if feature in phmm:
                         phmm_info = phmm_info + str(phmm[feature]) + '\n'
                     else:
-                        phmm_info = phmm_info + '\tNA\n'
+                        phmm_info = phmm_info + 'NA\n'
                     if option['reverse']:
                         out.write(groupname + '#' + seed + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
                                   + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\t'
@@ -209,14 +209,15 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
                                   + str(weight) + '\t' + inpath + '\t' + interpro + phmm_info)
             else:
                 for instance in seed_proteome[seed][tool][feature]['instance']:
-                    phmm_info = '\tNA\tNA\tNA\tNA\tNA\n'
                     if len(instance) > 3:
                         phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
                                     + str(instance[5]) + '\t'
-                        if feature in phmm:
-                            phmm_info = phmm_info + str(phmm[feature]) + '\n'
-                        else:
-                            phmm_info = phmm_info + '\tNA\n'
+                    else:
+                        phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
+                    if feature in phmm:
+                        phmm_info = phmm_info + str(phmm[feature]) + '\n'
+                    else:
+                        phmm_info = phmm_info + 'NA\n'
                     if option['reverse']:
                         out.write(groupname + '#' + seed + '\t' + seed + '\t' + str(seed_proteome[seed]['length'])
                                   + '\t' + feature + '\t' + str(instance[0]) + '\t' + str(instance[1]) + '\tNA\tN\t'
@@ -245,14 +246,14 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
                         else:
                             inpath = 'N'
                         if len(instance) > 3:
-                            phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t'\
-                                        + str(instance[5]) + '\t'
+                            phmm_info = ('\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4])
+                                         + '\t' + str(instance[5]) + '\t')
                         else:
-                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                         if feature in phmm:
                             phmm_info = phmm_info + str(phmm[feature]) + '\n'
                         else:
-                            phmm_info = phmm_info + '\tNA\n'
+                            phmm_info = phmm_info + 'NA\n'
                         if option['reverse']:
                             out.write(groupname + '#' + seed + '\t' + query + '\t' +
                                       str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
@@ -269,11 +270,11 @@ def write_domain_out(seed_proteome, query_proteome, seed, query, weights, scale,
                             phmm_info = '\t' + str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t'\
                                         + str(instance[5]) + '\t'
                         else:
-                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA'
+                            phmm_info = '\t' + str(instance[2]) + '\tNA\tNA\tNA\t'
                         if feature in phmm:
                             phmm_info = phmm_info + str(phmm[feature]) + '\n'
                         else:
-                            phmm_info = phmm_info + '\tNA\n'
+                            phmm_info = phmm_info + 'NA\n'
                         if option['reverse']:
                             out.write(groupname + '#' + seed + '\t' + query + '\t' +
                                       str(query_proteome[query]['length']) + '\t' + feature + '\t' + str(instance[0])
