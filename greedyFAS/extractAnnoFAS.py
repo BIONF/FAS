@@ -56,6 +56,12 @@ def get_ids(path):
 
 def extract_architectures(ids, annotation):
     clan = annotation['clan']
+    interprokeys = {}
+    if 'interproID' in annotation:
+        interprokeys = annotation['interproID']
+    phmm = {}
+    if 'length' in annotation:
+        phmm = annotation['length']
     feature = {}
     count = {}
     missing = []
@@ -76,7 +82,7 @@ def extract_architectures(ids, annotation):
     progress.refresh()
     progress.close()
     sleep(1.0)
-    new_dict = {'feature': feature, 'clan': clan, 'count': count}
+    new_dict = {'feature': feature, 'clan': clan, 'count': count, 'length': phmm, 'interproID': interprokeys}
     if len(missing) > 0:
         print('\nWARNING: The following architectures could not be extracted:')
         for pid in missing:
