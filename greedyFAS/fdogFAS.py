@@ -122,7 +122,7 @@ def create_jobdict(joblist):  # check jobdict generation
     groupdict = {}
     seedspec = None
     for entry in joblist:
-        seed = '|'.join(joblist[entry][0][1:-1])
+        seed = joblist[entry][0][1]
         if seedspec and not seedspec == joblist[entry][0][0]:
             raise Exception(
                 'There seem to be multiple seed species in the extended.fa but fdogFAS only supports a single one')
@@ -133,7 +133,7 @@ def create_jobdict(joblist):  # check jobdict generation
         else:
             groupdict[seed][entry] = {}
         for query in joblist[entry]:
-            prot_id = '|'.join(query[1:-1])
+            prot_id = query[1]
             spec = query[0]
             groupdict[seed][entry][prot_id] = query[-1]
             if spec not in jobdict:
