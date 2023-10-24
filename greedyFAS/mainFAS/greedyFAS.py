@@ -32,7 +32,7 @@ from time import sleep
 from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.mainFAS.fasInput import check_version
 from greedyFAS.mainFAS.fasOutput import write_domain_out
-from greedyFAS.mainFAS.fasOutput import write_tsv_out
+from greedyFAS.mainFAS.fasOutput import write_tsv_out, write_json_out
 from greedyFAS.mainFAS.fasOutput import phyloprofile_out
 from greedyFAS.mainFAS.fasScoring import sf_calc_score
 from greedyFAS.mainFAS.fasScoring import sf_entire_calc_score
@@ -152,11 +152,15 @@ def fc_start(option):
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
         if not option['tsv']:
             write_tsv_out(option["outpath"], True, (f_results, r_results))
+        if option['json']:
+            write_json_out(option["outpath"], True, (f_results, r_results))
     else:
         print("calculating forward scores...")
         results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm)
         if not option["tsv"]:
             write_tsv_out(option["outpath"], False, (results, None))
+        if option["json"]:
+            write_json_out(option["outpath"], False, (results, None))
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
 

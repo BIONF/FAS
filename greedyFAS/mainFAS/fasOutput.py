@@ -22,6 +22,7 @@
 
 
 from os.path import abspath
+import json
 
 
 def write_tsv_out(outpath, bidirectional, results):
@@ -43,6 +44,21 @@ def write_tsv_out(outpath, bidirectional, results):
                   + f'{outdict[pair][1][3]:.4}' + '\t' + f'{outdict[pair][0][4]:.4}' + '/'
                   + f'{outdict[pair][1][4]:.4}' + '\t' + outdict[pair][2] + '\n')
     out.close()
+
+
+def write_json_out(outpath, bidirectional, results):
+    outdict = {}
+    for result in results[0]:
+        outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
+    if bidirectional:
+        for result in results[1]:
+            outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2], outdict[result[1],
+                                                                                                  result[0]][2])
+    json_dict = {}
+    for pair in outdict:
+        json_dict['_'.join(pair)] = [f'{outdict[pair][0][0]:.4}', f'{outdict[pair][1][0]:.4}']
+    with open(f'{outpath}.json', 'w') as fp:
+        json.dump(json_dict, fp, ensure_ascii=False)
 
 
 def write_domain_out_fad(seed_proteome, query_proteome, seed, query, weights, scale, seedpath, querypath, out, option,

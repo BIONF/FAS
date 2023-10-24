@@ -107,6 +107,8 @@ def get_options():
     outargs.add_argument("--tsv", dest="tsv", action="store_true",
                          help="deactivates creation of the tsv output, either use together with --raw or "
                               "--phyloprofile")
+    outargs.add_argument("--json", dest="json", action="store_true",
+                         help="create json output")
     outargs.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
                          help="activate phyloprofile output, needs mapping file for all query proteins")
     outargs.add_argument("--domain", dest="domain", action="store_false",
@@ -178,7 +180,7 @@ def fas(args, toolpath):
                    "max_cardinality": args.max_cardinality, "cores": int(args.cpus), "raw": args.raw,
                    "bidirectional": args.bidirectional, "max_overlap": args.max_overlap,
                    "timelimit": args.timelimit, "phyloprofile": args.phyloprofile, "score_weights": [],
-                    "tsv": args.tsv, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
+                    "tsv": args.tsv, "json": args.json, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
                     "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True,
                     "empty_as_1": args.empty_as_1
                    }
