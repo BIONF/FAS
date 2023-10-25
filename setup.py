@@ -61,6 +61,8 @@ setup(
                             'fas.disorder.predict = greedyFAS.disorderFAS.predict_disorder:main',
                             'fas.disorder.setup = greedyFAS.disorderFAS.install_aucpred:main',
                             'fas.mergeAnno = greedyFAS.mergeAnno:main',
+                            'fas.mergeJson = greedyFAS.mergeJson:main',
+                            'fas.tsv2json = greedyFAS.tsv2json:main',
                             'fas.getAnnoVersion = greedyFAS.annoFAS.getAnnoVersion:main',
                             'fas.overlapStatistics = greedyFAS.getOverlapStats:main',
                             'fad.run = greedyFAS.calcFAD:main'

@@ -144,7 +144,7 @@ def fc_start(option):
         if option["pairwise"]:
             pairtmp = []
             for pair in option["pairwise"]:
-                pairtmp.append((pair[1], pair[0]))
+                pairtmp.append([pair[1], pair[0]])
             option["pairwise"] = pairtmp
         print("calculating backward scores...")
         r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option, interprokeys, phmm)
@@ -163,6 +163,17 @@ def fc_start(option):
             write_json_out(option["outpath"], False, (results, None))
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
+
+
+def check_oldJson(old_json, id_1, id_2):
+    """ Function to check if a FAS scores for input protein pair already exists
+    Return a list of pairs that should be excluded from the calculation
+    """
+    old_results = read_json(old_json)
+    ignored_pairs = []
+    if f'{id_1}_{id_2}' in old_results or f'{id_2}_{id_1}' in old_results:
+        ignored_pairs.append([id_1, id_2])
+    return(ignored_pairs)
 
 
 def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm):
@@ -189,26 +200,17 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
             domain_out = open(option["outpath"] + "_forward.domains", "w")
         domain_out.write('# pairID\torthoID\tseqLen\tfeature\tfStart\tfEnd\tfWeight\tfPath\tinterProID\te-value'
                          + '\tbitScore\tpStart\tpEnd\tpLen\n')
-    if option['pairwise']:
-        if option['progress']:
-            progress = tqdm(total=len(option['pairwise']), file=sys.stdout)
-        for pair in option['pairwise']:
-            query = pair[1]
-            protein = pair[0]
-            if query not in query_proteome:
-                raise Exception(query + ' is missing in annotation!')
-            if protein not in seed_proteome:
-                raise Exception(protein + ' is missing in annotation!')
-            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
-            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
-            go_priority, domain_count = tmp_query[7:9]
 
-            ####
-            results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
-                                       go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
-                                       domain_out, interprokeys, phmm))
-            if option["progress"]:
-                progress.update(1)
+    final_pairs = []
+    if option['pairwise']:
+        final_pairs = option['pairwise']
+        if option['old_json']:
+            for pair in option['pairwise']:
+                protein = pair[0]
+                query = pair[1]
+                ### FILTER pairwise input based on old json output file
+                final_pairs = [ elem for elem in final_pairs
+                    if not elem in check_oldJson(option['old_json'], protein, query)]
     else:
         if option["query_id"]:
             querylist = option["query_id"]
@@ -224,23 +226,40 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
                     raise Exception(seed + ' is missing in annotation!')
         else:
             seedlist = list(seed_proteome.keys())
-        if option['progress']:
-            progress = tqdm(total=len(querylist)*len(seedlist), file=sys.stdout)
-        for query in querylist:
-            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
-            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
-            go_priority, domain_count = tmp_query[7:9]
+        # create pairwise list
+        if option['old_json']:
+            for s in seedlist:
+                for q in querylist:
+                    ### FILTER pairwise input based on old json output file
+                    if not [s,q] == check_oldJson(option['old_json'], s, q):
+                        final_pairs.append([s,q])
 
-            for protein in seedlist:
-                results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths,
-                                           query_features, go_priority, a_q_f, clan_dict, query_graph, query_proteome,
-                                           query, query_clans, domain_out, interprokeys, phmm))
-                if option["progress"]:
-                    progress.update(1)
+    if option['progress']:
+         progress = tqdm(total=len(final_pairs), file=sys.stdout)
+
+    for pair in final_pairs:
+        query = pair[1]
+        protein = pair[0]
+        ### CHECK QUERY & PROTEIN IN JSON ################
+        if query not in query_proteome:
+            raise Exception(query + ' is missing in annotation!')
+        if protein not in seed_proteome:
+            raise Exception(protein + ' is missing in annotation!')
+        tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
+        query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
+        go_priority, domain_count = tmp_query[7:9]
+
+        #### WRITE RESULTS ####################
+        results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
+                                   go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
+                                   domain_out, interprokeys, phmm))
         if option["progress"]:
-            progress.refresh()
-            progress.close()
-            sleep(1.0)
+            progress.update(1)
+
+    if option["progress"]:
+        progress.refresh()
+        progress.close()
+        sleep(1.0)
     return results
 
 

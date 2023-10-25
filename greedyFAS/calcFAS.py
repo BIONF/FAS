@@ -22,6 +22,7 @@
 
 
 import os
+import sys
 import argparse
 import multiprocessing as mp
 from sys import argv
@@ -91,6 +92,8 @@ def get_options():
                         help="deactivate all against all comparison, needs a pairing file with the ids that should be"
                              " compared (one pair per line tab seperated), please look at the FAS wiki pages for "
                              "templates")
+    inargs.add_argument("--oldJson", default='', type=str,
+                        help="Input old FAS output in JSON format. Only new pairs will be considered!")
     inargs.add_argument("-d", "--featuretypes", default='', type=str,
                         help="inputfile that contains the tools/databases used to predict features. Please look at the "
                              "FAS wiki pages for templates of the the featuretypes input file")
@@ -251,6 +254,11 @@ def fas(args, toolpath):
         raise Exception("[--max_overlap_percentage] should be between 0.0 and 1.0")
     if args.out_name:
         option_dict['outpath'] = args.out_dir.rstrip('/') + '/' + args.out_name
+        out_file = f'{option_dict["outpath"]}.tsv'
+        if args.json:
+            out_file = f'{option_dict["outpath"]}.json'
+        if os.path.exists(out_file):
+            sys.exit(f'Output file {os.path.abspath(out_file)} exists!')
     else:
         option_dict['outpath'] = args.out_dir.rstrip('/') + '/' + seedname + '_' + queryname
     if args.featuretypes:
@@ -262,6 +270,13 @@ def fas(args, toolpath):
         option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
     else:
         option_dict["pairwise"] = None
+
+    option_dict["old_json"] = False
+    if args.oldJson:
+        if os.path.exists(os.path.abspath(args.oldJson)):
+            print(f'### NOTE: existing output given ({os.path.abspath(args.oldJson)}). Only new pairs of proteins will be considered!')
+            option_dict["old_json"] = os.path.abspath(args.oldJson)
+
     print('Calculating FAS score...')
     greedyFAS.fc_start(option_dict)
     if args.config:
