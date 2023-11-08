@@ -126,7 +126,8 @@ def fc_start(option):
             if protid not in query_proteome:
                 raise Exception(protid + " is not in the query annotation")
     if option["bidirectional"]:
-        print("calculating forward scores...")
+        if not option["silent"]:
+            print("calculating forward scores...")
         f_results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm)
         if option["MS_uni"] == 0 and option["ref_2"]:
             domain_count_2 = {}
@@ -146,7 +147,8 @@ def fc_start(option):
             for pair in option["pairwise"]:
                 pairtmp.append([pair[1], pair[0]])
             option["pairwise"] = pairtmp
-        print("calculating backward scores...")
+        if not option["silent"]:
+            print("calculating backward scores...")
         r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option, interprokeys, phmm)
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
@@ -155,7 +157,8 @@ def fc_start(option):
         if option['json']:
             write_json_out(option["outpath"], True, (f_results, r_results))
     else:
-        print("calculating forward scores...")
+        if not option["silent"]:
+            print("calculating forward scores...")
         results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm)
         if not option["tsv"]:
             write_tsv_out(option["outpath"], False, (results, None))

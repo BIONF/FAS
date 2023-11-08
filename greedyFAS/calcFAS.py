@@ -57,7 +57,7 @@ def get_options():
     general.add_argument("--bidirectional", action="store_true",
                          help="calculate both scoring directions")
     general.add_argument('--cpus', help='number of cores', type=int, action='store', default=0)
-    annotation.add_argument('--force', help='Force override annotations', action='store_true')
+    annotation.add_argument('--forceAnno', help='Force override annotations', action='store_true')
     annotation.add_argument("-f", "--eFeature", default="0.001", type=float,
                             help="eValue cutoff for PFAM/SMART domain, applied during annotation but also during "
                                  "calculation")
@@ -118,6 +118,8 @@ def get_options():
                          help="deactivate .domains output")
     outargs.add_argument("--no_config", dest="config", action="store_false",
                          help="deactivate *_config.yml output")
+    outargs.add_argument('--force', help='Force override output files', action='store_true')
+    outargs.add_argument('--silent', help='Turn off STDOUT', action='store_true')
     thresholds.add_argument("-c", "--max_overlap", dest="max_overlap", default=0, type=int,
                             help="maximum size overlap allowed, default is 0 amino acids")
     thresholds.add_argument("--max_overlap_percentage", dest="max_overlap_percentage", default=0.4, type=float,
@@ -160,11 +162,14 @@ def anno(annojobs, args, toolpath):
         outpath = os.path.abspath(args.annotation_dir)
         annotate = True
         seqfile = annojob
-        print('Check annotation for "' + name + '"...')
+        if not args.silent:
+            print('Check annotation for "' + name + '"...')
         if os.path.exists(os.path.abspath(args.annotation_dir + '/' + name + '.json')):
-            print('Annotation for "' + name + '" already exists.')
-            if args.force:
-                print('Overwriting...')
+            if not args.silent:
+                print('Annotation for "' + name + '" already exists.')
+            if args.forceAnno:
+                if not args.silent:
+                    print('Overwriting...')
                 annoModules.checkFileExist(seqfile)
             else:
                 annotate = False
@@ -172,11 +177,11 @@ def anno(annojobs, args, toolpath):
             annoModules.checkFileExist(seqfile)
         if annotate:
             annoFAS.runAnnoFas(
-                [seqfile, outpath, toolpath, args.force, name, eflps, signalporg, efeature, einstance, hmmcores, '',
+                [seqfile, outpath, toolpath, args.forceAnno, name, eflps, signalporg, efeature, einstance, hmmcores, '',
                  '', '', cpus, args.featuretypes])
 
-
-def fas(args, toolpath):
+def fas(opts):
+    (args, toolpath) = opts
     option_dict = {
                    "weight_const": False, "seed_id": args.seed_id, "query_id": args.query_id,
                    "priority_mode": args.priority_mode, "priority_threshold": args.priority_threshold,
@@ -185,7 +190,7 @@ def fas(args, toolpath):
                    "timelimit": args.timelimit, "phyloprofile": args.phyloprofile, "score_weights": [],
                     "tsv": args.tsv, "json": args.json, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
                     "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True,
-                    "empty_as_1": args.empty_as_1
+                    "empty_as_1": args.empty_as_1, "silent": args.silent
                    }
     seedname = '.'.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']
@@ -197,6 +202,8 @@ def fas(args, toolpath):
     else:
         option_dict["ref_proteome"] = None
     if args.raw:
+        option_dict["progress"] = False
+    if args.silent:
         option_dict["progress"] = False
     if option_dict["cores"] == 0:
         option_dict["cores"] = mp.cpu_count()-1
@@ -258,7 +265,10 @@ def fas(args, toolpath):
         if args.json:
             out_file = f'{option_dict["outpath"]}.json'
         if os.path.exists(out_file):
-            sys.exit(f'Output file {os.path.abspath(out_file)} exists!')
+            if not args.force:
+                sys.exit(f'Output file {os.path.abspath(out_file)} exists! Use --force if you want to overwrite it!')
+            else:
+                os.remove(f'{os.path.abspath(out_file)}')
     else:
         option_dict['outpath'] = args.out_dir.rstrip('/') + '/' + seedname + '_' + queryname
     if args.featuretypes:
@@ -277,12 +287,14 @@ def fas(args, toolpath):
             print(f'### NOTE: existing output given ({os.path.abspath(args.oldJson)}). Only new pairs of proteins will be considered!')
             option_dict["old_json"] = os.path.abspath(args.oldJson)
 
-    print('Calculating FAS score...')
+    if not args.silent:
+        print('Calculating FAS score...')
     greedyFAS.fc_start(option_dict)
     if args.config:
         fasOutput.write_metadata(option_dict['outpath'] + '_config.yml', args, ' '.join(argv),
                                  str(get_distribution('greedyFAS').version))
-    print('done!')
+    if not args.silent:
+        print('done!')
 
 
 def main():
@@ -306,7 +318,7 @@ def main():
     if args.ref_2 and args.ref_2 not in annojobs:
         annojobs.append(args.ref_2)
     anno(annojobs, args, toolpath)
-    fas(args, toolpath)
+    fas((args, toolpath))
 
 
 if __name__ == '__main__':
