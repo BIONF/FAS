@@ -33,9 +33,12 @@ from greedyFAS.mainFAS import fasInput, fasOutput, greedyFAS
 from greedyFAS import calcFAS
 from pkg_resources import get_distribution
 import multiprocessing as mp
+import subprocess
 from tqdm import tqdm
 import json
 import shutil
+import glob
+from datetime import date
 
 
 def get_options():
@@ -96,6 +99,10 @@ def get_options():
                               "--phyloprofile")
     outargs.add_argument("--json", dest="json", action="store_true",
                          help="create json output")
+    outargs.add_argument("--mergeJson", action="store_true",
+                        help="merge multiple json outputs")
+    outargs.add_argument("--outName", default=None, type=str,
+                        help="name for merged output file, if none is given the name will be created by the date")
     outargs.add_argument("--phyloprofile", dest="phyloprofile", default=None, type=str,
                          help="activate phyloprofile output, needs mapping file for all query proteins")
     outargs.add_argument("--domain", dest="domain", action="store_false",
@@ -245,8 +252,29 @@ def main():
         pass
     pool.close()
 
+    if args.mergeJson:
+        out_name = args.outName
+        out_dir = os.path.abspath(args.out_dir)
+        if not args.outName:
+            today = date.today()
+            out_name = f"fas_{today.strftime('%y%m%d')}"
+        print(f'==> merge outputs into {out_name}...')
+        os.makedirs(f'{out_dir}/tmp', exist_ok = True)
+        for json_file in glob.glob(os.path.join(out_dir, '*.json')):
+            shutil.move(json_file, f'{out_dir}/tmp/')
+        if args.oldJson:
+            if os.path.exists(os.path.abspath(args.oldJson)):
+                os.symlink(os.path.abspath(args.oldJson), f'{out_dir}/tmp/oldJson.json')
+        cmd = f'fas.mergeJson -i {out_dir}/tmp/ -n {out_name} -o {out_dir}'
+        try:
+            mergedOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+        except:
+            sys.exit(f'Error running\n{cmd}')
+
     if not args.keep:
         shutil.rmtree(f'{args.out_dir}/split_inputs')
+        if args.mergeJson:
+            shutil.rmtree(f'{args.out_dir}/tmp')
     print('==> DONE!')
 
 if __name__ == '__main__':

@@ -284,7 +284,8 @@ def fas(opts):
     option_dict["old_json"] = False
     if args.oldJson:
         if os.path.exists(os.path.abspath(args.oldJson)):
-            print(f'### NOTE: existing output given ({os.path.abspath(args.oldJson)}). Only new pairs of proteins will be considered!')
+            if not args.silent:
+                print(f'### NOTE: existing output given ({os.path.abspath(args.oldJson)}). Only new pairs of proteins will be considered!')
             option_dict["old_json"] = os.path.abspath(args.oldJson)
 
     if not args.silent:
