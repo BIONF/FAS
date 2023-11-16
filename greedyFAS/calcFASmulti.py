@@ -176,7 +176,7 @@ def create_jobs(in_file, args, annotation_dir, out_dir, toolpath):
         lines = fr.read().splitlines()
         if args.pairLimit > 0:
             if args.silentOff:
-                print(f"NOTE: only random {option['pairLimit']} pairs will be calculated!")
+                print(f"NOTE: only random {args.pairLimit} pairs will be calculated!")
             if args.pairLimit < len(lines):
                 lines = random.sample(lines, args.pairLimit)
         for line in lines:
