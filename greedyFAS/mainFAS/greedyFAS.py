@@ -27,6 +27,7 @@ import multiprocessing
 from functools import partial
 from copy import deepcopy
 from tqdm import tqdm
+import itertools
 import sys
 from time import sleep
 from greedyFAS.mainFAS.fasInput import read_json
@@ -236,6 +237,8 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
                     ### FILTER pairwise input based on old json output file
                     if not [s,q] == check_oldJson(option['old_json'], s, q):
                         final_pairs.append([s,q])
+        else:
+            final_pairs = list(itertools.product(seedlist,querylist))
 
     if option['progress']:
          progress = tqdm(total=len(final_pairs), file=sys.stdout)
