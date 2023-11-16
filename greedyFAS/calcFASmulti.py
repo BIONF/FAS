@@ -39,6 +39,8 @@ import json
 import shutil
 import glob
 from datetime import date
+# import linecache
+import random
 
 
 def get_options():
@@ -92,6 +94,8 @@ def get_options():
                              "someseed.json than the extra annotation files should be named someseed_"
                              "[EXTRA_ANNOTATION].json, these extra files need to exist for seed, query and the "
                              "references (if given)")
+    inargs.add_argument("--pairLimit", default=0, type=int,
+                        help="Limit the number of pairs to be considered")
     outargs.add_argument("--raw", dest="raw", action="store_true",
                          help="print FAS scores to terminal")
     outargs.add_argument("--tsv", dest="tsv", action="store_true",
@@ -169,7 +173,13 @@ def create_jobs(in_file, args, annotation_dir, out_dir, toolpath):
     tax_dict = {}
     os.makedirs(f'{out_dir}/split_inputs', exist_ok=True)
     with open(in_file, 'r') as fr:
-        for line in fr:
+        lines = fr.read().splitlines()
+        if args.pairLimit > 0:
+            if args.silentOff:
+                print(f"NOTE: only random {option['pairLimit']} pairs will be calculated!")
+            if args.pairLimit < len(lines):
+                lines = random.sample(lines, args.pairLimit)
+        for line in lines:
             tmp = line.strip().split()
             if len(tmp) == 4:
                 taxa_pair = f'{tmp[1]}#{tmp[3]}'
@@ -259,9 +269,12 @@ def main():
             today = date.today()
             out_name = f"fas_{today.strftime('%y%m%d')}"
         print(f'==> merge outputs into {out_name}...')
+        if os.path.exists(f'{out_dir}/{out_name}.json'):
+            if args.force:
+                os.remove(f'{out_dir}/{out_name}.json')
         os.makedirs(f'{out_dir}/tmp', exist_ok = True)
         for json_file in glob.glob(os.path.join(out_dir, '*.json')):
-            shutil.move(json_file, f'{out_dir}/tmp/')
+            shutil.move(json_file, f"{out_dir}/tmp/{json_file.split('/')[-1]}")
         if args.oldJson:
             if os.path.exists(os.path.abspath(args.oldJson)):
                 os.symlink(os.path.abspath(args.oldJson), f'{out_dir}/tmp/oldJson.json')
