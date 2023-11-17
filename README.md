@@ -11,6 +11,7 @@ FAS is a new release of the original [FACT](https://bmcbioinformatics.biomedcent
   * [Annotate protein features](#annotate-protein-features)
   * [Compare protein feature architectures](#compare-protein-feature-architectures)
 * [Additional Information](#additional-information)
+* [How-To Cite](#how-to-cite)
 * [Contributors](#contributors)
 * [Contact](#contact)
 
@@ -84,6 +85,10 @@ If the annotations of *seed* and *query* protein(s) already exist in `/annotatio
 # Additional Information
 
 A thorough guide to all FAS commands and options can be found at [our WIKI page](https://github.com/BIONF/FAS/wiki).
+
+# How-To Cite
+
+Julian Dosch, Holger Bergmann, Vinh Tran, Ingo Ebersberger, FAS: assessing the similarity between proteins using multi-layered feature architectures, Bioinformatics, Volume 39, Issue 5, May 2023, btad226, https://doi.org/10.1093/bioinformatics/btad226
 
 # Contributors
 - [Ingo Ebersberger](https://github.com/ebersber)
