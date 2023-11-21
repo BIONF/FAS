@@ -56,6 +56,7 @@ def get_options():
     weighting = parser.add_argument_group('weighting arguments')
     thresholds = parser.add_argument_group('threshold arguments')
     obscure = parser.add_argument_group('obscure arguments')
+    other = parser.add_argument_group('other arguments')
     parser.add_argument('--version', action='version', version=str(version))
     required.add_argument("--input", default=None, type=str, required=True,
                           help="Input file (see https://github.com/BIONF/FAS/wiki/File-Formats)")
@@ -140,6 +141,8 @@ def get_options():
                               "sum should be 1.0, the default is 0.7, 0.0, 0.3")
     obscure.add_argument("--empty_as_1", action='store_true',
                          help="If both proteins have no features, score 1.0 instead of the default 0.0")
+    other.add_argument("--check_anno", action='store_true',
+                         help="Checking for existing annotations")
     args = parser.parse_args()
     return args
 
@@ -241,10 +244,11 @@ def main():
     if args.force:
         print('WARNING: --force option is used. Old output files will be overwritten!')
 
-    print('==> checking annotations...')
-    missing_dict = check_anno(args.input, args.annotation_dir)
-    if len(missing_dict) > 0:
-        sys.exit(f'ERROR: Annotations for the following proteins are missing!\n{missing_dict}')
+    if args.check_anno:
+        print('==> checking annotations...')
+        missing_dict = check_anno(args.input, args.annotation_dir)
+        if len(missing_dict) > 0:
+            sys.exit(f'ERROR: Annotations for the following proteins are missing!\n{missing_dict}')
 
     print('==> preparing jobs...')
     jobs = create_jobs(args.input, args, args.annotation_dir, args.out_dir, toolpath)

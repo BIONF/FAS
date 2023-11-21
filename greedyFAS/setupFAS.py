@@ -698,6 +698,8 @@ def main():
     optional.add_argument('-i', '--ignore', help='List of tools should be ignored, e.g. SEG COILS2', nargs="*",
                         choices=['SignalP', 'TMHMM', 'COILS2', 'fLPS', 'SEG'],
                         action='store', default=[])
+    optional.add_argument('--noAnno', help='Run setup without installing annotation tools',
+                        action='store_true')
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
     optional.add_argument('-r', '--reinstall', help='List of tools should be reinstalled, e.g. SMART SignalP', nargs="*",
                         choices=['SMART','Pfam','SignalP', 'TMHMM', 'COILS2', 'fLPS', 'SEG'],
@@ -723,7 +725,8 @@ def main():
         'force': args.force,
         'reinstall': args.reinstall,
         'greedyFasPath': greedyFasPath,
-        'disorder': args.disorder
+        'disorder': args.disorder,
+        'noAnno': args.noAnno
     }
 
     if args.checkExecutable:
@@ -749,7 +752,6 @@ def main():
         checkAnnoToolsFile(args.toolPath)
         with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
             config.write(os.path.abspath(args.toolPath))
-            config.close()
         print('Annotation tools can be found at %s. FAS is ready to run!' % args.toolPath)
         print('You should test fas.doAnno with this command:')
         print('==> fas.doAnno -i test_annofas.fa -o testFas_output <==')
@@ -767,6 +769,15 @@ def main():
                 print(f'Creating length file for SMART...')
                 write_phmm_length(args.toolPath, 'SMART')
             sys.exit()
+
+    if args.noAnno:
+        with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
+            config.write(os.path.abspath(greedyFasPath))
+        with open(greedyFasPath+'/annoTools.txt', 'w') as annoFile:
+            annoFile.write("#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\nTMHMM\nSignalP\n#checked")
+        print(f'*** NOTE: This FAS version works by default only with complete annotations from all tools.')
+        print(f'Modify {greedyFasPath}/annoTools.txt if needed!')
+        sys.exit()
 
 
     anno_path = install_annoTool(options)
