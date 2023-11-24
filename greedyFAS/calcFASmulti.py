@@ -327,13 +327,13 @@ def main():
         if len(missing_dict) > 0:
             sys.exit(f'ERROR: Annotations for the following proteins are missing!\n{missing_dict}')
 
-    out_name = outName
-    out_dir = os.path.abspath(out_dir)
-    if not outName:
+    out_name = args.outName
+    out_dir = os.path.abspath(args.out_dir)
+    if not args.outName:
         today = date.today()
         out_name = f"fas_{today.strftime('%y%m%d')}"
     if args.mergeJson:
-        check_json_output(out_name, args.out_dir, args.force)
+        check_json_output(out_name, out_dir, args.force)
 
     print('==> preparing jobs...')
     if args.cpus == 0:
