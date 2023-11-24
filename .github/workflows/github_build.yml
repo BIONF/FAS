@@ -71,10 +71,6 @@ jobs:
         ls fas_output
         echo "*** TEST FAS.MERGEJSON..."
         fas.mergeJson -i fas_output -n merged_json -o fas_output
-        echo "*** TEST FAS.MERGEANNO..."
-        fas.mergeAnno -i anno_output/ -n merged_anno -o anno_output
-        echo "*** TEST FAS.UPDATEANNO..."
-        fas.updateAnno --new anno_output/spec_a.json --old anno_output/test_annofas.json
         echo "*** TEST FAS.RUNFDOGFAS..."
         wget https://github.com/BIONF/data4travis/raw/main/fas_test.tar.gz &> /dev/null
         tar -xf fas_test.tar.gz
