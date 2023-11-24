@@ -60,14 +60,21 @@ jobs:
         fas.calcComplexity -i anno_output/test_annofas.json
         echo "*** TEST FAS.GETDOMAINS..."
         fas.getDomains -j anno_output/test_annofas.json -p A0A1S4GN31 -o A0A1S4GN31.domains
-        echo "*** TEST FAS.SPLITJSON..."
+        echo "*** TEST FAS.SPLITANNO..."
         echo "A0A1W5C929" > id.txt
-        fas.splitJson -x id.txt -i anno_output/test_annofas.json -o anno_output/out.json
+        fas.splitAnno -x id.txt -i anno_output/test_annofas.json -o anno_output/out.json
         echo "*** TEST FAS.RUNMULTITAXA..."
         cp anno_output/test_annofas.json anno_output/spec_a.json
         cp anno_output/test_annofas.json anno_output/spec_b.json
         echo -e "A0A1U7F4Y7\tspec_a\tA0A1S4GN82\tspec_b\nA0A1U7F5Z4\tspec_a\tA0A1S4GN82\tspec_b" > test_multi.txt
         fas.runMultiTaxa --input test_multi.txt -a anno_output -o fas_output
+        ls fas_output
+        echo "*** TEST FAS.MERGEJSON..."
+        fas.mergeJson -i fas_output -n merged_json -o fas_output
+        echo "*** TEST FAS.MERGEANNO..."
+        fas.mergeAnno -i anno_output/ -n merged_anno -o anno_output
+        echo "*** TEST FAS.UPDATEANNO..."
+        fas.updateAnno --new anno_output/spec_a.json --old anno_output/test_annofas.json
         echo "*** TEST FAS.RUNFDOGFAS..."
         wget https://github.com/BIONF/data4travis/raw/main/fas_test.tar.gz &> /dev/null
         tar -xf fas_test.tar.gz
