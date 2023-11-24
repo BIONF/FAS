@@ -31,7 +31,8 @@ from pkg_resources import get_distribution
 
 def main():
     version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+                                     ' This script os used to add interpro IDs and tool versions to an existing annotation file',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')

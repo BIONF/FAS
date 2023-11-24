@@ -90,18 +90,19 @@ def main():
         proteins = list(proteome.keys())
     print('Protein ID\t#Paths\tapproximate greedy complexity')
     for protein in proteins:
-        calc_complex(protein, proteome, option_dict, clan_dict, args)
+        (path_number, greedy_comp, graph) = calc_complex(protein, proteome, option_dict, clan_dict)
+        print(f'{protein}\t{path_number}\t{greedy_comp}')
+        if args.show_graph:
+            show_graph(graph)
 
 
-def calc_complex(protein, proteome, option, clan_dict, args):
+def calc_complex(protein, proteome, option, clan_dict):
     lin_set, features, a_f, clans, clan_dict = greedyFAS.su_lin_query_protein(
         protein, proteome, clan_dict, option)
     graph, path_number = fasPathing.pb_region_paths(fasPathing.pb_region_mapper(
         lin_set, features, option["max_overlap"], option["max_overlap_percentage"]))
     greedy_comp = approx_greedy_comp(graph)
-    print(protein + "\t" + str(path_number) + '\t' + str(greedy_comp))
-    if args.show_graph:
-        show_graph(graph)
+    return((path_number, greedy_comp, graph))
 
 
 def approx_greedy_comp(graph):

@@ -31,6 +31,7 @@ from greedyFAS.annoFAS import annoFAS
 from greedyFAS.annoFAS import annoModules
 from greedyFAS.mainFAS import fasInput, fasOutput, greedyFAS
 from greedyFAS import calcFAS
+from greedyFAS import complexityFAS
 from pkg_resources import get_distribution
 import multiprocessing as mp
 import subprocess
@@ -39,7 +40,6 @@ import json
 import shutil
 import glob
 from datetime import date
-# import linecache
 import random
 
 
@@ -129,6 +129,9 @@ def get_options():
                             help="Change to define the threshold for the maximal cardinality (number) of feature paths "
                                  "in a graph. If max. cardinality is exceeded the priority mode will be used to for "
                                  "the path evaluation. default=500")
+    thresholds.add_argument("--paths_limit", default=0, type=int,
+                            help="Specify number of maximum paths to be considered (10^n). If this threshold is exceeded, "
+                                 "the corresponding protein will be ignored. Default: 0 for no limit")
     obscure.add_argument("--priority_mode", action='store_false',
                          help="deactivates the greedy strategy priority mode for larger architectures, NOT RECOMMENDED")
     obscure.add_argument("--timelimit", default=3600, type=int,
@@ -146,7 +149,10 @@ def get_options():
     args = parser.parse_args()
     return args
 
+
 def check_anno(in_file, annotation_dir):
+    """ Check if annotations for all input proteins are present
+    """
     # get list of taxa and their protein IDs
     input_dict = {}
     with open(in_file, 'r') as fr:
@@ -172,32 +178,84 @@ def check_anno(in_file, annotation_dir):
     return(missing_dict)
 
 
-def create_jobs(in_file, args, annotation_dir, out_dir, toolpath):
-    tax_dict = {}
-    os.makedirs(f'{out_dir}/split_inputs', exist_ok=True)
+def calc_path_number(prot_id, anno_file):
+    """ Calculate number of feature paths for a given protein ID in a anno file
+    """
+    anno_dict = {}
+    clan_dict = {}
+    with open(anno_file, 'r') as jf:
+        anno_dict = json.load(jf)
+        proteome = anno_dict["feature"]
+        clan_dict.update(anno_dict["clan"])
+    option_dict = {}
+    pathconfigfile = os.path.realpath(__file__).replace('calcFASmulti.py', 'pathconfig.txt')
+    with open(pathconfigfile) as f:
+        toolpath = f.readline().strip()
+    option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(toolpath + '/'
+                                                                                             + 'annoTools.txt')
+    option_dict["max_overlap"] = 0
+    option_dict["max_overlap_percentage"] = 0.4
+    option_dict["eFeature"] = 0.001
+    option_dict["eInstance"] = 0.01
+
+    (path_number, greedy_comp, graph) = complexityFAS.calc_complex(prot_id, proteome, option_dict, clan_dict)
+    return(path_number)
+
+
+def get_prot_for_taxpair(opts):
+    """ Create file contaning protein pairs for each pair of taxa
+    If a path limit is given, only protein that have less number of paths will
+    by saved
+    """
+    (line, paths_limit, annotation_dir, out_dir, out_name) = opts # line = id1  tax1  id2  tax2
+    tmp = line.strip().split()
+    taxa_pair = ''
+    if len(tmp) == 4:
+        taxa_pair = f'{tmp[1]}#{tmp[3]}'
+        if paths_limit > 0:
+            path_p1 = calc_path_number(tmp[0], f'{annotation_dir}/{tmp[1]}.json')
+            path_p2 = calc_path_number(tmp[2], f'{annotation_dir}/{tmp[3]}.json')
+            if path_p1 > 10**paths_limit or path_p2 > 10**paths_limit:
+                return('')
+        fp = open(f'{out_dir}/{out_name}_split_inputs/{taxa_pair}.txt', 'a+')
+        fp.write(f'{tmp[0]}\t{tmp[2]}\n')
+        fp.close()
+    return(taxa_pair)
+
+
+def create_jobs(in_file, args, annotation_dir, out_dir, out_name, toolpath, cpus):
+    """ Create jobs for running calcFas
+    """
+    tax_pairs = []
+    if os.path.exists(f'{out_dir}/{out_name}_split_inputs'):
+        if args.force:
+            shutil.rmtree(f'{args.out_dir}/{out_name}_split_inputs')
+        else:
+            sys.exists(f'{out_dir}/{out_name}_split_inputs exists! Please use --force to overwrite or manually delete that folder to continue')
+    os.makedirs(f'{out_dir}/{out_name}_split_inputs', exist_ok=True)
     with open(in_file, 'r') as fr:
         lines = fr.read().splitlines()
+        parse_taxa_jobs = []
         if args.pairLimit > 0:
             if args.silentOff:
                 print(f"NOTE: only random {args.pairLimit} pairs will be calculated!")
             if args.pairLimit < len(lines):
                 lines = random.sample(lines, args.pairLimit)
         for line in lines:
-            tmp = line.strip().split()
-            if len(tmp) == 4:
-                taxa_pair = f'{tmp[1]}#{tmp[3]}'
-                if taxa_pair not in tax_dict:
-                    fp = open(f'{out_dir}/split_inputs/{taxa_pair}.txt', 'w')
-                    fp.write(f'{tmp[0]}\t{tmp[2]}\n')
-                    fp.close()
-                    tax_dict[taxa_pair] = [f'{tmp[0]}\t{tmp[2]}']
-                else:
-                    fp = open(f'{out_dir}/split_inputs/{taxa_pair}.txt', 'a')
-                    fp.write(f'{tmp[0]}\t{tmp[2]}\n')
-                    fp.close()
-                    tax_dict[taxa_pair].append(f'{tmp[0]}\t{tmp[2]}')
+            parse_taxa_jobs.append((line, args.paths_limit, annotation_dir, out_dir, out_name))
+        if cpus == 1:
+            for l in parse_taxa_jobs:
+                tax_pairs.append(get_prot_for_taxpair(l))
+        else:
+            pool = mp.Pool(cpus)
+            for _ in tqdm(pool.imap_unordered(get_prot_for_taxpair, parse_taxa_jobs), total=len(parse_taxa_jobs)):
+                tax_pairs.append(_)
+            pool.close()
+
+    tax_pairs = list(set(tax_pairs))
+    tax_pairs = list(filter(None, tax_pairs))
     jobs = []
-    for tax_pair in tax_dict:
+    for tax_pair in tax_pairs:
         args_dict_new = {}
         args_dict = vars(args)
         for item in args_dict:
@@ -206,7 +264,7 @@ def create_jobs(in_file, args, annotation_dir, out_dir, toolpath):
         tmp = tax_pair.split('#')
         args_m.seed = f'{tmp[0]}.json'
         args_m.query = f'{tmp[1]}.json'
-        args_m.pairwise = f'{out_dir}/split_inputs/{tax_pair}.txt'
+        args_m.pairwise = f'{out_dir}/{out_name}_split_inputs/{tax_pair}.txt'
         args_m.out_name = tax_pair
         args_m.query_id = None
         args_m.seed_id = None
@@ -228,8 +286,33 @@ def create_jobs(in_file, args, annotation_dir, out_dir, toolpath):
     return(jobs)
 
 
+def check_json_output(outName, out_dir, force):
+    """ Check if outName.json file exists
+    Or if any other .json file present in out_dir
+    """
+    # check out_name.json exists
+    out_name = outName
+    out_dir = os.path.abspath(out_dir)
+    if not outName:
+        today = date.today()
+        out_name = f"fas_{today.strftime('%y%m%d')}"
+    if os.path.exists(f'{out_dir}/{out_name}.json'):
+        if force:
+            os.remove(f'{out_dir}/{out_name}.json')
+        else:
+            sys.exit(f'{out_dir}/{out_name}.json exists! Use --force to overwrite or move is to other directory.')
+    # check other json files. If present, move them to out_dir/old/
+    json_file = glob.glob(os.path.join(out_dir, '*.json'))
+    if len(json_file) > 0:
+        os.makedirs(f'{out_dir}/{out_name}_old', exist_ok = True)
+        for jf in json_file:
+            shutil.move(jf, f"{out_dir}/{out_name}_old/{jf.split('/')[-1]}")
+    return(out_name)
+
+
 def main():
     args = get_options()
+    print(f'#### {10**args.paths_limit} \t {10**args.paths_limit > 100000}')
     toolpath = args.toolPath
     if toolpath == '':
         pathconfigfile = os.path.realpath(__file__).replace('calcFASmulti.py', 'pathconfig.txt')
@@ -250,8 +333,10 @@ def main():
         if len(missing_dict) > 0:
             sys.exit(f'ERROR: Annotations for the following proteins are missing!\n{missing_dict}')
 
+    if args.mergeJson:
+        out_name = check_json_output(args.outName, args.out_dir, args.force)
+
     print('==> preparing jobs...')
-    jobs = create_jobs(args.input, args, args.annotation_dir, args.out_dir, toolpath)
     if args.cpus == 0:
         cpus = mp.cpu_count()-1
     else:
@@ -259,39 +344,53 @@ def main():
             cpus = mp.cpu_count()-1
         else:
             cpus = args.cpus
+    jobs = create_jobs(args.input, args, args.annotation_dir, args.out_dir, out_name, toolpath, cpus)
 
     print('==> calculating FAS scores...')
-    pool = mp.Pool(cpus)
-    for _ in tqdm(pool.imap_unordered(calcFAS.fas, jobs), total=len(jobs)):
-        pass
-    pool.close()
+    if cpus == 1:
+        for j in jobs:
+            calcFAS.fas(j)
+    else:
+        pool = mp.Pool(cpus)
+        for _ in tqdm(pool.imap_unordered(calcFAS.fas, jobs), total=len(jobs)):
+            pass
+        pool.close()
 
     if args.mergeJson:
-        out_name = args.outName
         out_dir = os.path.abspath(args.out_dir)
-        if not args.outName:
-            today = date.today()
-            out_name = f"fas_{today.strftime('%y%m%d')}"
         print(f'==> merge outputs into {out_name}...')
-        if os.path.exists(f'{out_dir}/{out_name}.json'):
-            if args.force:
-                os.remove(f'{out_dir}/{out_name}.json')
-        os.makedirs(f'{out_dir}/tmp', exist_ok = True)
+        os.makedirs(f'{out_dir}/{out_name}_tmp', exist_ok = True)
         for json_file in glob.glob(os.path.join(out_dir, '*.json')):
-            shutil.move(json_file, f"{out_dir}/tmp/{json_file.split('/')[-1]}")
-        if args.oldJson:
-            if os.path.exists(os.path.abspath(args.oldJson)):
-                os.symlink(os.path.abspath(args.oldJson), f'{out_dir}/tmp/oldJson.json')
-        cmd = f'fas.mergeJson -i {out_dir}/tmp/ -n {out_name} -o {out_dir}'
+            shutil.move(json_file, f"{out_dir}/{out_name}_tmp/{json_file.split('/')[-1]}")
+
+        cmd = f'fas.mergeJson -i {out_dir}/{out_name}_tmp/ -n {out_name} -o {out_dir}'
         try:
-            mergedOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
+            merged_out = subprocess.run([cmd], shell=True, capture_output=True, check=True)
         except:
             sys.exit(f'Error running\n{cmd}')
 
+        if args.oldJson:
+            if os.path.exists(f"{out_dir}/{out_name}_old/{args.oldJson.split('/')[-1]}"):
+                shutil.move(f"{out_dir}/{out_name}_old/{args.oldJson.split('/')[-1]}", os.path.abspath(args.oldJson))
+            if os.path.exists(os.path.abspath(args.oldJson)):
+                old_json_path = os.path.abspath(args.oldJson)
+                update_cmd = f'fas.updateJson --old {os.path.abspath(args.oldJson)} --new {out_dir}/{out_name}.json'
+                try:
+                    update_out = subprocess.run([update_cmd], shell=True, capture_output=True, check=True)
+                except:
+                    sys.exit(f'Error running\n{update_cmd}')
+            else:
+                print(f'WARNING: {args.oldJson} not found!')
+        if os.path.exists(f'{out_dir}/{out_name}_old'):
+            for jf in glob.glob(os.path.join(f'{out_dir}/{out_name}_old', '*.json')):
+                shutil.move(jf, f"{out_dir}/{jf.split('/')[-1]}")
+            shutil.rmtree(f'{args.out_dir}/{out_name}_old')
+
+
     if not args.keep:
-        shutil.rmtree(f'{args.out_dir}/split_inputs')
+        shutil.rmtree(f'{args.out_dir}/{out_name}_split_inputs')
         if args.mergeJson:
-            shutil.rmtree(f'{args.out_dir}/tmp')
+            shutil.rmtree(f'{args.out_dir}/{out_name}_tmp')
     print('==> DONE!')
 
 if __name__ == '__main__':

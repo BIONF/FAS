@@ -53,7 +53,11 @@ def merge_JsonFiles(json_files, outName, outPath):
 
 def main():
     version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+                                     ' This script is used to merge multiple calculated FAS json output files!' +
+                                     ' Note: if one protein pair has different scores in different files, only' +
+                                     ' the scores in the first file will be kept. If you want to update the FAS scores,' +
+                                     ' please use fas.updateJson function!',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')

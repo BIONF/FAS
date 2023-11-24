@@ -43,7 +43,11 @@ def merge_anno(pathlist, outpath, name):
 
 def main():
     version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+                                     ' This script is used to merge all annotation json files into one file!' +
+                                     ' Note: if one protein has different annotations in different files, only' +
+                                     ' the first annotation will be kept. If you want to update the annotations,' +
+                                     ' please use fas.updateAnno function!',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
