@@ -286,16 +286,11 @@ def create_jobs(in_file, args, annotation_dir, out_dir, out_name, toolpath, cpus
     return(jobs)
 
 
-def check_json_output(outName, out_dir, force):
+def check_json_output(out_name, out_dir, force):
     """ Check if outName.json file exists
     Or if any other .json file present in out_dir
     """
     # check out_name.json exists
-    out_name = outName
-    out_dir = os.path.abspath(out_dir)
-    if not outName:
-        today = date.today()
-        out_name = f"fas_{today.strftime('%y%m%d')}"
     if os.path.exists(f'{out_dir}/{out_name}.json'):
         if force:
             os.remove(f'{out_dir}/{out_name}.json')
@@ -307,7 +302,6 @@ def check_json_output(outName, out_dir, force):
         os.makedirs(f'{out_dir}/{out_name}_old', exist_ok = True)
         for jf in json_file:
             shutil.move(jf, f"{out_dir}/{out_name}_old/{jf.split('/')[-1]}")
-    return(out_name)
 
 
 def main():
@@ -333,8 +327,13 @@ def main():
         if len(missing_dict) > 0:
             sys.exit(f'ERROR: Annotations for the following proteins are missing!\n{missing_dict}')
 
+    out_name = outName
+    out_dir = os.path.abspath(out_dir)
+    if not outName:
+        today = date.today()
+        out_name = f"fas_{today.strftime('%y%m%d')}"
     if args.mergeJson:
-        out_name = check_json_output(args.outName, args.out_dir, args.force)
+        check_json_output(out_name, args.out_dir, args.force)
 
     print('==> preparing jobs...')
     if args.cpus == 0:
