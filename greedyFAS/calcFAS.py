@@ -29,6 +29,7 @@ from sys import argv
 from greedyFAS.annoFAS import annoFAS
 from greedyFAS.annoFAS import annoModules
 from greedyFAS.mainFAS import fasInput, fasOutput, greedyFAS
+from greedyFAS.mainFAS.fasInput import read_json
 from pkg_resources import get_distribution
 
 
@@ -276,10 +277,6 @@ def fas(opts):
     else:
         option_dict['input_linearized'], option_dict['input_normal'] = fasInput.featuretypes(toolpath
                                                                                              + '/' + 'annoTools.txt')
-    if args.pairwise:
-        option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
-    else:
-        option_dict["pairwise"] = None
 
     option_dict["old_json"] = False
     if args.oldJson:
@@ -287,6 +284,18 @@ def fas(opts):
             if not args.silent:
                 print(f'### NOTE: existing output given ({os.path.abspath(args.oldJson)}). Only new pairs of proteins will be considered!')
             option_dict["old_json"] = os.path.abspath(args.oldJson)
+        else:
+            print(f'WARNING: {args.oldJson} not found!')
+
+    if args.pairwise:
+        option_dict["pairwise"] = fasInput.read_pairwise(args.pairwise)
+        if args.oldJson:
+            if os.path.exists(os.path.abspath(args.oldJson)):
+                option_dict["pairwise"] = filter_oldJson(args.oldJson, fasInput.read_pairwise(args.pairwise))
+        if len(option_dict['pairwise']) == 0:
+            sys.exit(f'DONE! All pairwise FAS scores can be found in {args.oldJson}!')
+    else:
+        option_dict["pairwise"] = None
 
     if not args.silent:
         print('Calculating FAS score...')
@@ -296,6 +305,18 @@ def fas(opts):
                                  str(get_distribution('greedyFAS').version))
     if not args.silent:
         print('done!')
+
+
+def filter_oldJson(old_json, in_pairs):
+    """ Function to check if a FAS scores for input protein pair already exists
+    Return a list of new pairs only
+    """
+    old_results = read_json(old_json)
+    new_pairs = []
+    for pair in in_pairs:
+        if not f'{pair[0]}_{pair[1]}' in old_results and not f'{pair[1]}_{pair[0]}' in old_results:
+            new_pairs.append(pair)
+    return(new_pairs)
 
 
 def main():

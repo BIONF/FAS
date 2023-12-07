@@ -27,9 +27,9 @@ import sys
 import argparse
 import multiprocessing as mp
 from sys import argv
-from greedyFAS.annoFAS import annoFAS
-from greedyFAS.annoFAS import annoModules
+from greedyFAS.annoFAS import annoFAS, annoModules
 from greedyFAS.mainFAS import fasInput, fasOutput, greedyFAS
+from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS import calcFAS
 from greedyFAS import complexityFAS
 from pkg_resources import get_distribution
@@ -168,13 +168,12 @@ def check_anno(in_file, annotation_dir):
     # check missing anno
     missing_dict = {}
     for taxon in input_dict:
-        with open(f'{annotation_dir}/{taxon}.json') as f:
-            anno_dict = json.load(f)
-            for id in input_dict[taxon]:
-                if not id in anno_dict['feature']:
-                    if not taxon in missing_dict:
-                        missing_dict[taxon] = []
-                    missing_dict[taxon].append(id)
+        anno_dict = read_json(f'{annotation_dir}/{taxon}.json')
+        for id in input_dict[taxon]:
+            if not id in anno_dict['feature']:
+                if not taxon in missing_dict:
+                    missing_dict[taxon] = []
+                missing_dict[taxon].append(id)
     return(missing_dict)
 
 
@@ -183,10 +182,9 @@ def calc_path_number(prot_id, anno_file):
     """
     anno_dict = {}
     clan_dict = {}
-    with open(anno_file, 'r') as jf:
-        anno_dict = json.load(jf)
-        proteome = anno_dict["feature"]
-        clan_dict.update(anno_dict["clan"])
+    anno_dict = read_json(anno_file)
+    proteome = anno_dict["feature"]
+    clan_dict.update(anno_dict["clan"])
     option_dict = {}
     pathconfigfile = os.path.realpath(__file__).replace('calcFASmulti.py', 'pathconfig.txt')
     with open(pathconfigfile) as f:
@@ -200,6 +198,20 @@ def calc_path_number(prot_id, anno_file):
 
     (path_number, greedy_comp, graph) = complexityFAS.calc_complex(prot_id, proteome, option_dict, clan_dict)
     return(path_number)
+
+
+def filter_oldJson(old_json, in_file):
+    """ Function to check if a FAS scores for input protein pair already exists
+    Return a list of lines from in_file containing new pairs
+    """
+    old_results = read_json(old_json)
+    new_in_file = []
+    with open(in_file, 'r') as fr:
+        for line in fr:
+            tmp = line.strip().split()
+            if not f'{tmp[0]}_{tmp[2]}' in old_results and not f'{tmp[2]}_{tmp[0]}' in old_results:
+                new_in_file.append(line.strip())
+    return(new_in_file)
 
 
 def get_prot_for_taxpair(opts):
@@ -235,58 +247,64 @@ def create_jobs(in_file, args, annotation_dir, out_dir, out_name, toolpath, cpus
     os.makedirs(f'{out_dir}/{out_name}_split_inputs', exist_ok=True)
     with open(in_file, 'r') as fr:
         lines = fr.read().splitlines()
-        parse_taxa_jobs = []
-        if args.pairLimit > 0:
-            if args.silentOff:
-                print(f"NOTE: only random {args.pairLimit} pairs will be calculated!")
-            if args.pairLimit < len(lines):
-                lines = random.sample(lines, args.pairLimit)
-        for line in lines:
-            parse_taxa_jobs.append((line, args.paths_limit, annotation_dir, out_dir, out_name))
-        if cpus == 1:
-            for l in parse_taxa_jobs:
-                tax_pairs.append(get_prot_for_taxpair(l))
-        else:
-            pool = mp.Pool(cpus)
-            for _ in tqdm(pool.imap_unordered(get_prot_for_taxpair, parse_taxa_jobs), total=len(parse_taxa_jobs)):
-                tax_pairs.append(_)
-            pool.close()
+        if args.oldJson:
+            if os.path.exists(os.path.abspath(args.oldJson)):
+                lines = filter_oldJson(args.oldJson, in_file)
+            else:
+                print(f'WARNING: {args.oldJson} not found!')
+        if len(lines) > 0:
+            parse_taxa_jobs = []
+            if args.pairLimit > 0:
+                if args.silentOff:
+                    print(f"NOTE: only random {args.pairLimit} pairs will be calculated!")
+                if args.pairLimit < len(lines):
+                    lines = random.sample(lines, args.pairLimit)
+            for line in lines:
+                parse_taxa_jobs.append((line, args.paths_limit, annotation_dir, out_dir, out_name))
+            if cpus == 1:
+                for l in parse_taxa_jobs:
+                    tax_pairs.append(get_prot_for_taxpair(l))
+            else:
+                pool = mp.Pool(cpus)
+                for _ in tqdm(pool.imap_unordered(get_prot_for_taxpair, parse_taxa_jobs), total=len(parse_taxa_jobs)):
+                    tax_pairs.append(_)
+                pool.close()
 
-    tax_pairs = list(set(tax_pairs))
-    tax_pairs = list(filter(None, tax_pairs))
-    jobs = []
-    for tax_pair in tax_pairs:
-        args_dict_new = {}
-        args_dict = vars(args)
-        for item in args_dict:
-            args_dict_new[item] = args_dict[item]
-        args_m = argparse.Namespace(**args_dict_new)
-        tmp = tax_pair.split('#')
-        args_m.seed = f'{tmp[0]}.json'
-        args_m.query = f'{tmp[1]}.json'
-        args_m.pairwise = f'{out_dir}/{out_name}_split_inputs/{tax_pair}.txt'
-        args_m.out_name = tax_pair
-        args_m.query_id = None
-        args_m.seed_id = None
-        args_m.ref_proteome = None
-        args_m.ref_2 = None
-        if args.silentOff:
-            args_m.silent = False
-        else:
-            args_m.silent = True
-        # check existing output files
-        out_file = f'{args_m.out_dir}/{args_m.out_name}.tsv'
-        if args.json:
-            out_file = f'{args_m.out_dir}/{args_m.out_name}.json'
-        if os.path.exists(out_file):
-            if not args.force:
-                print(f'Output file {os.path.abspath(out_file)} exists! Use --force if you want to overwrite it!')
-                continue
-        jobs.append([args_m, toolpath])
+        tax_pairs = list(set(tax_pairs))
+        tax_pairs = list(filter(None, tax_pairs))
+        jobs = []
+        for tax_pair in tax_pairs:
+            args_dict_new = {}
+            args_dict = vars(args)
+            for item in args_dict:
+                args_dict_new[item] = args_dict[item]
+            args_m = argparse.Namespace(**args_dict_new)
+            tmp = tax_pair.split('#')
+            args_m.seed = f'{tmp[0]}.json'
+            args_m.query = f'{tmp[1]}.json'
+            args_m.pairwise = f'{out_dir}/{out_name}_split_inputs/{tax_pair}.txt'
+            args_m.out_name = tax_pair
+            args_m.query_id = None
+            args_m.seed_id = None
+            args_m.ref_proteome = None
+            args_m.ref_2 = None
+            if args.silentOff:
+                args_m.silent = False
+            else:
+                args_m.silent = True
+            # check existing output files
+            out_file = f'{args_m.out_dir}/{args_m.out_name}.tsv'
+            if args.json:
+                out_file = f'{args_m.out_dir}/{args_m.out_name}.json'
+            if os.path.exists(out_file):
+                if not args.force:
+                    print(f'Output file {os.path.abspath(out_file)} exists! Use --force if you want to overwrite it!')
+                    continue
+            jobs.append([args_m, toolpath])
     return(jobs)
 
 
-def check_json_output(out_name, out_dir, force):
+def check_json_output(out_name, out_dir, old_json, force):
     """ Check if outName.json file exists
     Or if any other .json file present in out_dir
     """
@@ -301,12 +319,12 @@ def check_json_output(out_name, out_dir, force):
     if len(json_file) > 0:
         os.makedirs(f'{out_dir}/{out_name}_old', exist_ok = True)
         for jf in json_file:
-            shutil.move(jf, f"{out_dir}/{out_name}_old/{jf.split('/')[-1]}")
+            if not os.path.abspath(jf) == os.path.abspath(old_json):
+                shutil.move(jf, f"{out_dir}/{out_name}_old/{jf.split('/')[-1]}")
 
 
 def main():
     args = get_options()
-    print(f'#### {10**args.paths_limit} \t {10**args.paths_limit > 100000}')
     toolpath = args.toolPath
     if toolpath == '':
         pathconfigfile = os.path.realpath(__file__).replace('calcFASmulti.py', 'pathconfig.txt')
@@ -332,8 +350,10 @@ def main():
     if not args.outName:
         today = date.today()
         out_name = f"fas_{today.strftime('%y%m%d')}"
+
     if args.mergeJson:
-        check_json_output(out_name, out_dir, args.force)
+        check_json_output(out_name, out_dir, args.oldJson, args.force)
+
 
     print('==> preparing jobs...')
     if args.cpus == 0:
@@ -345,15 +365,20 @@ def main():
             cpus = args.cpus
     jobs = create_jobs(args.input, args, args.annotation_dir, args.out_dir, out_name, toolpath, cpus)
 
-    print('==> calculating FAS scores...')
-    if cpus == 1:
-        for j in jobs:
-            calcFAS.fas(j)
+
+    if len(jobs) > 0:
+        print('==> calculating FAS scores...')
+        if cpus == 1:
+            for j in jobs:
+                calcFAS.fas(j)
+        else:
+            pool = mp.Pool(cpus)
+            for _ in tqdm(pool.imap_unordered(calcFAS.fas, jobs), total=len(jobs)):
+                pass
+            pool.close()
     else:
-        pool = mp.Pool(cpus)
-        for _ in tqdm(pool.imap_unordered(calcFAS.fas, jobs), total=len(jobs)):
-            pass
-        pool.close()
+        sys.exit(f'==> DONE! All pairwise FAS scores can be found in {args.oldJson}!')
+
 
     if args.mergeJson:
         out_dir = os.path.abspath(args.out_dir)
@@ -361,25 +386,27 @@ def main():
         os.makedirs(f'{out_dir}/{out_name}_tmp', exist_ok = True)
         for json_file in glob.glob(os.path.join(out_dir, '*.json')):
             shutil.move(json_file, f"{out_dir}/{out_name}_tmp/{json_file.split('/')[-1]}")
+            if args.oldJson:
+                if os.path.abspath(json_file) == os.path.abspath(args.oldJson):
+                    shutil.move(f"{out_dir}/{out_name}_tmp/{json_file.split('/')[-1]}", args.oldJson)
 
         cmd = f'fas.mergeJson -i {out_dir}/{out_name}_tmp/ -n {out_name} -o {out_dir}'
         try:
             merged_out = subprocess.run([cmd], shell=True, capture_output=True, check=True)
         except:
             sys.exit(f'Error running\n{cmd}')
-
-        if args.oldJson:
-            if os.path.exists(f"{out_dir}/{out_name}_old/{args.oldJson.split('/')[-1]}"):
-                shutil.move(f"{out_dir}/{out_name}_old/{args.oldJson.split('/')[-1]}", os.path.abspath(args.oldJson))
-            if os.path.exists(os.path.abspath(args.oldJson)):
-                old_json_path = os.path.abspath(args.oldJson)
-                update_cmd = f'fas.updateJson --old {os.path.abspath(args.oldJson)} --new {out_dir}/{out_name}.json'
-                try:
-                    update_out = subprocess.run([update_cmd], shell=True, capture_output=True, check=True)
-                except:
-                    sys.exit(f'Error running\n{update_cmd}')
-            else:
-                print(f'WARNING: {args.oldJson} not found!')
+        # if args.oldJson:
+        #     if os.path.exists(f"{out_dir}/{out_name}_old/{args.oldJson.split('/')[-1]}"):
+        #         shutil.move(f"{out_dir}/{out_name}_old/{args.oldJson.split('/')[-1]}", os.path.abspath(args.oldJson))
+        #     if os.path.exists(os.path.abspath(args.oldJson)):
+        #         old_json_path = os.path.abspath(args.oldJson)
+        #         update_cmd = f'fas.updateJson --old {os.path.abspath(args.oldJson)} --new {out_dir}/{out_name}.json'
+        #         try:
+        #             update_out = subprocess.run([update_cmd], shell=True, capture_output=True, check=True)
+        #         except:
+        #             sys.exit(f'Error running\n{update_cmd}')
+        #     else:
+        #         print(f'WARNING: {args.oldJson} not found!')
         if os.path.exists(f'{out_dir}/{out_name}_old'):
             for jf in glob.glob(os.path.join(f'{out_dir}/{out_name}_old', '*.json')):
                 shutil.move(jf, f"{out_dir}/{jf.split('/')[-1]}")

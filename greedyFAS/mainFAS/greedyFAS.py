@@ -169,15 +169,16 @@ def fc_start(option):
             phyloprofile_out(option["outpath"], False, option["phyloprofile"], [results, None])
 
 
-def check_oldJson(old_json, id_1, id_2):
+def filter_oldJson(old_json, in_pairs):
     """ Function to check if a FAS scores for input protein pair already exists
-    Return a list of pairs that should be excluded from the calculation
+    Return a list of new pairs only
     """
     old_results = read_json(old_json)
-    ignored_pairs = []
-    if f'{id_1}_{id_2}' in old_results or f'{id_2}_{id_1}' in old_results:
-        ignored_pairs.append([id_1, id_2])
-    return(ignored_pairs)
+    new_pairs = []
+    for pair in in_pairs:
+        if not f'{pair[0]}_{pair[1]}' in old_results and not f'{pair[1]}_{pair[0]}' in old_results:
+            new_pairs.append(pair)
+    return(new_pairs)
 
 
 def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm):
@@ -208,13 +209,6 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
     final_pairs = []
     if option['pairwise']:
         final_pairs = option['pairwise']
-        if option['old_json']:
-            for pair in option['pairwise']:
-                protein = pair[0]
-                query = pair[1]
-                ### FILTER pairwise input based on old json output file
-                final_pairs = [ elem for elem in final_pairs
-                    if not elem in check_oldJson(option['old_json'], protein, query)]
     else:
         if option["query_id"]:
             querylist = option["query_id"]
@@ -231,41 +225,38 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
         else:
             seedlist = list(seed_proteome.keys())
         # create pairwise list
+        final_pairs = list(itertools.product(seedlist,querylist))
         if option['old_json']:
-            for s in seedlist:
-                for q in querylist:
-                    ### FILTER pairwise input based on old json output file
-                    if not [s,q] == check_oldJson(option['old_json'], s, q):
-                        final_pairs.append([s,q])
-        else:
-            final_pairs = list(itertools.product(seedlist,querylist))
+            final_pairs = filter_oldJson(option['old_json'], final_pairs)
+    if len(final_pairs) > 0:
+        if option['progress']:
+             progress = tqdm(total=len(final_pairs), file=sys.stdout)
 
-    if option['progress']:
-         progress = tqdm(total=len(final_pairs), file=sys.stdout)
+        for pair in final_pairs:
+            query = pair[1]
+            protein = pair[0]
+            ### CHECK QUERY & PROTEIN IN JSON ################
+            if query not in query_proteome:
+                raise Exception(query + ' is missing in annotation!')
+            if protein not in seed_proteome:
+                raise Exception(protein + ' is missing in annotation!')
+            tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
+            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
+            go_priority, domain_count = tmp_query[7:9]
 
-    for pair in final_pairs:
-        query = pair[1]
-        protein = pair[0]
-        ### CHECK QUERY & PROTEIN IN JSON ################
-        if query not in query_proteome:
-            raise Exception(query + ' is missing in annotation!')
-        if protein not in seed_proteome:
-            raise Exception(protein + ' is missing in annotation!')
-        tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
-        query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
-        go_priority, domain_count = tmp_query[7:9]
+            #### WRITE RESULTS ####################
+            results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
+                                       go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
+                                       domain_out, interprokeys, phmm))
+            if option["progress"]:
+                progress.update(1)
 
-        #### WRITE RESULTS ####################
-        results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
-                                   go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
-                                   domain_out, interprokeys, phmm))
         if option["progress"]:
-            progress.update(1)
-
-    if option["progress"]:
-        progress.refresh()
-        progress.close()
-        sleep(1.0)
+            progress.refresh()
+            progress.close()
+            sleep(1.0)
+    else:
+        print('==> No new protein pairs need to be calculated!')
     return results
 
 
