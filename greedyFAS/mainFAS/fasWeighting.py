@@ -61,6 +61,8 @@ def w_weighting(protein, domain_count, proteome, option):
 
 def w_count_add_domains(protein, domain_count, proteome):
     features = []
+    if domain_count == 'NA':
+        return 0
     for feature in proteome[protein]:
         features.append(feature)
     for feature in features:

@@ -191,7 +191,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, weight_dir, tmp_path, cores, 
                      "score_weights": (0.7, 0.0, 0.3), "output": 0, "max_overlap_percentage": 0.0, "domain": True,
                      "pairwise": jobdict[spec], "weight_correction": "loge", "outpath": tmp_path + "/" + spec,
                      "input_linearized": features[0], "input_normal": features[1], "MS_uni": 0,
-                     "ref_proteome": [spec + '.json'], "progress": False, "old_json": False},
+                     "ref_proteome": [spec + '.json'], "progress": False, "old_json": False, "paths_limit": 0},
                      seed_proteome, seed_weight, weight_dir, clan_dict, fasta, tmp_path, interprokeys, phmm])
     jobpool = multiprocessing.Pool(processes=cores)
     results = []
