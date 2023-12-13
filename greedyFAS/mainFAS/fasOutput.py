@@ -30,12 +30,16 @@ def write_tsv_out(outpath, bidirectional, results):
     outdict = {}
     out.write('Seed\tQuery\tScore(Forward/Reverse)\tMS(Forward/Reverse)\tPS(Forward/Reverse)\tCS(Forward/Reverse)'
               '\tLS(Forward/Reverse)\tMethod\n')
-    for result in results[0]:
-        outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
-    if bidirectional:
+    if results[0]:
+        for result in results[0]:
+            outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
+        if bidirectional:
+            for result in results[1]:
+                outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2],
+                                                    outdict[result[1],result[0]][2])
+    else:
         for result in results[1]:
-            outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2], outdict[result[1],
-                                                                                                  result[0]][2])
+            outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
     for pair in outdict:
         out.write(pair[0] + '\t' + pair[1] + '\t' + f'{outdict[pair][0][0]:.4}' + '/'
                   + f'{outdict[pair][1][0]:.4}' + '\t' + f'{outdict[pair][0][1]:.4}' + '/'
@@ -48,12 +52,17 @@ def write_tsv_out(outpath, bidirectional, results):
 
 def write_json_out(outpath, bidirectional, results):
     outdict = {}
-    for result in results[0]:
-        outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
-    if bidirectional:
+    if results[0]:
+        for result in results[0]:
+            outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
+        if bidirectional:
+            for result in results[1]:
+                outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2],
+                                                    outdict[result[1],result[0]][2])
+    else:
         for result in results[1]:
-            outdict[result[1], result[0]] = (outdict[result[1], result[0]][0], result[2], outdict[result[1],
-                                                                                                  result[0]][2])
+            outdict[result[0], result[1]] = (result[2], ('NA', 'NA', 'NA', 'NA', 'NA'), result[3])
+
     json_dict = {}
     for pair in outdict:
         json_dict['_'.join(pair)] = [f'{outdict[pair][0][0]:.4}', f'{outdict[pair][1][0]:.4}']

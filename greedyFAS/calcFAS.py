@@ -133,6 +133,9 @@ def get_options():
                             help="Change to define the threshold for the maximal cardinality (number) of feature paths "
                                  "in a graph. If max. cardinality is exceeded the priority mode will be used to for "
                                  "the path evaluation. default=500")
+    thresholds.add_argument("--paths_limit", default=0, type=int,
+                            help="Specify number of maximum paths to be considered (10^n). If this threshold is exceeded, "
+                                "the corresponding protein will be ignored. Default: 0 for no limit")
     obscure.add_argument("--priority_mode", action='store_false',
                          help="deactivates the greedy strategy priority mode for larger architectures, NOT RECOMMENDED")
     obscure.add_argument("--timelimit", default=3600, type=int,
@@ -191,7 +194,7 @@ def fas(opts):
                    "timelimit": args.timelimit, "phyloprofile": args.phyloprofile, "score_weights": [],
                     "tsv": args.tsv, "json": args.json, "max_overlap_percentage": 0.0, "domain": args.domain, "pairwise": None,
                     "eInstance": args.eInstance, "eFeature": args.eFeature, "progress": True,
-                    "empty_as_1": args.empty_as_1, "silent": args.silent
+                    "empty_as_1": args.empty_as_1, "silent": args.silent, "paths_limit": 10**args.paths_limit
                    }
     seedname = '.'.join(args.seed.split('/')[-1].split('.')[:-1])
     option_dict["p_path"] = [args.annotation_dir + '/' + seedname + '.json']

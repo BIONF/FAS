@@ -130,27 +130,30 @@ def fc_start(option):
         if not option["silent"]:
             print("calculating forward scores...")
         f_results = fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, interprokeys, phmm)
-        if option["MS_uni"] == 0 and option["ref_2"]:
-            domain_count_2 = {}
-            for path in option["ref_2"]:
-                domain_count_2.update(read_json(path)["count"])
-            if option["weight_correction"]:
-                domain_count_2 = w_weight_correction(option["weight_correction"], domain_count_2)
-            option['ref_proteome'] = option['ref_2']
-        else:
-            domain_count_2 = domain_count
-        id_tmp = option["seed_id"]
-        option["reverse"] = True
-        option["seed_id"] = option["query_id"]
-        option["query_id"] = id_tmp
-        if option["pairwise"]:
-            pairtmp = []
-            for pair in option["pairwise"]:
-                pairtmp.append([pair[1], pair[0]])
-            option["pairwise"] = pairtmp
-        if not option["silent"]:
-            print("calculating backward scores...")
-        r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option, interprokeys, phmm)
+        r_results = ()
+        if not f_results[-1] == 'NA':
+            if option["MS_uni"] == 0 and option["ref_2"]:
+                domain_count_2 = {}
+                for path in option["ref_2"]:
+                    domain_count_2.update(read_json(path)["count"])
+                if option["weight_correction"]:
+                    domain_count_2 = w_weight_correction(option["weight_correction"], domain_count_2)
+                option['ref_proteome'] = option['ref_2']
+            else:
+                domain_count_2 = domain_count
+            id_tmp = option["seed_id"]
+            option["reverse"] = True
+            option["seed_id"] = option["query_id"]
+            option["query_id"] = id_tmp
+            if option["pairwise"]:
+                pairtmp = []
+                for pair in option["pairwise"]:
+                    pairtmp.append([pair[1], pair[0]])
+                option["pairwise"] = pairtmp
+            if not option["silent"]:
+                print("calculating backward scores...")
+            r_results = fc_main(domain_count_2, query_proteome, seed_proteome, clan_dict, option, interprokeys, phmm)
+
         if option["phyloprofile"]:
             phyloprofile_out(option["outpath"], True, option["phyloprofile"], (f_results, r_results))
         if not option['tsv']:
@@ -241,15 +244,22 @@ def fc_main(domain_count, seed_proteome, query_proteome, clan_dict, option, inte
             if protein not in seed_proteome:
                 raise Exception(protein + ' is missing in annotation!')
             tmp_query = fc_prep_query(query, domain_count, query_proteome, option, clan_dict)
-            query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
-            go_priority, domain_count = tmp_query[7:9]
+            if not tmp_query == None:
+                tmp_protein = fc_prep_query(protein, 'NA', seed_proteome, option, clan_dict)
+                if not tmp_protein == None:
+                    query_graph, all_query_paths, lin_query_set, query_features, a_q_f, query_clans, clan_dict = tmp_query[0:7]
+                    go_priority, domain_count = tmp_query[7:9]
 
-            #### WRITE RESULTS ####################
-            results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
-                                       go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
-                                       domain_out, interprokeys, phmm))
-            if option["progress"]:
-                progress.update(1)
+                    #### WRITE RESULTS ####################
+                    results.append(fc_main_sub(protein, domain_count, seed_proteome, option, all_query_paths, query_features,
+                                               go_priority, a_q_f, clan_dict, query_graph, query_proteome, query, query_clans,
+                                               domain_out, interprokeys, phmm))
+                    if option["progress"]:
+                        progress.update(1)
+                else:
+                    results.append((protein, query, ('NA', 'NA', 'NA', 'NA', 'NA'), 'NA'))
+            else:
+                results.append((protein, query, ('NA', 'NA', 'NA', 'NA', 'NA'), 'NA'))
 
         if option["progress"]:
             progress.refresh()
@@ -268,6 +278,8 @@ def fc_prep_query(query, domain_count, query_proteome, option, clan_dict):
         query, query_proteome, clan_dict, option)
     tmp_query_graph, path_number = pb_region_paths(pb_region_mapper(
         lin_query_set, query_features, option["max_overlap"], option["max_overlap_percentage"]))
+    if option["paths_limit"] > 1 and option["paths_limit"] < path_number:
+        return None
     # PRIORITY CHECK: checking for number of instances - assess complexity of the feature graph
     if (len(query_features) > option["priority_threshold"] or path_number > option["max_cardinality"]) and \
             option["priority_mode"]:

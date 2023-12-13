@@ -3,7 +3,9 @@
 #######################################################################
 # Copyright (C) 2023 Vinh Tran
 #
-# This file is part of FAS.
+#  This file is part of FAS. This script is used to convert FAS output
+#  from TSV (tab-delimited) to JSON formar. Only proteins IDs and their
+#  (pairwise) FAS scores will be stored in the JSON output.
 #
 #  FAS is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by

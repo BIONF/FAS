@@ -224,11 +224,11 @@ def get_prot_for_taxpair(opts):
     taxa_pair = ''
     if len(tmp) == 4:
         taxa_pair = f'{tmp[1]}#{tmp[3]}'
-        if paths_limit > 0:
-            path_p1 = calc_path_number(tmp[0], f'{annotation_dir}/{tmp[1]}.json')
-            path_p2 = calc_path_number(tmp[2], f'{annotation_dir}/{tmp[3]}.json')
-            if path_p1 > 10**paths_limit or path_p2 > 10**paths_limit:
-                return('')
+        # if paths_limit > 0:
+        #     path_p1 = calc_path_number(tmp[0], f'{annotation_dir}/{tmp[1]}.json')
+        #     path_p2 = calc_path_number(tmp[2], f'{annotation_dir}/{tmp[3]}.json')
+        #     if path_p1 > 10**paths_limit or path_p2 > 10**paths_limit:
+        #         return('')
         fp = open(f'{out_dir}/{out_name}_split_inputs/{taxa_pair}.txt', 'a+')
         fp.write(f'{tmp[0]}\t{tmp[2]}\n')
         fp.close()
