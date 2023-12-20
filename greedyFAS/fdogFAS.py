@@ -37,7 +37,7 @@ from pkg_resources import get_distribution
 def main():
     args = get_options()
     if not args.outname:
-        outname = args.extended_fa.split('/')[-1].split('.')[0]
+        outname = args.extended_fa.split('/')[-1].replace('.extended.fa', '')  #.split('.')[0]
     else:
         outname = args.outname
     if not args.out_dir:
