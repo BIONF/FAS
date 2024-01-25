@@ -60,18 +60,24 @@ def write_domain_file(path, idlist, outpath, tools, groupname):
         for pid in idlist:
             for tool in tools:
                 for feature in proteome["feature"][pid][tool]:
+                    print(proteome["feature"][pid][tool][feature])
+                    inteproID = "NA"
+                    if "interproID" in proteome:
+                        if feature in proteome["interproID"]:
+                            inteproID = proteome["interproID"][feature]
                     for instance in proteome["feature"][pid][tool][feature]["instance"]:
-                        phmm_info = 'NA\tNA\tNA\tNA\tNA\n'
+                        phmm_info = 'NA\tNA\tNA\tNA\n'
                         if len(instance) > 3:
-                            phmm_info = str(instance[2]) + '\t' + str(instance[3]) + '\t' + str(instance[4]) + '\t' \
+                            phmm_info = str(instance[3]) + '\t' + str(instance[4]) + '\t' \
                                         + str(instance[5]) + '\t'
                             if feature in proteome['length']:
                                 phmm_info = phmm_info + str(proteome['length'][feature]) + '\n'
                             else:
                                 phmm_info = phmm_info + 'NA\n'
                         out.write(groupname + "#" + pid + "\t" + pid + "\t" + str(proteome["feature"][pid]["length"])
-                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1]) + "\tNA\tNA"
-                                  + phmm_info)
+                                  + "\t" + feature + "\t" + str(instance[0]) + "\t" + str(instance[1])
+                                  + "\tNA\tNA\t" + inteproID + "\t" + str(instance[2])
+                                  + "\t" + phmm_info)
 
 
 def main():
