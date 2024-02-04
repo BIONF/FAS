@@ -328,6 +328,11 @@ def install_pfam(pfam_version, pfam_path, anno_path):
                 sys.exit('ERROR: Problem occurred while creating binary files for PFAM at %s/Pfam/Pfam-hmms' % (anno_path))
             # write length file for PFAM
             write_phmm_length(anno_path, 'Pfam')
+            # remove symlinks
+            if os.path.isfile(f'{anno_path}/{file}'):
+                os.remove(f'{anno_path}/{file}')
+                os.remove(f'{anno_path}/{dat_file}')
+                os.remove(f'{anno_path}/{relnotes_file}')
         else:
             sys.exit('ERROR: No Pfam-A.hmm.gz found at %s' % url)
     else:
