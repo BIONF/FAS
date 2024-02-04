@@ -297,7 +297,7 @@ def install_pfam(pfam_version, pfam_path, anno_path):
             annoModules.checkFileExist(f'{pfam_path}/{file}')
             annoModules.checkFileExist(f'{pfam_path}/{dat_file}')
             annoModules.checkFileExist(f'{pfam_path}/{relnotes_file}')
-        if os.path.isfile(file):
+        if os.path.isfile(f'{pfam_path}/{file}'):
             Path(anno_path + '/Pfam/Pfam-hmms').mkdir(parents=True, exist_ok=True)
             # move donwloaded file to anno_path/Pfam/Pfam-hmms
             try:
