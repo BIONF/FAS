@@ -87,7 +87,7 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoTo
 
     annoCmd = 'fas.doAnno -i %s -o %s --cpus %s' % (faFile, outPath, cpus)
     if annoToolFile:
-        annoCmd += ' -annoToolFile %s' % annoToolFile
+        annoCmd += ' --annoToolFile %s' % annoToolFile
     if silent:
         annoCmd = annoCmd + ' > /dev/null 2>&1'
     try:
