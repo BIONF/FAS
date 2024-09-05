@@ -237,6 +237,13 @@ def main():
     print('PID ' + str(os.getpid()))
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
                 extract, annoFile, cpus, annoToolFile])
+    # remove tmp folders
+    if os.path.exists('tmp/signalp'):
+        subfolders = [ f.path for f in os.scandir('tmp') if f.is_dir() ]
+        if len(subfolders) == 1 and subfolders[0] == "tmp/signalp":
+            shutil.rmtree('tmp')
+    if os.path.exists(f'{outPath}/tmp'):
+        shutil.rmtree(f'{outPath}/tmp')
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 

@@ -31,6 +31,7 @@ from greedyFAS.annoFAS import annoModules
 from greedyFAS.mainFAS import fasInput, fasOutput, greedyFAS
 from greedyFAS.mainFAS.fasInput import read_json
 from pkg_resources import get_distribution
+import shutil
 
 
 def get_options():
@@ -344,7 +345,11 @@ def main():
         annojobs.append(args.ref_2)
     anno(annojobs, args, toolpath)
     fas((args, toolpath))
-
+    # remove tmp folders
+    if os.path.exists('tmp/signalp'):
+        subfolders = [ f.path for f in os.scandir('tmp') if f.is_dir() ]
+        if len(subfolders) == 1 and subfolders[0] == "tmp/signalp":
+            shutil.rmtree('tmp')
 
 if __name__ == '__main__':
     main()
