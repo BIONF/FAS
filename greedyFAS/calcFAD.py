@@ -180,7 +180,7 @@ def fad(args, toolpath):
     fadMain.fc_start(option_dict)
     if args.config:
         fasOutput.write_metadata(option_dict['outpath'] + '_config.yml', args, ' '.join(argv),
-                                 str(version("greedyFAS"))
+                                 str(version("greedyFAS")))
     print('done!')
 
 
