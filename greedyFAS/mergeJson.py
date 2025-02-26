@@ -26,7 +26,7 @@ import sys
 import argparse
 import json
 import glob
-from pkg_resources import get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 
 def merge_JsonFiles(json_files, outName, outPath):
@@ -52,8 +52,8 @@ def merge_JsonFiles(json_files, outName, outPath):
 
 
 def main():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.' +
                                      ' This script is used to merge multiple calculated FAS json output files!' +
                                      ' Note: if one protein pair has different scores in different files, only' +
                                      ' the scores in the first file will be kept. If you want to update the FAS scores,' +

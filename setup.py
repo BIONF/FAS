@@ -28,8 +28,8 @@ with open('README.md', 'r') as input:
 
 setup(
     name='greedyFAS',
-    version='1.18.13',
-    python_requires='>=3.7.0',
+    version='1.18.14',
+    python_requires='>=3.10.0',
     description='A tool to compare protein feature architectures',
     long_description=long_description,
     long_description_content_type='text/markdown',

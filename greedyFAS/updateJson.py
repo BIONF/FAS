@@ -26,9 +26,8 @@ import sys
 import argparse
 import json
 import glob
-from pkg_resources import get_distribution
 from greedyFAS.annoFAS import annoModules
-from pkg_resources import get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 
 def update_JsonFile(js_old, js_new, out_file, force):
@@ -62,8 +61,8 @@ def update_JsonFile(js_old, js_new, out_file, force):
 
 
 def main():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.' +
                                      ' This script is used to update an old FAS json file by a new one!',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

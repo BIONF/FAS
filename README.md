@@ -37,7 +37,7 @@ export PATH=$HOME/.local/bin:$PATH
 # Usage
 
 ## Download and install annotation tools
-Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://www.ebi.ac.uk/interpro/download/Pfam/), [SMART](https://software.embl-em.de/software/18), [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](https://mendel.imp.ac.at/METHODS/seg.server.html), [COILS](https://mybiosoftware.com/coils-2-2-prediction-coiled-coil-regions-proteins.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/). To get these tools and make a configuration file for FAS, please use the `setupFAS` function:
+Before using FAS, some annotation tools and databases need to be installed. FAS' standard databases/annotation tools are: [PFAM](https://www.ebi.ac.uk/interpro/download/Pfam/), [SMART](https://software.embl-em.de/software/18), [COILS](https://mybiosoftware.com/coils-2-2-prediction-coiled-coil-regions-proteins.html), [THMHH 2.0c](http://www.cbs.dtu.dk/services/TMHMM/) and [SignalP 4.1g](http://www.cbs.dtu.dk/services/SignalP/) and 2 optional tools [fLPS](http://biology.mcgill.ca/faculty/harrison/flps.html), [SEG](https://mendel.imp.ac.at/METHODS/seg.server.html). To get these tools and make a configuration file for FAS, please use the `setupFAS` function:
 ```
 fas.setup -t /directory/where/you/want/to/save/annotation/tools
 ```

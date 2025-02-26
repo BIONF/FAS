@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 import sys
 import argparse
-from pkg_resources import get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 
 def split_domainFile(domain_file, outdir, idlist):
@@ -61,8 +61,8 @@ def split_domainFile(domain_file, outdir, idlist):
 
 
 def main():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.' +
                                      ' This script is used to split a domain file into individual file for each protein',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

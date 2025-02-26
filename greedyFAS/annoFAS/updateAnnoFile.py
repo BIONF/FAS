@@ -26,12 +26,12 @@ import os
 import argparse
 from pathlib import Path
 import greedyFAS.annoFAS.annoModules as annoModules
-from pkg_resources import get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 
 def main():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.' +
                                      ' This script os used to add interpro IDs and tool versions to an existing annotation file',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")

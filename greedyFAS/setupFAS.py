@@ -38,7 +38,7 @@ import multiprocessing as mp
 from tqdm import tqdm
 from greedyFAS.disorderFAS import install_aucpred
 import greedyFAS.annoFAS.annoModules as annoModules
-from pkg_resources import get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 home = expanduser('~')
 
@@ -397,7 +397,7 @@ def install_flps(anno_path):
     if not os.path.islink('%s/fLPS/fLPS' % anno_path):
         # download flps
         fLPS_file = 'fLPS2programs.tar' #'fLPS.tar.gz'
-        fLPS_url = 'http://biology.mcgill.ca/faculty/harrison/'
+        fLPS_url = 'https://biology.mcgill.ca/faculty/harrison/'
         download_file(fLPS_url, fLPS_file)
         shutil.unpack_archive(fLPS_file, anno_path, 'gztar')
         os.remove(fLPS_file)
@@ -499,9 +499,11 @@ def install_annoTool(options):
     reinstall = options['reinstall']
     pfam_version = options['pfamVersion']
     pfam_path = options['pfamPath']
+    lowComplexity = options['lowComplexity']
     check_hmmer()
 
-
+    if not lowComplexity:
+        ignoreList.extend(('SEG', 'fLPS'))
     tools = check_installed_tools(anno_path, ignoreList, reinstall, force, options['greedyFasPath'])
 
     # do install anno tools
@@ -560,21 +562,19 @@ def install_annoTool(options):
                 print('==> Installing PFAM latest version...')
             install_pfam(pfam_version, pfam_path, anno_path)
 
-        # install fLPS, COILS2 and SEG
-        if len(reinstall) == 0 or 'fLPS' in reinstall:
-            if not 'fLPS' in ignoreList:
-                print('==> Installing fLPS ...')
-                install_flps(anno_path)
-
+        # install COILS2, fLPS and SEG
         if len(reinstall) == 0 or 'COILS2' in reinstall:
             if 'COILS2' not in ignoreList:
                 print('==> Installing COILS2...')
                 install_coils(anno_path)
 
-        if len(reinstall) == 0 or 'SEG' in reinstall:
-            if 'SEG' not in ignoreList:
-                print('==> Installing SEG...')
-                install_seg(anno_path)
+        if lowComplexity or 'fLPS' in reinstall:
+            print('==> Installing fLPS ...')
+            install_flps(anno_path)
+
+        if lowComplexity or 'SEG' in reinstall:
+            print('==> Installing SEG...')
+            install_seg(anno_path)
 
         # install disorder
         if options['disorder']:
@@ -692,8 +692,8 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
 
 
 def main():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.')
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.')
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='',
@@ -703,9 +703,11 @@ def main():
                           default='')
     optional.add_argument('--pfamVersion', help='Specify PFAM version. E.g.: 35.0', action='store', default='')
     optional.add_argument('--pfamPath', help='Set path to your downloaded PFAM folder', action='store', default='')
-    optional.add_argument('-i', '--ignore', help='List of tools should be ignored, e.g. SEG COILS2', nargs="*",
-                        choices=['SignalP', 'TMHMM', 'COILS2', 'fLPS', 'SEG'],
+    optional.add_argument('-i', '--ignore', help='List of tools should be ignored, e.g. SignalP COILS2', nargs="*",
+                        choices=['SignalP', 'TMHMM', 'COILS2'],
                         action='store', default=[])
+    optional.add_argument('--lowComplexity', help='Install low complexity prediction tools SEG and fLPS',
+                        action='store_true')
     optional.add_argument('--noAnno', help='Run setup without installing annotation tools',
                         action='store_true')
     optional.add_argument('-f', '--force', help='Overwrite old annotation tools if exist', action='store_true')
@@ -734,6 +736,7 @@ def main():
         'reinstall': args.reinstall,
         'greedyFasPath': greedyFasPath,
         'disorder': args.disorder,
+        'lowComplexity': args.lowComplexity,
         'noAnno': args.noAnno
     }
 
@@ -782,8 +785,8 @@ def main():
         with open(greedyFasPath+'/pathconfig.txt', 'w') as config:
             config.write(os.path.abspath(greedyFasPath))
         with open(greedyFasPath+'/annoTools.txt', 'w') as annoFile:
-            annoFile.write("#linearized\nPfam\nSMART\n#normal\nfLPS\nCOILS2\nSEG\nTMHMM\nSignalP\n#checked")
-        print(f'*** NOTE: This FAS version works by default only with complete annotations from all tools.')
+            annoFile.write("#linearized\nPfam\nSMART\n#normal\nCOILS2\nTMHMM\nSignalP\n#checked")
+        print(f'*** NOTE: This FAS version works by default only with complete annotations from all required tools.')
         print(f'Modify {greedyFasPath}/annoTools.txt if needed!')
         sys.exit()
 

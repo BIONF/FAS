@@ -25,7 +25,7 @@ import argparse
 from greedyFAS.annoFAS.annoModules import mergeNestedDic
 from greedyFAS.mainFAS.fasInput import read_json
 from greedyFAS.annoFAS.annoModules import save2json
-from pkg_resources import get_distribution
+from importlib.metadata import version, PackageNotFoundError
 
 
 def merge_anno(pathlist, outpath, name):
@@ -42,8 +42,8 @@ def merge_anno(pathlist, outpath, name):
 
 
 def main():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.' +
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.' +
                                      ' This script is used to merge all annotation json files into one file!' +
                                      ' Note: if one protein has different annotations in different files, only' +
                                      ' the first annotation will be kept. If you want to update the annotations,' +

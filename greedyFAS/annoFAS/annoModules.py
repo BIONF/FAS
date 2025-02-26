@@ -495,8 +495,8 @@ def doAnno(args):
         subprocess.run([rmCmd], shell=True, check=True)
     except:
         sys.exit('Error running\n%s' % rmCmd)
-    if len(os.listdir(f'{outPath}/tmp/{pid}')) == 0:
-        shutil.rmtree(f'{outPath}/tmp')
+    # if len(os.listdir(f'{outPath}/tmp/{pid}')) == 0:
+    #     shutil.rmtree(f'{outPath}/tmp')
     if 'signalp' in toolList:
         try:
             seqFileName = seqFile.split('/')[-1].split('.')[0]

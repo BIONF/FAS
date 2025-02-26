@@ -29,12 +29,11 @@ from greedyFAS.annoFAS import annoFAS
 from greedyFAS.annoFAS import annoModules
 from greedyFAS.mainFAS import fasInput, fasOutput, fadMain
 from greedyFAS.calcFAS import anno
-from pkg_resources import get_distribution
-
+from importlib.metadata import version, PackageNotFoundError
 
 def get_options():
-    version = get_distribution('greedyFAS').version
-    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(version) + '.',
+    fas_version = version("greedyFAS")
+    parser = argparse.ArgumentParser(description='You are running FAS version ' + str(fas_version) + '.',
                                      epilog="For more information on certain options, please refer to the wiki pages "
                                             "on github: https://github.com/BIONF/FAS/wiki")
     required = parser.add_argument_group('required arguments')
