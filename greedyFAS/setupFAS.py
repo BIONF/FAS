@@ -69,7 +69,7 @@ def download_progress(count, block_size, total_size):
 
 def download_file(url, file):
     try:
-        response = requests.get(url, stream=True)
+        response = requests.get(f'{url}/{file}', stream=True, verify=False, allow_redirects=True)
         response.raise_for_status()  # Raises HTTPError for bad responses (4xx, 5xx)
         with open(file, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
