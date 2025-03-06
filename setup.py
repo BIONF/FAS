@@ -44,7 +44,8 @@ setup(
         'graphviz',
         'gnureadline',
         'GitPython',
-        'pathlib'
+        'pathlib',
+        'requests'
     ],
     entry_points={
         'console_scripts': ['fas.parseAnno = greedyFAS.annoFAS.annoParserFAS:main',
