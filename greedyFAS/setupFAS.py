@@ -31,8 +31,6 @@ import argparse
 import gnureadline
 import glob
 from os.path import expanduser
-# import ssl
-# import urllib.request
 import requests
 import time
 import multiprocessing as mp
@@ -70,21 +68,13 @@ def download_progress(count, block_size, total_size):
 
 
 def download_file(url, file):
-    # ctx = ssl.create_default_context()
-    # ctx.check_hostname = False
-    # ctx.verify_mode = ssl.CERT_NONE
-    # download_file = urllib.request.URLopener(context=ctx)
-    # print('Downloading %s' % (url + '/' + file))
-    # download_file.retrieve(url + '/' + file, file, download_progress)
-    # print(' ... done!')
-    # def download_file(url, filename):
     try:
         response = requests.get(url, stream=True)
         response.raise_for_status()  # Raises HTTPError for bad responses (4xx, 5xx)
         with open(filename, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
-        print(f"Download successful: {filename}")
+        print(f"Download successful: {file}")
     except requests.exceptions.RequestException as e:
         sys.exit(f"ERROR: Unable to download file. Reason: {e}")
 
