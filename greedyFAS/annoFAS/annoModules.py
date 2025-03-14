@@ -500,9 +500,9 @@ def doAnno(args):
     if 'signalp' in toolList:
         try:
             seqFileName = seqFile.split('/')[-1].split('.')[0]
-            shutil.rmtree('tmp/signalp/%s' % seqFileName)
+            shutil.rmtree(f'{outPath}/tmp/signalp/{seqFileName}')
         except:
-            sys.exit('Error deleting tmp/signalp/%s_%s' % (outNameTmp, seqIdTmp))
+            sys.exit(f'Error deleting {outPath}/tmp/signalp/{outNameTmp}_{seqIdTmp}')
     return final
 
 # functions for posprocessing annotation dictionary
