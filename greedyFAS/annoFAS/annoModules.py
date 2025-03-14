@@ -191,10 +191,10 @@ def doSignalp(args):
     (seqFile, toolPath, org, outPath) = args
     # create tmp folder for signalp output
     seqFileName = seqFile.split('/')[-1].split('.')[0]
-    Path(f'{outPath}/tmp/signalp/{seqFileName}').mkdir(parents = True, exist_ok = True)
+    Path(f'{outPath}/tmp/signalp_{seqFileName}').mkdir(parents = True, exist_ok = True)
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
-    cmd = '%s/SignalP/signalp -T %s/tmp/signalp/%s -t %s "%s"' % (toolPath, outPath, seqFileName, org, seqFile)
+    cmd = '%s/SignalP/signalp -T %s/tmp/signalp_%s -t %s "%s"' % (toolPath, outPath, seqFileName, org, seqFile)
     try:
         signalpOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
     except:
@@ -497,12 +497,12 @@ def doAnno(args):
         sys.exit('Error running\n%s' % rmCmd)
     # if len(os.listdir(f'{outPath}/tmp/{pid}')) == 0:
     #     shutil.rmtree(f'{outPath}/tmp')
-    if 'signalp' in toolList:
-        try:
-            seqFileName = seqFile.split('/')[-1].split('.')[0]
-            shutil.rmtree(f'{outPath}/tmp/signalp/{seqFileName}')
-        except:
-            sys.exit(f'Error deleting {outPath}/tmp/signalp/{outNameTmp}_{seqIdTmp}')
+    # if 'signalp' in toolList:
+    #     try:
+    #         seqFileName = seqFile.split('/')[-1].split('.')[0]
+    #         shutil.rmtree(f'{outPath}/tmp/signalp/{seqFileName}')
+    #     except:
+    #         sys.exit(f'Error deleting {outPath}/tmp/signalp/{outNameTmp}_{seqIdTmp}')
     return final
 
 # functions for posprocessing annotation dictionary
