@@ -191,10 +191,10 @@ def doSignalp(args):
     (seqFile, toolPath, org, outPath) = args
     # create tmp folder for signalp output
     seqFileName = seqFile.split('/')[-1].split('.')[0]
-    Path('/tmp/signalp/'+seqFileName).mkdir(parents = True, exist_ok = True)
+    Path(f'{outPath}/tmp/signalp/{seqFileName}').mkdir(parents = True, exist_ok = True)
     # load fasta seq
     inSeq = SeqIO.to_dict((SeqIO.parse(open(seqFile), 'fasta')))
-    cmd = '%s/SignalP/signalp -T tmp/signalp/%s -t %s "%s"' % (toolPath, seqFileName, org, seqFile)
+    cmd = '%s/SignalP/signalp -T %s/tmp/signalp/%s -t %s "%s"' % (toolPath, outPath, seqFileName, org, seqFile)
     try:
         signalpOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
     except:
