@@ -447,7 +447,7 @@ def check_hmmer():
     except subprocess.CalledProcessError as e:
         # If hmmsearch is not found, try installing using mamba, micromamba, or conda
         if check_conda_env():
-        micromamba_install_cmd = 'micromamba install -c bioconda hmmer -y'
+            micromamba_install_cmd = 'micromamba install -c bioconda hmmer -y'
             mamba_install_cmd = 'mamba install -c bioconda hmmer -y'
             conda_install_cmd = 'conda install -c bioconda hmmer -y'
 
