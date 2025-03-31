@@ -442,18 +442,29 @@ def install_seg(anno_path):
 
 def check_hmmer():
     try:
-        subprocess.check_output(['which hmmsearch'], shell = True, stderr = subprocess.STDOUT)
+        # Check if hmmsearch is installed
+        subprocess.check_output(['which hmmsearch'], shell=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        if check_conda_env() == True:
-            conda_install_cmd = 'mamba install -c bioconda hmmer -y'
+        # If hmmsearch is not found, try installing using mamba, micromamba, or conda
+        if check_conda_env():
+        micromamba_install_cmd = 'micromamba install -c bioconda hmmer -y'
+            mamba_install_cmd = 'mamba install -c bioconda hmmer -y'
+            conda_install_cmd = 'conda install -c bioconda hmmer -y'
+
             try:
-                subprocess.call([conda_install_cmd], shell = True)
-            except:
+                # Try to use micromamba first
+                subprocess.check_call(micromamba_install_cmd, shell=True)
+            except subprocess.CalledProcessError as e:
                 try:
-                    conda_install_cmd = 'conda install -c bioconda hmmer -y'
-                    subprocess.call([conda_install_cmd], shell = True)
-                except:
-                    sys.exit('\033[91mERROR: Cannot install hmmer using this command\n%s\033[0m' % conda_install_cmd)
+                    # If micromamba fails, try mamba
+                    subprocess.check_call(mamba_install_cmd, shell=True)
+                except subprocess.CalledProcessError as e:
+                    try:
+                        # If both fail, try conda
+                        subprocess.check_call(conda_install_cmd, shell=True)
+                    except subprocess.CalledProcessError as e:
+                        # If all installation attempts fail, exit with an error message
+                        sys.exit(f'\033[91mERROR: Cannot install hmmer using any of the commands\n{mamba_install_cmd}\n{micromamba_install_cmd}\n{conda_install_cmd}\033[0m')
         else:
             sys.exit('\033[91mERROR: Please install HMMER before using FAS (http://hmmer.org/documentation.html)\033[0m')
 
