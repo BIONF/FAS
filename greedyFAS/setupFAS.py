@@ -445,11 +445,15 @@ def check_hmmer():
         subprocess.check_output(['which hmmsearch'], shell = True, stderr = subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         if check_conda_env() == True:
-            conda_install_cmd = 'conda install -c bioconda hmmer -y'
+            conda_install_cmd = 'mamba install -c bioconda hmmer -y'
             try:
                 subprocess.call([conda_install_cmd], shell = True)
             except:
-                sys.exit('\033[91mERROR: Cannot install hmmer using this command\n%s\033[0m' % conda_install_cmd)
+                try:
+                    conda_install_cmd = 'conda install -c bioconda hmmer -y'
+                    subprocess.call([conda_install_cmd], shell = True)
+                except:
+                    sys.exit('\033[91mERROR: Cannot install hmmer using this command\n%s\033[0m' % conda_install_cmd)
         else:
             sys.exit('\033[91mERROR: Please install HMMER before using FAS (http://hmmer.org/documentation.html)\033[0m')
 
