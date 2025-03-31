@@ -447,24 +447,17 @@ def check_hmmer():
     except subprocess.CalledProcessError as e:
         # If hmmsearch is not found, try installing using mamba, micromamba, or conda
         if check_conda_env():
-            micromamba_install_cmd = 'micromamba install -c bioconda hmmer -y'
-            mamba_install_cmd = 'mamba install -c bioconda hmmer -y'
-            conda_install_cmd = 'conda install -c bioconda hmmer -y'
-
+            install_cmd = 'install -c bioconda hmmer -y'
+            if shutil.which("micromamba"):
+                install_cmd = f'micromamba {install_cmd}'
+            elif shutil.which("mamba"):
+                install_cmd = f'mamba {install_cmd}'
+            else:
+                install_cmd = f'conda {install_cmd}'
             try:
-                # Try to use micromamba first
-                subprocess.check_call(micromamba_install_cmd, shell=True)
-            except subprocess.CalledProcessError as e:
-                try:
-                    # If micromamba fails, try mamba
-                    subprocess.check_call(mamba_install_cmd, shell=True)
-                except subprocess.CalledProcessError as e:
-                    try:
-                        # If both fail, try conda
-                        subprocess.check_call(conda_install_cmd, shell=True)
-                    except subprocess.CalledProcessError as e:
-                        # If all installation attempts fail, exit with an error message
-                        sys.exit(f'\033[91mERROR: Cannot install hmmer using any of the commands\n{mamba_install_cmd}\n{micromamba_install_cmd}\n{conda_install_cmd}\033[0m')
+                subprocess.call(install_cmd, shell=True)
+            except:
+                sys.exit(f'\033[91mERROR: Cannot install hmmer using any of the commands\n{install_cmd}\033[0m')
         else:
             sys.exit('\033[91mERROR: Please install HMMER before using FAS (http://hmmer.org/documentation.html)\033[0m')
 
