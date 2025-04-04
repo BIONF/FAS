@@ -58,7 +58,7 @@ def runAnnoFas(args):
     annoOut = []
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
-            print(f'Doing annotation for {seqFile} using {cpus} CPUs...' % )
+            print(f'Doing annotation for {seqFile} using {cpus} CPUs...')
             annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath,
                                                    annoModules.getAnnoTools(annoToolFile, toolPath), eFlps, signalpOrg,
                                                    eFeature, eInstance, hmmCores, pid])
