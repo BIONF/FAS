@@ -58,7 +58,7 @@ def runAnnoFas(args):
     annoOut = []
     if annoModules.checkFileEmpty(outFile) == True or force:
         if extract == '':
-            print('Doing annotation for %s...' % seqFile)
+            print(f'Doing annotation for {seqFile} using {cpus} CPUs...' % )
             annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath,
                                                    annoModules.getAnnoTools(annoToolFile, toolPath), eFlps, signalpOrg,
                                                    eFeature, eInstance, hmmCores, pid])
@@ -207,6 +207,8 @@ def main():
     cpus = args.cpus
     if cpus == 0:
         cpus = mp.cpu_count()-1
+    if cpus > mp.cpu_count():
+        cpus = mp.cpu_count() - 1
 
     # option for saving json file
     outPath = os.path.abspath(args.outPath)
