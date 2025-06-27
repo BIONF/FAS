@@ -178,6 +178,8 @@ def main():
                           action='store', default='')
     optional.add_argument('--annoToolFile', help='Path to files contains annotation tool names',
                           action='store', default='')
+    optional.add_argument('--keepTmp', help='Keep tmp folder (useful for running multiple jobs in parallel)',
+                          action='store_true', default='')
 
     args = parser.parse_args()
 
@@ -222,6 +224,7 @@ def main():
     redo = args.redo
     extract = args.extract
     annoFile = args.annoFile
+    keepTmp = args.keepTmp
     if extract:
         annoModules.checkFileExist(annoFile)
         if annoFile == '':
@@ -240,12 +243,13 @@ def main():
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
                 extract, annoFile, cpus, annoToolFile])
     # remove tmp folders
-    if os.path.exists('tmp/signalp'):
-        subfolders = [ f.path for f in os.scandir('tmp') if f.is_dir() ]
-        if len(subfolders) == 1 and subfolders[0] == "tmp/signalp":
-            shutil.rmtree('tmp')
-    if os.path.exists(f'{outPath}/tmp'):
-        shutil.rmtree(f'{outPath}/tmp')
+    if not keepTmp:
+        if os.path.exists('tmp/signalp'):
+            subfolders = [ f.path for f in os.scandir('tmp') if f.is_dir() ]
+            if len(subfolders) == 1 and subfolders[0] == "tmp/signalp":
+                shutil.rmtree('tmp')
+        if os.path.exists(f'{outPath}/tmp'):
+            shutil.rmtree(f'{outPath}/tmp')
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 
