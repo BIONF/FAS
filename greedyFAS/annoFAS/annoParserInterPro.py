@@ -27,6 +27,7 @@ import argparse
 import json
 import os
 import re
+import sys
 from Bio import SeqIO
 from importlib.metadata import version, PackageNotFoundError
 import greedyFAS.annoFAS.annoModules as annoModules
