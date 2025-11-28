@@ -41,8 +41,9 @@ jobs:
         echo "*** INSTALL FAS..."
         pip install .
         echo "*** DOWNLOAD DEPENDENCIES AND SETUP FAS..."
-        wget https://github.com/BIONF/data4travis/raw/main/dtu/signalp-4.1g.Linux.tar.gz &> /dev/null
-        wget https://github.com/BIONF/data4travis/raw/main/dtu/tmhmm-2.0c.Linux.tar.gz &> /dev/null
+        git clone --depth 1 https://github.com/BIONF/data4travis.git data4travis
+        cp data4travis/dtu/signalp-4.1g.Linux.tar.gz .
+        cp data4travis/dtu/tmhmm-2.0c.Linux.tar.gz .
         fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
         less annoTools.txt | grep -v "COILS2" > annoTools.txt.mod
         mv annoTools.txt.mod annoTools.txt
@@ -72,7 +73,7 @@ jobs:
         echo "*** TEST FAS.MERGEJSON..."
         fas.mergeJson -i fas_output -n merged_json -o fas_output
         echo "*** TEST FAS.RUNFDOGFAS..."
-        wget https://github.com/BIONF/data4travis/raw/main/fas_test.tar.gz &> /dev/null
+        cp data4travis/fas_test.tar.gz .
         tar -xf fas_test.tar.gz
         fas.runFdogFas -i test.extended.fa -w annotation_dir
         ls
