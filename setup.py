@@ -28,7 +28,7 @@ with open('README.md', 'r') as input:
 
 setup(
     name='greedyFAS',
-    version='1.19.0',
+    version='1.19.1',
     python_requires='>=3.12.0',
     description='A tool to compare protein feature architectures',
     long_description=long_description,
@@ -63,7 +63,7 @@ setup(
                             'fas.splitAnno = greedyFAS.extractAnnoFAS:main',
                             'fas.disorder.predict = greedyFAS.disorderFAS.predict_disorder:main',
                             'fas.disorder.setup = greedyFAS.disorderFAS.install_aucpred:main',
-                            'fas.mergeAnno = greedyFAS.mergeAnno:main',
+                            'fas.mergeAnno = greedyFAS.annoFAS.mergeAnno:main',
                             'fas.updateAnno = greedyFAS.updateAnno:main',
                             'fas.mergeJson = greedyFAS.mergeJson:main',
                             'fas.updateJson = greedyFAS.updateJson:main',
