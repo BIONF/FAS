@@ -356,9 +356,8 @@ def write_phmm_length(anno_path, tool_name):
 
 def install_coils(anno_path):
     if not os.path.islink('%s/COILS2/COILS2' % anno_path):
-        # url = 'http://ftp.ebi.ac.uk/pub/software/unix/coils-2.2/'
-        # file = 'ncoils.tar.gz'
-        url = 'https://www.russelllab.org/coils/'
+        # url = 'https://www.russelllab.org/coils/' # not works since Nov. 2025
+        url = 'https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/'
         file = 'coils.tar.gz'
         download_file(url, file)
         if os.path.isfile(file):
@@ -431,7 +430,7 @@ def install_flps(anno_path):
 
 def install_seg(anno_path):
     if not os.path.islink('%s/SEG/seg' % anno_path):
-        url = 'https://raw.githubusercontent.com/BIONF/data4travis/main'
+        url = 'https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/'
         file = 'SEG.tar.gz'
         download_file(url, file)
         shutil.unpack_archive(file, anno_path, 'gztar')
@@ -691,10 +690,10 @@ def saveConfigFile(checkResult, anno_path, greedyFasPath):
             config.write(os.path.abspath(anno_path))
             config.close()
         print('Done! Annotation tools can be found in %s' % anno_path)
+        print('*** NOTE: YOU NEED TO source %s/fas.profile or add COILSDIR to your bash profile BEFORE USING FAS!' % anno_path)
+        print('Check https://github.com/BIONF/FAS/wiki/setup#add-COILSDIR-to-bashrc-or-bash_profile for more details')
         print('You should test fas.doAnno with this command:')
         print('==> fas.doAnno -i test_annofas.fa -o testFas_output <==')
-        print('*** NOTE: YOU NEED TO source %s/fas.profile BEFORE USING FAS!' % anno_path)
-        print('Check https://github.com/BIONF/FAS/wiki/setup#add-COILSDIR-to-bashrc-or-bash_profile for more details')
         sys.exit()
     else:
         sys.exit('Some errors occur with annotation tools. Please check if they can be excuted at %s' % anno_path)
