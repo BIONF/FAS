@@ -44,6 +44,7 @@ jobs:
         wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/signalp-4.1g.Linux.tar.gz &> /dev/null
         wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/tmhmm-2.0c.Linux.tar.gz &> /dev/null
         fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
+        source /home/runner/work/FAS/FAS/fas.profile
         echo "*** TEST FAS.DOANNO..."
         fas.doAnno -i test_annofas.fa -o anno_output
         echo "*** TEST FAS.RUN..."
