@@ -78,7 +78,7 @@ def checkOutdatedAnno(jsonFile):
             return('updated')
 
 
-def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoToolFile):
+def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoToolFile, keepTmp):
     toolPath = annoModules.getFasToolPath()
     # do annotation for missing proteins
     faFile = '%s/%s_tmp.fa' % (outPath, taxon)
@@ -107,7 +107,8 @@ def doAnnoForMissing(taxon, missingAnno, jsonFile, outPath, cpus, silent, annoTo
     # remove tmp files
     os.remove(faFile)
     os.remove('%s/%s_tmp.json' % (outPath, taxon))
-    shutil.rmtree('%s/tmp' % outPath)
+    if not keepTmp:
+        shutil.rmtree('%s/tmp' % outPath)
 
 
 def main():
@@ -130,6 +131,7 @@ def main():
                           action='store', default=0, type=int)
     optional.add_argument('--annoToolFile', help='Path to files contains annotation tool names',
                           action='store', default='')
+    optional.add_argument('--keepTmp', help='Do not remove TMP folder', action='store_true')
 
     args = parser.parse_args()
 
@@ -147,6 +149,7 @@ def main():
     noAnno = args.noAnno
     update = args.update
     keep = args.keep
+    keepTmp = args.keepTmp
     silent = args.silent
     annoToolFile = args.annoToolFile
     annoModules.checkFileExist(annoToolFile)
@@ -157,7 +160,7 @@ def main():
     missingAnno = checkCompleteAnno(seqFile, annoFile)
     if len(missingAnno) > 0:
         if noAnno == False:
-            doAnnoForMissing(taxon, missingAnno, annoFile, outPath, cpus, silent, annoToolFile)
+            doAnnoForMissing(taxon, missingAnno, annoFile, outPath, cpus, silent, annoToolFile, keepTmp)
             annoModules.printMsg(silent, '%s missing proteins of %s has been annotated!' % (len(missingAnno), taxon))
         else:
             print('WARNING: Annotation for %s proteins of %s are missing!\n%s' % (len(missingAnno), taxon, missingAnno))
