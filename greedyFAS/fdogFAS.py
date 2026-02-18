@@ -169,7 +169,7 @@ def manage_jobpool(jobdict, seed_names, seed_spec, anno_dir, tmp_path, cores, fe
         for i in missing:
             missinseq.append('>' + i + '\n' + fasta[seed_spec][i])
         doAnnoForMissing(seed_spec, missinseq, anno_dir + "/" + seed_spec + ".json", tmp_path + "/", cores, True,
-                         annoToolFile)
+                         annoToolFile, True)
         tmp_data = read_json(tmp_path + "/" + seed_spec + ".json")
         seed_weight = w_weight_correction("loge", tmp_data["count"])
         seed_proteome = tmp_data["feature"]
