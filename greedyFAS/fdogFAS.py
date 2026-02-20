@@ -231,7 +231,7 @@ def run_fas(data):
             anno_dir = data[7]
         else:
             anno_dir = data[4]
-        doAnnoForMissing(data[0], missinseq, anno_dir + "/" + data[0] + ".json", data[7] + "/", 1, True, "None")
+        doAnnoForMissing(data[0], missinseq, anno_dir + "/" + data[0] + ".json", data[7] + "/", 1, True, "None", True)
         tmp_data = read_json(data[7] + "/" + data[0] + ".json")
         for i in missing:
             query_proteome[i] = tmp_data["feature"][i]
