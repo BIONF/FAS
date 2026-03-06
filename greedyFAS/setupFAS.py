@@ -189,8 +189,9 @@ def install_signalp():
             if 'ENV{SIGNALP} = ' in line:
                 line = '    $ENV{SIGNALP} = "%s";\n' % signalp_path
             if 'uname -m' in line:
-                if 'Debian' in os.uname()[3]:
-                    line = 'my $architecture = \"i686\";\n'
+                line = 'my $architecture = \"i686\";\n'
+                #if 'Debian' in os.uname()[3]:
+                #    line = 'my $architecture = \"i686\";\n'
             outfile.write(line)
     shutil.move(signalp_path+'/signalp.mod', signalp_path+'/signalp')
     subprocess.call(['chmod', '0755', signalp_path+'/signalp'])

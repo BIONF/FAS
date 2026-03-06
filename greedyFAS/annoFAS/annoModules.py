@@ -207,6 +207,8 @@ def doSignalp(args):
             if not line.startswith('#') and not 'Temporary files in' in line:
                     if len(line) > 0:
                         tmp = line.strip().split()
+                        if not tmp[0] in inSeq:
+                            sys.exit('Error running SignalP. No seq ID found!\n%s' % cmd)
                         if tmp[9] == 'Y':
                             annoOut[tmp[0]] = {}
                             annoOut[tmp[0]]['length'] = len(inSeq[tmp[0]])
