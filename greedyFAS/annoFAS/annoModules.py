@@ -367,7 +367,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                 tmp = result.split('Domain annotation for each model:')
                 flag_instance = {} # check if any instance exceeds the cutoff
                 for line in tmp[0].split('\n'):
-                    if re.search('^\d+', line.lstrip()):
+                    if re.search(r'^\d+', line.lstrip()):
                         items = line.lstrip().split()
                         if float(items[0]) <= eFeature:
                             outDict[query][toolName][toolName+'_'+items[8]] = {}
@@ -377,7 +377,7 @@ def parseHmmscan(hmmOut, toolName, eFeature, eInstance):
                 for line in tmp[1].split('\n'):
                     if line.startswith('>>'):
                         dom = line.strip().split()[1]
-                    if re.search('^\d+', line.lstrip()):
+                    if re.search(r'^\d+', line.lstrip()):
                         items2 = line.lstrip().split()
                         if toolName + '_' + dom in outDict[query][toolName]:
                             if float(items2[4]) <= eInstance:
@@ -448,15 +448,15 @@ def getAnnoTools(annoToolFile, toolPath):
 
 
 def createAnnoJobs(args):
-    (outName, outPath, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores, pid) = args
+    (outName, outPath, seqFile, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores, pid, keepTmp) = args
     annoJobs = []
     for s in SeqIO.parse(seqFile, 'fasta'):
         annoJobs.append([s.id, s.seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature,
-                         eInstance, hmmCores, pid])
+                         eInstance, hmmCores, pid, keepTmp])
     return annoJobs
 
 def doAnno(args):
-    (seqId, seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores, pid) = args
+    (seqId, seq, outName, outPath, toolPath, toolList, eFlps, signalpOrg, eFeature, eInstance, hmmCores, pid, keepTmp) = args
     # create temp fasta file
     Path(f'{outPath}/tmp/{pid}').mkdir(parents = True, exist_ok = True)
     outNameTmp = outName.replace("|","_")
@@ -491,20 +491,13 @@ def doAnno(args):
         annoList.append(anno)
     final['feature'] = mergeNestedDic(annoList)
     # remove tmp fasta file
-    seqFileTmp = seqFile.replace("|","\|")
-    rmCmd = 'rm %s' % (seqFileTmp)
-    try:
-        subprocess.run([rmCmd], shell=True, check=True)
-    except:
-        sys.exit('Error running\n%s' % rmCmd)
-    # if len(os.listdir(f'{outPath}/tmp/{pid}')) == 0:
-    #     shutil.rmtree(f'{outPath}/tmp')
-    # if 'signalp' in toolList:
-    #     try:
-    #         seqFileName = seqFile.split('/')[-1].split('.')[0]
-    #         shutil.rmtree(f'{outPath}/tmp/signalp/{seqFileName}')
-    #     except:
-    #         sys.exit(f'Error deleting {outPath}/tmp/signalp/{outNameTmp}_{seqIdTmp}')
+    if not keepTmp:
+        seqFileTmp = seqFile.replace("|",r"\|")
+        rmCmd = 'rm %s' % (seqFileTmp)
+        try:
+            subprocess.run([rmCmd], shell=True, check=True)
+        except:
+            sys.exit('Error running\n%s' % rmCmd)
     return final
 
 # functions for posprocessing annotation dictionary

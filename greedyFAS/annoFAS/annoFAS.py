@@ -38,7 +38,7 @@ home = expanduser('~')
 
 def runAnnoFas(args):
     (seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo, extract,
-     annoFile, cpus, annoToolFile) = args
+     annoFile, cpus, annoToolFile, keepTmp) = args
     pid = os.getpid()
     # get list of cutoffs
     cutoffs = (eFeature, eInstance, eFlps, signalpOrg)
@@ -61,7 +61,7 @@ def runAnnoFas(args):
             print(f'Doing annotation for {seqFile} using {cpus} CPUs...')
             annoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath,
                                                    annoModules.getAnnoTools(annoToolFile, toolPath), eFlps, signalpOrg,
-                                                   eFeature, eInstance, hmmCores, pid])
+                                                   eFeature, eInstance, hmmCores, pid, keepTmp])
             # do annotation and save to json output
             if cpus == 1:
                 for job in annoJobs:
@@ -97,7 +97,7 @@ def runAnnoFas(args):
         if not redo == '':
             print('Redoing annotation for %s...' % redo)
             redoJobs = annoModules.createAnnoJobs([outName, outPath, seqFile, toolPath, [redo], eFlps, signalpOrg,
-                                                   eFeature, eInstance, hmmCores, pid])
+                                                   eFeature, eInstance, hmmCores, pid, keepTmp])
             # redo annotation
             if cpus == 1:
                 for job in redoJobs:
@@ -241,7 +241,7 @@ def main():
     start = time.time()
     print('PID ' + str(os.getpid()))
     runAnnoFas([seqFile, outPath, toolPath, force, outName, eFlps, signalpOrg, eFeature, eInstance, hmmCores, redo,
-                extract, annoFile, cpus, annoToolFile])
+                extract, annoFile, cpus, annoToolFile, keepTmp])
     # remove tmp folders
     if not keepTmp:
         if os.path.exists('tmp/signalp'):
@@ -250,6 +250,15 @@ def main():
                 shutil.rmtree('tmp')
         if os.path.exists(f'{outPath}/tmp'):
             shutil.rmtree(f'{outPath}/tmp')
+    else:
+        RED = "\033[91m"   # bright red
+        RESET = "\033[0m"
+        msg = (
+            f"The temporary directory '{outPath}/tmp' was retained. "
+            "Please delete it manually after your job is complete if it is no longer needed."
+        )
+        print(f"{RED}{msg}{RESET}")
+        
     ende = time.time()
     print('Finished in ' + '{:5.3f}s'.format(ende-start))
 
