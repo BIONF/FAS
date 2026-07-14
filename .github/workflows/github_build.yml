@@ -18,9 +18,9 @@ jobs:
       matrix:
         python-version: [3.12]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -41,8 +41,8 @@ jobs:
         echo "*** INSTALL FAS..."
         pip install .
         echo "*** DOWNLOAD DEPENDENCIES AND SETUP FAS..."
-        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/signalp-4.1g.Linux.tar.gz &> /dev/null
-        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/tmhmm-2.0c.Linux.tar.gz &> /dev/null
+        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/signalp-4.1g.Linux.tar.gz --no-check-certificate &> /dev/null
+        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/tmhmm-2.0c.Linux.tar.gz --no-check-certificate &> /dev/null
         fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
         source /home/runner/work/FAS/FAS/fas.profile
         echo "*** TEST FAS.DOANNO..."
@@ -75,10 +75,29 @@ jobs:
         tar -xf fas_test.tar.gz
         fas.runFdogFas -i test.extended.fa -w annotation_dir
         ls
-    - name: Deploy
-      if: startsWith(github.event.ref, 'refs/tags')
-      uses: casperdcl/deploy-pypi@v2
-      with:
-        password: ${{ secrets.pypi }}
-        build: true
-        upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
+  deploy:
+    needs: build
+    runs-on: ubuntu-22.04
+    if: startsWith(github.event.ref, 'refs/tags')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+      - name: Build distribution packages
+        run: python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.pypi }}
+    
+    #  uses: casperdcl/deploy-pypi@v2
+    #  with:
+    #    password: ${{ secrets.pypi }}
+    #    build: true
+    #    upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
