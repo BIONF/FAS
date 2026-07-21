@@ -272,7 +272,7 @@ def install_smart(smart_path, anno_path):
             subprocess.run([hmmpressCmd], shell=True, check=True)
         except:
             sys.exit('ERROR: Problem occurred while creating binary files for SMART at %s/SMART/SMART-hmms' % (anno_path))
-        getVersionCmd = 'tail -n 1 %s/README | cut -d " " -f2 | sed "s/\//_/g" > %s/SMART/version.txt' % (smart_path, anno_path)
+        getVersionCmd = f'tail -n 1 {smart_path}/README | cut -d " " -f2 | sed "s#/#_#g" > {anno_path}/SMART/version.txt'
         subprocess.call([getVersionCmd], shell=True)
         # write length file
         write_phmm_length(anno_path, 'SMART')
@@ -735,9 +735,9 @@ def main():
     args = parser.parse_args()
     greedyFasPath = os.path.realpath(__file__).replace('/setupFAS.py','')
     options = {
-        'toolPath': args.toolPath,
-        'smartPath': args.smartPath,
-        'dtuPath': args.dtuPath,
+        'toolPath': os.path.abspath(args.toolPath),
+        'smartPath': os.path.abspath(args.smartPath),
+        'dtuPath': os.path.abspath(args.dtuPath),
         'pfamVersion': args.pfamVersion,
         'pfamPath': args.pfamPath,
         'ignore': args.ignore,
