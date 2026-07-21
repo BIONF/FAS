@@ -38,11 +38,15 @@ jobs:
     - name: Test
       run: |
         pwd
+        echo "*** CURRENT WORKING DIR"
+        pwd
         echo "*** INSTALL FAS..."
         pip install .
-        echo "*** DOWNLOAD DEPENDENCIES AND SETUP FAS..."
-        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/signalp-4.1g.Linux.tar.gz --no-check-certificate &> /dev/null
-        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/tmhmm-2.0c.Linux.tar.gz --no-check-certificate &> /dev/null
+        echo "*** DOWNLOAD DEPENDENCIES..."
+        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/signalp-4.1g.Linux.tar.gz &> /dev/null
+        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/tmhmm-2.0c.Linux.tar.gz &> /dev/null
+        pwd
+        echo "*** SETUP FAS..."
         fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
         source /home/runner/work/FAS/FAS/fas.profile
         echo "*** TEST FAS.DOANNO..."
@@ -95,9 +99,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.pypi }}
-    
-    #  uses: casperdcl/deploy-pypi@v2
-    #  with:
-    #    password: ${{ secrets.pypi }}
-    #    build: true
-    #    upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
