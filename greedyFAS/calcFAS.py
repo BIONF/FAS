@@ -183,7 +183,7 @@ def anno(annojobs, args, toolpath):
         if annotate:
             annoFAS.runAnnoFas(
                 [seqfile, outpath, toolpath, args.forceAnno, name, eflps, signalporg, efeature, einstance, hmmcores, '',
-                 '', '', cpus, args.featuretypes])
+                 '', '', cpus, args.featuretypes, ''])
 
 def fas(opts):
     (args, toolpath) = opts
