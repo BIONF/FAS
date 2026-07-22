@@ -82,7 +82,7 @@ def get_property(prop, project):
 
 
 def getFasToolPath():
-    cmd = 'fas.setup -t ~/ -c'
+    cmd = 'fas.setup -t ~/ --smartPath ~/ -c'
     try:
         flpsOut = subprocess.run([cmd], shell=True, capture_output=True, check=True)
     except:
