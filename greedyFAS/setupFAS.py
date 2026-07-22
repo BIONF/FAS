@@ -707,7 +707,8 @@ def main():
     optional = parser.add_argument_group('optional arguments')
     required.add_argument('-t', '--toolPath', help='Set path to save annotation tools', action='store', default='',
                           required=True)
-    optional.add_argument('--smartPath', help='Set path to your downloaded SMART folder', action='store', default='')
+    required.add_argument('--smartPath', help='Set path to your downloaded SMART folder', action='store', default='',
+                          required=True)
     optional.add_argument('-d', '--dtuPath', help='Set path to DTU tools (SignalP and TMHMM)', action='store',
                           default='')
     optional.add_argument('--pfamVersion', help='Specify PFAM version. E.g.: 35.0', action='store', default='')
