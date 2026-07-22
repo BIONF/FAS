@@ -45,9 +45,14 @@ jobs:
         echo "*** DOWNLOAD DEPENDENCIES..."
         wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/signalp-4.1g.Linux.tar.gz &> /dev/null
         wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/tmhmm-2.0c.Linux.tar.gz &> /dev/null
-        pwd
+        mkdir dtu
+        mv signalp-4.1g.Linux.tar.gz dtu/
+        mv tmhmm-2.0c.Linux.tar.gz dtu/
+        wget https://applbio.biologie.uni-frankfurt.de/download/data4testingFAS/smart_01_06_2016.tar.gz &> /dev/null
+        tar -xvf smart_01_06_2016.tar.gz
+        ls
         echo "*** SETUP FAS..."
-        fas.setup -t /home/runner/work/FAS/FAS -d /home/runner/work/FAS/FAS
+        fas.setup -t /home/runner/work/FAS/FAS --smartPath /home/runner/work/FAS/FAS/smart_01_06_2016 -d /home/runner/work/FAS/FAS/dtu
         source /home/runner/work/FAS/FAS/fas.profile
         echo "*** TEST FAS.DOANNO..."
         fas.doAnno -i test_annofas.fa -o anno_output
